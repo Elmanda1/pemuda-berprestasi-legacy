@@ -38,6 +38,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            **/.env*
 
       - name: 📂 Sync public_html (Public Assets)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
