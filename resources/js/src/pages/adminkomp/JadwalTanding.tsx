@@ -17,7 +17,7 @@ import { useKompetisi } from "../../context/KompetisiContext";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 import { exportMultipleBracketsByLapangan } from "../../utils/exportBracketPDF";
-import { exportPesertaListPerLapangan } from "../../utils/pdfGenerators";
+import { exportPesertaListPerLapangan, exportPesertaListBatch } from "../../utils/pdfGenerators";
 import taekwondo from "../../assets/logo/taekwondo.png";
 import sriwijaya from "../../assets/logo/sriwijaya.png";
 
@@ -63,6 +63,7 @@ const JadwalPertandingan: React.FC = () => {
     loadingAtlet,
     errorKelasKejuaraan,
     errorAtlet,
+    kompetisiDetail
   } = useKompetisi();
 
   const { user, token } = useAuth();
@@ -108,6 +109,8 @@ const JadwalPertandingan: React.FC = () => {
   const [showPesertaListModal, setShowPesertaListModal] = useState(false);
   const [selectedPesertaHari, setSelectedPesertaHari] = useState<string>("");
   const [selectedPesertaLapangan, setSelectedPesertaLapangan] = useState<number[]>([]);
+  const [batchExportMode, setBatchExportMode] = useState(false); // 🆕 Renamed state
+  const [resetModalData, setResetModalData] = useState<{ id: number; nama: string } | null>(null); // 🆕 Reset Modal State
   const [exportingPesertaPDF, setExportingPesertaPDF] = useState(false);
   const [autoResetBeforeGenerate, setAutoResetBeforeGenerate] = useState(true); // Default true = selalu reset
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -797,7 +800,12 @@ const JadwalPertandingan: React.FC = () => {
 
       const res = await fetch(
         `${import.meta.env.VITE_API_URL
-        }/lapangan/${id_lapangan}/preview-numbers?starting_number=1`
+        }/lapangan/${id_lapangan}/preview-numbers?starting_number=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const data = await res.json();
@@ -844,7 +852,12 @@ const JadwalPertandingan: React.FC = () => {
       const resetRes = await fetch(
         `${import.meta.env.VITE_API_URL
         }/lapangan/${selectedAutoGenLapangan}/reset-numbers`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const resetData = await resetRes.json();
@@ -862,10 +875,13 @@ const JadwalPertandingan: React.FC = () => {
 
       const genRes = await fetch(
         `${import.meta.env.VITE_API_URL
-        }/lapangan/${selectedAutoGenLapangan}/auto-generate-numbers`,
+        }/lapangan/${selectedAutoGenLapangan}/generate-numbers`, // Fixed endpoint name match route
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             starting_number: 1,
             hari: hariNumber, // ⭐ KIRIM HARI KE BACKEND
@@ -891,7 +907,10 @@ const JadwalPertandingan: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/lapangan/antrian`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             id_lapangan: selectedAutoGenLapangan,
             bertanding: 1,
@@ -974,7 +993,12 @@ const JadwalPertandingan: React.FC = () => {
 
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/lapangan/${id_lapangan}/reset-numbers`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
       );
 
       const data = await res.json();
@@ -1001,14 +1025,8 @@ const JadwalPertandingan: React.FC = () => {
     id_lapangan: number,
     namaLapangan: string
   ) => {
-    if (
-      !confirm(
-        `Yakin ingin reset semua nomor partai di Lapangan ${namaLapangan}?\n\n` +
-        `Nomor partai akan dihapus dan antrian akan di-reset ke 0.`
-      )
-    ) {
-      return;
-    }
+    // ❌ Removed browser confirm, now using Custom Modal
+    // Force Rebuild TIMESTAMP 12345
 
     setErrorMessage("");
     setSuccessMessage("");
@@ -1019,7 +1037,13 @@ const JadwalPertandingan: React.FC = () => {
       // STEP 1: Reset nomor partai
       const resetRes = await fetch(
         `${import.meta.env.VITE_API_URL}/lapangan/${id_lapangan}/reset-numbers`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Added Auth Header
+          },
+        }
       );
 
       const resetData = await resetRes.json();
@@ -1035,7 +1059,10 @@ const JadwalPertandingan: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/lapangan/antrian`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Added Auth Header
+          },
           body: JSON.stringify({
             id_lapangan: id_lapangan,
             bertanding: 0,
@@ -1361,6 +1388,10 @@ const JadwalPertandingan: React.FC = () => {
   };
 
   // ⭐ NEW: Handler for exporting peserta list per lapangan (multiple kelas in ONE PDF)
+
+  // ... (existing state)
+
+  // ⭐ NEW: Handler for exporting peserta list per lapangan (multiple kelas in ONE PDF)
   const handleExportPesertaList = async () => {
     if (!idKompetisi || selectedPesertaLapangan.length === 0) return;
 
@@ -1374,6 +1405,13 @@ const JadwalPertandingan: React.FC = () => {
 
       let totalLapanganExported = 0;
       const failedLapangan: string[] = [];
+      const batchData: Array<{
+        lapanganNama: string;
+        kelasListData: Array<{
+          kelasData: any;
+          namaKelas: string;
+        }>
+      }> = [];
 
       for (const lapanganId of selectedPesertaLapangan) {
         const lapangan = selectedHari.lapangan.find(
@@ -1390,17 +1428,25 @@ const JadwalPertandingan: React.FC = () => {
           namaKelas: string;
         }> = [];
 
-        // Get all kelas in this lapangan
-        const kelasList = lapangan.kelasDipilih
-          .map((kelasId) => {
-            const kelas = kelasKejuaraanList.find(
+        // Pre-fetch bracket info to show list of classes
+        const kelasList = await Promise.all(
+          lapangan.kelasDipilih.map(async (kelasId) => {
+            // Get detailed kelas info from cached state or fetch if missing
+            let kelas = kelasKejuaraanList.find(
               (k) => k.id_kelas_kejuaraan === kelasId
             );
+
+            // If not found in list, we might need to rely on what we have or fetch
+            // But usually kelasKejuaraanList has everything
+
             if (!kelas) return null;
 
-            const isPemula = kelas.kategori_event.nama_kategori
-              .toLowerCase()
-              .includes("pemula");
+            // Determine if pemula (for sorting)
+            const isPemula =
+              kelas.kategori_event?.nama_kategori?.toLowerCase().includes("pemula") ||
+              kelas.kelompok?.nama_kelompok?.toLowerCase().includes("pemula");
+
+            // Count peserta in this kelas (approved only)
             const jumlahPeserta = pesertaList.filter(
               (p) =>
                 p.status === "APPROVED" &&
@@ -1409,13 +1455,14 @@ const JadwalPertandingan: React.FC = () => {
 
             return {
               kelasId,
-              kelasData: kelas,
               isPemula,
               jumlahPeserta,
-              namaKelas: generateNamaKelas(kelas),
+              namaKelas: `${kelas.kategori_event?.nama_kategori || ""} - ${kelas.kelompok?.nama_kelompok || ""
+                } - ${kelas.kelas_berat?.nama_kelas || kelas.poomsae?.nama_kelas || ""}`,
+              kelasData: kelas,
             };
           })
-          .filter((item): item is NonNullable<typeof item> => item !== null);
+        ).then((results) => results.filter((k): k is NonNullable<typeof k> => k !== null));
 
         // Sort: PEMULA first, then by jumlah peserta DESC
         const sortedKelas = kelasList.sort((a, b) => {
@@ -1473,22 +1520,33 @@ const JadwalPertandingan: React.FC = () => {
           console.log(`   ✅ Added: ${kelas.namaKelas} (${pesertaKelas.length} peserta)`);
         }
 
-        // Export ONE PDF for this lapangan (with all kelas)
+        // Processing Logic
         if (kelasListForThisLapangan.length > 0) {
-          try {
-            await exportPesertaListPerLapangan(kelasListForThisLapangan, {
-              namaKejuaraan: "Sriwijaya International Taekwondo Championship 2025",
-              logoPBTI: taekwondo,
-              logoEvent: sriwijaya,
+          if (batchExportMode) {
+            // Store for batch export
+            batchData.push({
               lapanganNama: lapangan.nama_lapangan,
-              tanggal: selectedPesertaHari,
+              kelasListData: kelasListForThisLapangan
             });
-
             totalLapanganExported++;
-            console.log(`   ✅ Exported PDF: Lapangan ${lapangan.nama_lapangan} (${kelasListForThisLapangan.length} kelas)`);
-          } catch (exportError: any) {
-            console.error(`   ❌ Export error:`, exportError);
-            failedLapangan.push(lapangan.nama_lapangan);
+          } else {
+            // Export ONE PDF per lapangan immediately
+            try {
+              await exportPesertaListPerLapangan(kelasListForThisLapangan, {
+                namaKejuaraan: kompetisiDetail?.nama_event || "Sriwijaya International Taekwondo Championship 2025",
+                logoPBTI: taekwondo,
+                logoEvent: kompetisiDetail?.logo_url || sriwijaya,
+                lapanganNama: lapangan.nama_lapangan,
+                tanggal: selectedPesertaHari,
+                themeColor: kompetisiDetail?.primary_color,
+              });
+
+              totalLapanganExported++;
+              console.log(`   ✅ Exported PDF: Lapangan ${lapangan.nama_lapangan} (${kelasListForThisLapangan.length} kelas)`);
+            } catch (exportError: any) {
+              console.error(`   ❌ Export error:`, exportError);
+              failedLapangan.push(lapangan.nama_lapangan);
+            }
           }
         } else {
           console.warn(`   ⚠️ No kelas with participants in Lapangan ${lapangan.nama_lapangan}`);
@@ -1496,8 +1554,27 @@ const JadwalPertandingan: React.FC = () => {
         }
       }
 
+      // Final Batch Export Step
+      if (batchExportMode && batchData.length > 0) {
+        try {
+          console.log(`📦 Creating Batch PDF for ${batchData.length} lapangan...`);
+          await exportPesertaListBatch(batchData, {
+            namaKejuaraan: kompetisiDetail?.nama_event || "Sriwijaya International Taekwondo Championship 2025",
+            logoPBTI: taekwondo,
+            logoEvent: kompetisiDetail?.logo_url || sriwijaya,
+            tanggal: selectedPesertaHari,
+            themeColor: kompetisiDetail?.primary_color,
+          });
+          console.log(`✅ Batch Export Success!`);
+        } catch (err: any) {
+          console.error("❌ Batch export error:", err);
+          throw new Error("Gagal membuat file Batch PDF");
+        }
+      }
+
+
       console.log(`\n📦 EXPORT SUMMARY`);
-      console.log(`   Total lapangan exported: ${totalLapanganExported}`);
+      console.log(`   Total lapangan processed: ${totalLapanganExported}`);
       console.log(`   Failed/skipped: ${failedLapangan.length}`);
 
       if (totalLapanganExported === 0) {
@@ -1511,7 +1588,10 @@ const JadwalPertandingan: React.FC = () => {
         }
       }
 
-      let message = `✅ Berhasil export ${totalLapanganExported} PDF daftar peserta!`;
+      let message = batchExportMode
+        ? `✅ Berhasil download 1 file Batch PDF (${totalLapanganExported} lapangan)!`
+        : `✅ Berhasil export ${totalLapanganExported} PDF daftar peserta!`;
+
       if (failedLapangan.length > 0) {
         message += `\n\n⚠️ ${failedLapangan.length} lapangan di-skip:\n${failedLapangan.join(", ")}`;
       }
@@ -2166,13 +2246,13 @@ const JadwalPertandingan: React.FC = () => {
                                       </p>
                                     </div>
 
-                                    {/* 🆕 BUTTON RESET */}
+                                    {/* 🆕 BUTTON RESET OPENS MODAL */}
                                     <button
                                       onClick={() =>
-                                        handleResetAndUpdateAntrian(
-                                          lap.id_lapangan,
-                                          lap.nama_lapangan
-                                        )
+                                        setResetModalData({
+                                          id: lap.id_lapangan,
+                                          nama: lap.nama_lapangan,
+                                        })
                                       }
                                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80"
                                       style={{
@@ -2901,17 +2981,37 @@ const JadwalPertandingan: React.FC = () => {
                   </div>
                 )}
 
+                {/* Pilihan Batch Export */}
+                {selectedPesertaLapangan.length > 1 && (
+                  <div className="mt-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={batchExportMode}
+                        onChange={(e) => setBatchExportMode(e.target.checked)}
+                        className="w-5 h-5 accent-[#4F46E5]"
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        Gabungkan File (Batch Export)
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 ml-7 mt-1">
+                      Jika dicentang, semua daftar peserta dari lapangan terpilih akan disatukan dalam satu file PDF.
+                    </p>
+                  </div>
+                )}
+
                 {/* Info terpilih */}
                 {selectedPesertaLapangan.length > 0 && (
                   <div
-                    className="p-3 rounded-lg"
+                    className="p-3 rounded-lg mt-4"
                     style={{ backgroundColor: "rgba(79,70,229,0.1)" }}
                   >
                     <p
                       className="text-sm font-medium"
                       style={{ color: "#4F46E5" }}
                     >
-                      {selectedPesertaLapangan.length} lapangan terpilih
+                      {selectedPesertaLapangan.length} lapangan terpilih {batchExportMode ? "(Mode Batch)" : ""}
                     </p>
                   </div>
                 )}
@@ -3461,6 +3561,46 @@ const JadwalPertandingan: React.FC = () => {
           </div>
         )
       }
+
+      {/* 🆕 RESET CONFIRMATION MODAL */}
+      {resetModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <Trash2 size={24} />
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Reset Lapangan {resetModalData.nama}?
+                </h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  Tindakan ini akan <b>menghapus seluruh nomor partai</b> yang sudah digenerate
+                  dan <b>mereset antrian</b> menjadi 0.
+                  <br />
+                  Pastikan tidak ada pertandingan yang sedang berlangsung.
+                </p>
+              </div>
+
+              <div className="flex gap-3 w-full mt-2">
+                <button
+                  onClick={() => setResetModalData(null)}
+                  className="flex-1 py-2.5 rounded-lg border font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => handleResetAndUpdateAntrian(resetModalData.id, resetModalData.nama)}
+                  className="flex-1 py-2.5 rounded-lg bg-red-600 font-medium text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+                >
+                  Ya, Reset Semua
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };

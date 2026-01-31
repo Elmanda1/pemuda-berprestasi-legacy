@@ -20,4 +20,9 @@ class Lapangan extends Model
     {
         return $this->belongsTo(Kompetisi::class, 'id_kompetisi', 'id_kompetisi');
     }
+
+    public function kelas_list()
+    {
+        return $this->hasMany(LapanganKelas::class, 'id_lapangan', 'id_lapangan');
+    }
 }

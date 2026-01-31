@@ -10,16 +10,17 @@ import Select from 'react-select';
 
 const BulkCetakSertifikat: React.FC = () => {
   const { user } = useAuth();
-  const { 
-    pesertaList, 
-    fetchAtletByKompetisi, 
-    loadingAtlet, 
-    atletPagination, 
+  const {
+    pesertaList,
+    fetchAtletByKompetisi,
+    loadingAtlet,
+    atletPagination,
     setAtletLimit,
     allPesertaList,
-    fetchAllAtletByKompetisi 
+    fetchAllAtletByKompetisi,
+    kompetisiDetail
   } = useKompetisi();
-  
+
   const [dojangs, setDojangs] = useState<{ id: number; name: string }[]>([]);
   const [kelasKejuaraan, setKelasKejuaraan] = useState<{ id: string; name: string }[]>([]);
   const [selectedDojang, setSelectedDojang] = useState<string>("ALL");
@@ -29,7 +30,7 @@ const BulkCetakSertifikat: React.FC = () => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [currentDisplayPage, setCurrentDisplayPage] = useState(1); // Visual pagination
   const [itemsPerDisplayPage] = useState(25); // Show 25 items per page visually
-  
+
   // Additional filters like ValidasiPeserta
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("APPROVED");
@@ -132,9 +133,9 @@ const BulkCetakSertifikat: React.FC = () => {
       setCurrentDisplayPage(1); // Reset to page 1
       setSelectedAtlets(new Set()); // Clear selection when filter changes
       fetchAtletByKompetisi(
-        kompetisiId, 
-        undefined, 
-        selectedDojang === "ALL" ? undefined : parseInt(selectedDojang), 
+        kompetisiId,
+        undefined,
+        selectedDojang === "ALL" ? undefined : parseInt(selectedDojang),
         selectedKelas === "ALL" ? undefined : selectedKelas,
         "APPROVED"
       );
@@ -147,9 +148,9 @@ const BulkCetakSertifikat: React.FC = () => {
       console.log(`🔄 [BulkCetak] Page changed to ${atletPagination.page}`);
       setSelectedAtlets(new Set()); // Clear selection when page changes
       fetchAtletByKompetisi(
-        kompetisiId, 
-        undefined, 
-        selectedDojang === "ALL" ? undefined : parseInt(selectedDojang), 
+        kompetisiId,
+        undefined,
+        selectedDojang === "ALL" ? undefined : parseInt(selectedDojang),
         selectedKelas === "ALL" ? undefined : selectedKelas,
         "APPROVED"
       );
@@ -175,7 +176,7 @@ const BulkCetakSertifikat: React.FC = () => {
 
       setDojangs(Array.from(dojangSet, ([id, name]) => ({ id, name })));
       setKelasKejuaraan(Array.from(kelasSet, ([id, name]) => ({ id, name })));
-      
+
       console.log(`📊 Filter options: ${dojangSet.size} dojangs, ${kelasSet.size} kelas`);
     }
   }, [allPesertaList]);
@@ -243,7 +244,7 @@ const BulkCetakSertifikat: React.FC = () => {
   const getDisplayPageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
     const maxVisiblePages = 5;
-    
+
     if (totalDisplayPages <= maxVisiblePages) {
       for (let i = 1; i <= totalDisplayPages; i++) {
         pageNumbers.push(i);
@@ -271,13 +272,13 @@ const BulkCetakSertifikat: React.FC = () => {
         pageNumbers.push(totalDisplayPages);
       }
     }
-    
+
     return pageNumbers;
   };
 
   const handleBulkDownload = async () => {
     // Determine which athletes to generate - USE FILTERED DATA
-    const atletToGenerate = selectedAtlets.size > 0 
+    const atletToGenerate = selectedAtlets.size > 0
       ? filteredPeserta.filter(p => selectedAtlets.has(p.id_peserta_kompetisi))
       : filteredPeserta; // Use filtered data when nothing is selected
 
@@ -301,7 +302,7 @@ const BulkCetakSertifikat: React.FC = () => {
           continue;
         }
         try {
-          const medalStatus: MedalStatus = "PARTICIPANT"; 
+          const medalStatus: MedalStatus = "PARTICIPANT";
           const kelasName = getKelasKejuaraan(peserta, pesertaList);
 
           // Enhanced atlet with complete peserta data
@@ -313,7 +314,12 @@ const BulkCetakSertifikat: React.FC = () => {
             }]
           };
 
-          const pdfBytes = await generateCertificatePdfBytes(enhancedAtlet as any, medalStatus, kelasName);
+          const pdfBytes = await generateCertificatePdfBytes(
+            enhancedAtlet as any,
+            medalStatus,
+            kelasName,
+            kompetisiDetail?.primary_color
+          );
           const pdfToMerge = await PDFDocument.load(pdfBytes);
           const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
           copiedPages.forEach((page) => mergedPdf.addPage(page));
@@ -343,7 +349,7 @@ const BulkCetakSertifikat: React.FC = () => {
   };
 
   const handlePrintPreview = () => {
-    const atletToPreview = selectedAtlets.size > 0 
+    const atletToPreview = selectedAtlets.size > 0
       ? filteredPeserta.filter(p => selectedAtlets.has(p.id_peserta_kompetisi))
       : filteredPeserta; // Use filtered data when nothing is selected
 
@@ -356,7 +362,7 @@ const BulkCetakSertifikat: React.FC = () => {
   };
 
   const handlePrint = async () => {
-    const atletToPrint = selectedAtlets.size > 0 
+    const atletToPrint = selectedAtlets.size > 0
       ? filteredPeserta.filter(p => selectedAtlets.has(p.id_peserta_kompetisi))
       : filteredPeserta; // Use filtered data when nothing is selected
 
@@ -379,7 +385,7 @@ const BulkCetakSertifikat: React.FC = () => {
         try {
           const medalStatus: MedalStatus = "PARTICIPANT";
           const kelasName = getKelasKejuaraan(peserta, pesertaList);
-          
+
           // Enhanced atlet with complete peserta data
           const enhancedAtlet = {
             ...peserta.atlet,
@@ -388,8 +394,13 @@ const BulkCetakSertifikat: React.FC = () => {
               kelas_kejuaraan: peserta.kelas_kejuaraan
             }]
           };
-          
-          const pdfBytes = await generateCertificatePdfBytes(enhancedAtlet as any, medalStatus, kelasName);
+
+          const pdfBytes = await generateCertificatePdfBytes(
+            enhancedAtlet as any,
+            medalStatus,
+            kelasName,
+            kompetisiDetail?.primary_color
+          );
           const pdfToMerge = await PDFDocument.load(pdfBytes);
           const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
           copiedPages.forEach((page) => mergedPdf.addPage(page));
@@ -401,7 +412,7 @@ const BulkCetakSertifikat: React.FC = () => {
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes as BlobPart], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      
+
       // Open in new window for printing
       const printWindow = window.open(url, '_blank');
       if (printWindow) {
@@ -409,7 +420,7 @@ const BulkCetakSertifikat: React.FC = () => {
           printWindow.print();
         };
       }
-      
+
       URL.revokeObjectURL(url);
       toast.success('Print dialog opened!', { id: toastId });
     } catch (error) {
@@ -435,19 +446,19 @@ const BulkCetakSertifikat: React.FC = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F5FBEF' }}>
       <div className="p-4 sm:p-6 lg:p-8 max-w-full">
-        
+
         {/* HEADER */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-            <div 
+            <div
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ 
+              style={{
                 background: 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)'
               }}
             >
-              <Award 
-                size={32} 
-                className="sm:w-8 sm:h-8" 
+              <Award
+                size={32}
+                className="sm:w-8 sm:h-8"
                 style={{ color: 'white' }}
               />
             </div>
@@ -463,10 +474,10 @@ const BulkCetakSertifikat: React.FC = () => {
         </div>
 
         {/* FILTERS & ACTIONS */}
-        <div 
+        <div
           className="rounded-2xl shadow-md border p-6 mb-6"
-          style={{ 
-            backgroundColor: 'white', 
+          style={{
+            backgroundColor: 'white',
             borderColor: 'rgba(153, 13, 53, 0.1)'
           }}
         >
@@ -482,7 +493,7 @@ const BulkCetakSertifikat: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#990D35]"
-              style={{ 
+              style={{
                 borderColor: 'rgba(153, 13, 53, 0.2)'
               }}
             />
@@ -495,9 +506,9 @@ const BulkCetakSertifikat: React.FC = () => {
                 Status
               </label>
               <Select
-                value={{ 
-                  value: filterStatus, 
-                  label: filterStatus === "ALL" ? "Semua Status" : filterStatus 
+                value={{
+                  value: filterStatus,
+                  label: filterStatus === "ALL" ? "Semua Status" : filterStatus
                 }}
                 onChange={(selected) => setFilterStatus(selected?.value as any || "ALL")}
                 options={[
@@ -524,9 +535,9 @@ const BulkCetakSertifikat: React.FC = () => {
                 Kategori
               </label>
               <Select
-                value={{ 
-                  value: filterCategory, 
-                  label: filterCategory === "ALL" ? "Semua Kategori" : filterCategory 
+                value={{
+                  value: filterCategory,
+                  label: filterCategory === "ALL" ? "Semua Kategori" : filterCategory
                 }}
                 onChange={(selected) => setFilterCategory(selected?.value as any || "ALL")}
                 options={[
@@ -552,9 +563,9 @@ const BulkCetakSertifikat: React.FC = () => {
                 Kelompok Usia
               </label>
               <Select
-                value={{ 
-                  value: filterKelompokUsia, 
-                  label: filterKelompokUsia === "ALL" ? "Semua Kelompok" : filterKelompokUsia 
+                value={{
+                  value: filterKelompokUsia,
+                  label: filterKelompokUsia === "ALL" ? "Semua Kelompok" : filterKelompokUsia
                 }}
                 onChange={(selected) => setFilterKelompokUsia(selected?.value as any || "ALL")}
                 options={[
@@ -583,8 +594,8 @@ const BulkCetakSertifikat: React.FC = () => {
                 Level
               </label>
               <Select
-                value={{ 
-                  value: filterLevel, 
+                value={{
+                  value: filterLevel,
                   label: filterLevel === "ALL" ? "Semua Level" : filterLevel.charAt(0).toUpperCase() + filterLevel.slice(1)
                 }}
                 onChange={(selected) => setFilterLevel(selected?.value as any || "ALL")}
@@ -611,9 +622,9 @@ const BulkCetakSertifikat: React.FC = () => {
                 Kelas Berat
               </label>
               <Select
-                value={{ 
-                  value: filterKelasBerat, 
-                  label: filterKelasBerat === "ALL" ? "Semua Kelas Berat" : filterKelasBerat 
+                value={{
+                  value: filterKelasBerat,
+                  label: filterKelasBerat === "ALL" ? "Semua Kelas Berat" : filterKelasBerat
                 }}
                 onChange={(selected) => setFilterKelasBerat(selected?.value || "ALL")}
                 options={kelasBeratOptions}
@@ -703,7 +714,7 @@ const BulkCetakSertifikat: React.FC = () => {
                 onClick={handlePrintPreview}
                 disabled={isGenerating || filteredPeserta.length === 0}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
+                style={{
                   backgroundColor: 'white',
                   color: '#050505',
                   border: '1px solid rgba(153, 13, 53, 0.2)'
@@ -717,7 +728,7 @@ const BulkCetakSertifikat: React.FC = () => {
                 onClick={handleBulkDownload}
                 disabled={isGenerating || loadingAtlet || filteredPeserta.length === 0}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
+                style={{
                   background: isGenerating ? '#7A0A2B' : 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)'
                 }}
               >
@@ -729,10 +740,10 @@ const BulkCetakSertifikat: React.FC = () => {
         </div>
 
         {/* PESERTA LIST */}
-        <div 
+        <div
           className="rounded-2xl shadow-md border p-6"
-          style={{ 
-            backgroundColor: 'white', 
+          style={{
+            backgroundColor: 'white',
             borderColor: 'rgba(153, 13, 53, 0.1)'
           }}
         >
@@ -785,7 +796,7 @@ const BulkCetakSertifikat: React.FC = () => {
                     key={peserta.id_peserta_kompetisi || idx}
                     onClick={() => handleSelectAtlet(peserta.id_peserta_kompetisi)}
                     className="rounded-xl border p-4 hover:shadow-md transition-all cursor-pointer relative"
-                    style={{ 
+                    style={{
                       backgroundColor: isSelected ? 'rgba(153, 13, 53, 0.05)' : '#F5FBEF',
                       borderColor: isSelected ? '#990D35' : 'rgba(153, 13, 53, 0.1)',
                       borderWidth: isSelected ? '2px' : '1px'
@@ -802,7 +813,7 @@ const BulkCetakSertifikat: React.FC = () => {
                       />
                     </div>
                     <div className="flex items-start gap-3">
-                      <div 
+                      <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)' }}
                       >
@@ -876,16 +887,16 @@ const BulkCetakSertifikat: React.FC = () => {
 
       {/* PRINT PREVIEW MODAL */}
       {showPrintPreview && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           onClick={() => setShowPrintPreview(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div 
+            <div
               className="p-6 border-b flex items-center justify-between"
               style={{ borderColor: 'rgba(153, 13, 53, 0.1)' }}
             >
@@ -894,8 +905,8 @@ const BulkCetakSertifikat: React.FC = () => {
                   PRINT PREVIEW
                 </h3>
                 <p className="text-sm mt-1" style={{ color: '#050505', opacity: 0.6 }}>
-                  {selectedAtlets.size > 0 
-                    ? `${selectedAtlets.size} sertifikat yang dipilih` 
+                  {selectedAtlets.size > 0
+                    ? `${selectedAtlets.size} sertifikat yang dipilih`
                     : `${filteredPeserta.length} sertifikat (semua data ter-filter)`}
                 </p>
               </div>
@@ -912,19 +923,19 @@ const BulkCetakSertifikat: React.FC = () => {
             {/* Modal Body - Athlete List */}
             <div className="p-6 overflow-y-auto max-h-[60vh]">
               <div className="space-y-3">
-                {(selectedAtlets.size > 0 
+                {(selectedAtlets.size > 0
                   ? filteredPeserta.filter(p => selectedAtlets.has(p.id_peserta_kompetisi))
                   : filteredPeserta
                 ).map((peserta, idx) => (
                   <div
                     key={peserta.id_peserta_kompetisi || idx}
                     className="flex items-center gap-3 p-3 rounded-lg border"
-                    style={{ 
+                    style={{
                       backgroundColor: 'white',
                       borderColor: 'rgba(153, 13, 53, 0.2)'
                     }}
                   >
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ background: 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)' }}
                     >
@@ -945,14 +956,14 @@ const BulkCetakSertifikat: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div 
+            <div
               className="p-6 border-t flex gap-3 justify-end"
               style={{ borderColor: 'rgba(153, 13, 53, 0.1)' }}
             >
               <button
                 onClick={() => setShowPrintPreview(false)}
                 className="px-6 py-2.5 rounded-lg font-medium transition-all"
-                style={{ 
+                style={{
                   backgroundColor: 'white',
                   color: '#050505',
                   border: '1px solid rgba(153, 13, 53, 0.2)'
@@ -964,7 +975,7 @@ const BulkCetakSertifikat: React.FC = () => {
                 onClick={handlePrint}
                 disabled={isGenerating}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-                style={{ 
+                style={{
                   background: isGenerating ? '#7A0A2B' : 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)'
                 }}
               >

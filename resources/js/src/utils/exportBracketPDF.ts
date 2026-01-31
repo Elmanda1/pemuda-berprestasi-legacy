@@ -243,7 +243,8 @@ const convertElementToImage = async (
     height: bracketVisual.scrollHeight,
     backgroundColor: "#FFFFFF",
     cacheBust: true,
-    skipFonts: false,
+    skipFonts: true, // ✅ Skip fonts to prevent "font is undefined" error
+    fontEmbedCSS: '', // ✅ Disable font embedding
     filter: (node) => {
       // Filter out buttons or other interactive elements you don't want in the PDF
       if (node.nodeName === "BUTTON") return false;
@@ -307,11 +308,9 @@ export const exportBracketFromData = async (
     eventName: metadata?.namaKejuaraan || kelasData.kompetisi.nama_event,
     categoryName:
       metadata?.kelas ||
-      `${kelasData.kelompok?.nama_kelompok || ""} ${
-        kelasData.kelas_berat?.jenis_kelamin === "LAKI_LAKI" ? "Male" : "Female"
-      } ${
-        kelasData.kelas_berat?.nama_kelas || kelasData.poomsae?.nama_kelas || ""
-      }`.trim(),
+      `${kelasData.kelompok?.nama_kelompok || ""} ${kelasData.kelas_berat?.jenis_kelamin === "LAKI_LAKI" ? "Male" : "Female"
+        } ${kelasData.kelas_berat?.nama_kelas || kelasData.poomsae?.nama_kelas || ""
+        }`.trim(),
     location: metadata?.lokasi || kelasData.kompetisi.lokasi,
     dateRange:
       metadata?.tanggalTanding ||
@@ -740,8 +739,7 @@ export const exportMultipleBracketsByLapangan = async (
 
   doc.save(filename);
   console.log(
-    `\n✅ PDF saved: ${filename} (${pageIndex} pages, Format: ${
-      useA3 ? "A3" : "A4"
+    `\n✅ PDF saved: ${filename} (${pageIndex} pages, Format: ${useA3 ? "A3" : "A4"
     })`
   );
 };
