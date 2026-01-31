@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Gunakan: ./d [command]"
+    echo "Contoh:"
+    echo "  ./d artisan migrate"
+    echo "  ./d composer install"
+    echo "  ./d shell"
+    exit 1
+fi
+
+if [ "$1" == "shell" ]; then
+    docker exec -it pemuda-app bash
+elif [ "$1" == "composer" ]; then
+    docker exec -it pemuda-app composer "${@:2}"
+else
+    # Asumsikan sisanya command php, misalnya 'artisan'
+    if [ "$1" == "artisan" ]; then
+        docker exec -it pemuda-app php artisan "${@:2}"
+    else
+        docker exec -it pemuda-app php "$@"
+    fi
+fi
