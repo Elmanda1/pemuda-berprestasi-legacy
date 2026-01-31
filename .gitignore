@@ -1,0 +1,16 @@
+# Root level ignores
+/vendor/
+/node_modules/
+/storage/
+/bootstrap/
+/.composer/
+/.env
+
+# Keep pemuda-app and public_html
+!/pemuda-app/
+!/public_html/
+
+# General ignores (recurses, but we anchored the root ones above)
+.DS_Store
+.idea
+.vscode
