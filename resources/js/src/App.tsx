@@ -1,7 +1,11 @@
 import AppRoutes from "./appRoutes";
-import inter from "../src/assets/font/Inter.ttf"
-import ibm from "../src/assets/font/IBMPlexSans-VariableFont_wdth,wght.ttf"
+import ThemeInjector from "./components/ThemeInjector";
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <ThemeInjector />
+      <AppRoutes />
+    </>
+  );
 }

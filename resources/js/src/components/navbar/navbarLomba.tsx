@@ -11,10 +11,12 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/authContext";
+import { useKompetisi } from "../../context/KompetisiContext";
 
 const NavbarLomba = ({ onLogoutRequest }: { onLogoutRequest: () => void }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,7 +27,7 @@ const NavbarLomba = ({ onLogoutRequest }: { onLogoutRequest: () => void }) => {
     // Try to extract from current URL path
     const match = location.pathname.match(/\/event\/(?:pertandingan|medal-tally)\/(\d+)/);
     if (match) return match[1];
-    
+
     // Fallback: get from localStorage or default
     const storedId = localStorage.getItem('currentKompetisiId');
     return storedId || '1'; // Default to 1 if not found
@@ -75,13 +77,13 @@ const NavbarLomba = ({ onLogoutRequest }: { onLogoutRequest: () => void }) => {
   }, [isBurgerOpen]);
 
   // ✅ UPDATED: Navigation items with Medal Tally
-const navItems = [
-  { to: "/event/home", label: "Beranda" },
-  { to: "/event/timeline", label: "Timeline" },
-  { to: "/event/faq", label: "FAQ" },
-  { to: "/event/live-streaming", label: "Live Streaming" },
-  { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali" }, // ✅ COMMENTED - Akan diaktifkan nanti
-];
+  const navItems: { to: string; label: string; icon?: any }[] = [
+    { to: "/event/home", label: "Beranda" },
+    { to: "/event/timeline", label: "Timeline" },
+    { to: "/event/faq", label: "FAQ" },
+    { to: "/event/live-streaming", label: "Live Streaming" },
+    { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali" }, // ✅ COMMENTED - Akan diaktifkan nanti
+  ];
 
   const getDashboardLink = () => {
     if (user?.role === "PELATIH")
@@ -125,12 +127,20 @@ const navItems = [
             {/* Logo */}
             <Link
               to="/"
-              className={`text-xl sm:text-2xl lg:text-4xl ${styles.logo} font-bebas tracking-wider uppercase transition-all duration-300 ease-out hover:scale-105`}
+              className={`text-xl sm:text-2xl lg:text-4xl ${styles.logo} font-bebas tracking-wider uppercase transition-all duration-300 ease-out hover:scale-105 flex items-center gap-2`}
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              CJV Management
+              {kompetisiDetail?.logo_url ? (
+                <img
+                  src={kompetisiDetail.logo_url}
+                  alt="Logo"
+                  className="h-10 md:h-14 w-auto object-contain"
+                />
+              ) : (
+                "CJV Management"
+              )}
             </Link>
 
             {/* Desktop Navigation */}
@@ -139,13 +149,11 @@ const navItems = [
                 <Link
                   key={to}
                   to={to}
-                  className={`text-xl relative px-4 py-2 ${
-                    styles.text
-                  } font-plex font-medium transition-all duration-300 ease-out ${
-                    location.pathname === to
+                  className={`text-xl relative px-4 py-2 ${styles.text
+                    } font-plex font-medium transition-all duration-300 ease-out ${location.pathname === to
                       ? "text-yellow font-semibold"
                       : styles.hoverText
-                  } group`}
+                    } group`}
                   onClick={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -156,11 +164,10 @@ const navItems = [
                   </span>
                   {/* Animated underline */}
                   <span
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-yellow transition-all duration-300 ease-out ${
-                      location.pathname === to
-                        ? "w-full"
-                        : "w-0 group-hover:w-full"
-                    }`}
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-yellow transition-all duration-300 ease-out ${location.pathname === to
+                      ? "w-full"
+                      : "w-0 group-hover:w-full"
+                      }`}
                   />
                 </Link>
               ))}
@@ -198,9 +205,8 @@ const navItems = [
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`transition-all duration-300 ease-out ${
-                        showDropdown ? "rotate-180" : ""
-                      } group-hover:scale-110`}
+                      className={`transition-all duration-300 ease-out ${showDropdown ? "rotate-180" : ""
+                        } group-hover:scale-110`}
                     />
                   </button>
 
@@ -250,47 +256,43 @@ const navItems = [
               <div className="relative w-6 h-6">
                 <Menu
                   size={24}
-                  className={`absolute inset-0 transition-all duration-300 ease-out ${
-                    isBurgerOpen
-                      ? "opacity-0 rotate-180 scale-75"
-                      : "opacity-100 rotate-0 scale-100"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-out ${isBurgerOpen
+                    ? "opacity-0 rotate-180 scale-75"
+                    : "opacity-100 rotate-0 scale-100"
+                    }`}
                 />
                 <X
                   size={24}
-                  className={`absolute inset-0 transition-all duration-300 ease-out ${
-                    isBurgerOpen
-                      ? "opacity-100 rotate-0 scale-100"
-                      : "opacity-0 rotate-180 scale-75"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-out ${isBurgerOpen
+                    ? "opacity-100 rotate-0 scale-100"
+                    : "opacity-0 rotate-180 scale-75"
+                    }`}
                 />
               </div>
             </button>
           </div>
         </div>
-      </nav>
+      </nav >
 
       {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${
-          isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+      < div
+        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`
+        }
       >
         {/* Background overlay */}
-        <div
-          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ease-out ${
-            isBurgerOpen ? "opacity-100" : "opacity-0"
-          }`}
+        < div
+          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ease-out ${isBurgerOpen ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setIsBurgerOpen(false)}
         />
 
         {/* Mobile menu panel */}
         <div
-          className={`absolute top-30 md:top-24 left-4 right-4 sm:left-8 sm:right-8 bg-white rounded-xl shadow-2xl transform transition-all duration-500 ease-out ${
-            isBurgerOpen
-              ? "translate-y-0 opacity-100"
-              : "-translate-y-full opacity-0"
-          }`}
+          className={`absolute top-30 md:top-24 left-4 right-4 sm:left-8 sm:right-8 bg-white rounded-xl shadow-2xl transform transition-all duration-500 ease-out ${isBurgerOpen
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0"
+            }`}
         >
           <div className="px-4 py-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
             {/* Mobile Navigation Links */}
@@ -299,11 +301,10 @@ const navItems = [
                 <Link
                   key={to}
                   to={to}
-                  className={`flex items-center gap-2 px-4 py-3 text-base font-plex font-medium rounded-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md ${
-                    location.pathname === to
-                      ? "bg-red text-white shadow-lg"
-                      : "text-red hover:bg-red hover:text-white"
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-3 text-base font-plex font-medium rounded-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md ${location.pathname === to
+                    ? "bg-red text-white shadow-lg"
+                    : "text-red hover:bg-red hover:text-white"
+                    }`}
                   onClick={() => {
                     setIsBurgerOpen(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -389,7 +390,7 @@ const navItems = [
             </div>
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 };

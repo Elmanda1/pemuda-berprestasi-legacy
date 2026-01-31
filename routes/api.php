@@ -95,6 +95,7 @@ Route::prefix('v1')->group(function () {
     // Public Kompetisi
     Route::prefix('kompetisi')->group(function () {
         Route::get('/', 'KompetisiController@getAll');
+        Route::get('{id}', 'KompetisiController@getById');
         Route::get('{id}/brackets/{kelasId?}', 'KompetisiController@getBrackets');
         Route::get('{id}/medal-tally', 'KompetisiController@getMedalTally'); // For BracketList
     });
@@ -142,9 +143,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/', 'LapanganController@getAll');
             Route::get('hari', 'LapanganController@getAllHari');
             Route::get('kompetisi/{id_kompetisi}', 'LapanganController@getByKompetisi');
+            Route::post('simpan-kelas', 'LapanganController@simpanKelas');
             Route::post('tambah-hari', 'LapanganController@tambahHariLapangan');
             Route::delete('{id}', 'LapanganController@delete');
             Route::post('{id}/generate-numbers', 'LapanganController@autoGenerateMatchNumbers');
+            Route::get('{id}/preview-numbers', 'LapanganController@previewNumbering');
+            Route::delete('{id}/reset-numbers', 'LapanganController@resetNumbering');
             Route::get('{id}/numbering-status', 'LapanganController@getNumberingStatus');
         });
     });
