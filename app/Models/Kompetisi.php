@@ -19,7 +19,10 @@ class Kompetisi extends Model
         'status',
         'deskripsi',
         'poster_image',
-        'website_url'
+        'website_url',
+        'primary_color',
+        'secondary_color',
+        'logo_url'
     ];
 
     public function penyelenggara()

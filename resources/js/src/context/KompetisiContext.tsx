@@ -30,6 +30,9 @@ export interface Kompetisi {
   status: "PENDAFTARAN" | "SEDANG_DIMULAI" | "SELESAI";
   lokasi?: string;
   jumlah_peserta?: number;
+  primary_color?: string;
+  logo_url?: string;
+  secondary_color?: string;
 }
 
 export interface KelasKejuaraan {
@@ -227,6 +230,10 @@ export interface KompetisiContextType {
     kompetisiId: number,
     participantId: number,
     kelasKejuaraanId: number
+  ) => Promise<any>;
+  updateKompetisiTheme: (
+    kompetisiId: number,
+    data: { primary_color?: string; logo_url?: string }
   ) => Promise<any>;
 }
 
@@ -509,6 +516,29 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateKompetisiTheme = async (
+    kompetisiId: number,
+    data: { primary_color?: string; secondary_color?: string; logo_url?: string }
+  ) => {
+    try {
+      const response: any = await apiClient.put(`/kompetisi/${kompetisiId}`, data);
+
+      // Update local state
+      setKompetisiList(prev => prev.map(k =>
+        k.id_kompetisi === kompetisiId ? { ...k, ...data } : k
+      ));
+
+      if (kompetisiDetail?.id_kompetisi === kompetisiId) {
+        setKompetisiDetail({ ...kompetisiDetail, ...data });
+      }
+
+      return response.data || response;
+    } catch (error: any) {
+      console.error("❌ Error updating kompetisi theme:", error);
+      throw error;
+    }
+  };
+
   return (
     <KompetisiContext.Provider
       value={{
@@ -532,6 +562,7 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
         updatePesertaStatus,
         deleteParticipant,
         updateParticipantClass,
+        updateKompetisiTheme,
         setAtletPage,
         setAtletLimit,
       }}

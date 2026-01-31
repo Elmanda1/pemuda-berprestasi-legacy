@@ -102,6 +102,13 @@ const AdminKompetisiLayout: React.FC = () => {
       active: location.pathname === "/admin-kompetisi/bulk-generate-id-card",
       description: "Generate ID card untuk banyak peserta",
     },
+    {
+      icon: Settings,
+      label: "Pengaturan",
+      path: "/admin-kompetisi/settings",
+      active: location.pathname === "/admin-kompetisi/settings",
+      description: "Kelola tema dan pengaturan kompetisi",
+    },
   ];
 
   const displayName =
@@ -118,15 +125,14 @@ const AdminKompetisiLayout: React.FC = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-80 lg:overflow-y-auto">
         <div
-          className="h-full shadow-lg border-r"
-          style={{ backgroundColor: "#F5FBEF", borderColor: "#990D35" }}
+          className="h-full shadow-lg border-r border-red/20"
+          style={{ backgroundColor: "#F5FBEF" }}
         >
           {/* Header */}
-          <div className="p-6 border-b" style={{ borderColor: "#990D35" }}>
+          <div className="p-6 border-b border-red/20">
             <div className="flex items-center gap-3">
               <div
-                className="p-3 rounded-xl shadow-sm"
-                style={{ backgroundColor: "#990D35" }}
+                className="p-3 rounded-xl shadow-sm bg-red"
               >
                 <Trophy className="text-white" size={28} />
               </div>
@@ -159,36 +165,15 @@ const AdminKompetisiLayout: React.FC = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${
-                  item.active
-                    ? "shadow-md transform scale-[0.98]"
-                    : "hover:shadow-sm hover:transform hover:scale-[0.99]"
-                }`}
-                style={{
-                  backgroundColor: item.active ? "#990D35" : "transparent",
-                  color: item.active ? "#F5FBEF" : "#050505",
-                }}
-                onMouseEnter={(e) => {
-                  if (!item.active) {
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(153, 13, 53, 0.1)";
-                    e.currentTarget.style.color = "#990D35";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!item.active) {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#050505";
-                  }
-                }}
+                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${item.active
+                  ? "bg-red text-white shadow-md transform scale-[0.98]"
+                  : "hover:bg-red/10 hover:text-red hover:shadow-sm hover:transform hover:scale-[0.99]"
+                  }`}
               >
                 <div className="flex items-center gap-3 flex-1">
                   <item.icon
                     size={22}
-                    style={{
-                      color: item.active ? "#F5B700" : "#050505",
-                    }}
-                    className="transition-colors group-hover:text-current flex-shrink-0"
+                    className={`transition-colors flex-shrink-0 ${item.active ? 'text-yellow' : 'text-black group-hover:text-red'}`}
                   />
                   <div className="text-left">
                     <div className="font-semibold text-base">{item.label}</div>
@@ -201,10 +186,7 @@ const AdminKompetisiLayout: React.FC = () => {
                 </div>
                 <ChevronRight
                   size={18}
-                  style={{
-                    color: item.active ? "#F5B700" : "rgba(5, 5, 5, 0.4)",
-                  }}
-                  className="transition-all duration-200 group-hover:translate-x-1 group-hover:text-current flex-shrink-0"
+                  className={`transition-all duration-200 group-hover:translate-x-1 flex-shrink-0 ${item.active ? 'text-yellow' : 'text-black/40 group-hover:text-red'}`}
                 />
               </button>
             ))}
@@ -214,21 +196,7 @@ const AdminKompetisiLayout: React.FC = () => {
           <div className="absolute bottom-6 left-6 right-6 space-y-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border hover:shadow-sm"
-              style={{
-                color: "#990D35",
-                borderColor: "#990D35",
-                backgroundColor: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "rgba(153, 13, 53, 0.1)";
-                e.currentTarget.style.borderColor = "#990D35";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.borderColor = "#990D35";
-              }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-red text-red hover:bg-red/10 hover:shadow-sm"
             >
               <LogOut size={18} />
               <span className="font-medium text-sm">Logout</span>
@@ -239,8 +207,8 @@ const AdminKompetisiLayout: React.FC = () => {
 
       {/* Mobile Header */}
       <div
-        className="lg:hidden border-b px-4 py-3 shadow-sm"
-        style={{ backgroundColor: "#F5FBEF", borderColor: "#990D35" }}
+        className="lg:hidden border-b px-4 py-3 shadow-sm border-red/20"
+        style={{ backgroundColor: "#F5FBEF" }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -258,7 +226,7 @@ const AdminKompetisiLayout: React.FC = () => {
               <Menu size={24} />
             </button>
             <div className="flex items-center gap-2">
-              <Trophy style={{ color: "#990D35" }} size={20} />
+              <Trophy className="text-red" size={20} />
               <div>
                 <h1 className="text-lg font-bold" style={{ color: "#050505" }}>
                   ADMIN KOMPETISI
@@ -280,7 +248,7 @@ const AdminKompetisiLayout: React.FC = () => {
               >
                 {displayName}
               </div>
-              <div className="text-xs" style={{ color: "#990D35" }}>
+              <div className="text-xs text-red">
                 Administrator
               </div>
             </div>
@@ -375,9 +343,8 @@ const AdminKompetisiLayout: React.FC = () => {
                     navigate(item.path);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
-                    item.active ? "shadow-md" : "hover:shadow-sm"
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${item.active ? "shadow-md" : "hover:shadow-sm"
+                    }`}
                   style={{
                     backgroundColor: item.active ? "#990D35" : "transparent",
                     color: item.active ? "#F5FBEF" : "#050505",
@@ -453,8 +420,7 @@ const AdminKompetisiLayout: React.FC = () => {
       <main className="lg:ml-80">
         {/* Page Header */}
         <div
-          className="bg-white border-b px-6 py-4"
-          style={{ borderColor: "#990D35" }}
+          className="bg-white border-b border-red/20 px-6 py-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -474,7 +440,7 @@ const AdminKompetisiLayout: React.FC = () => {
             >
               <span>Admin Kompetisi</span>
               <ChevronRight size={16} />
-              <span style={{ color: "#990D35" }}>{pageTitle}</span>
+              <span className="text-red">{pageTitle}</span>
             </div>
           </div>
         </div>

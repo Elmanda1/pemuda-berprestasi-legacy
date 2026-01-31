@@ -206,6 +206,7 @@ export default function AppRoutes() {
           <Route path="penimbangan" element={<Penimbangan />} />
           <Route path="bulk-cetak-sertifikat" element={<BulkCetakSertifikat />} />
           <Route path="bulk-generate-id-card" element={<BulkGenerateIDCard />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* Admin routes - protected for ADMIN role only */}
@@ -322,34 +323,34 @@ export default function AppRoutes() {
             }
           />
 
-{/* Competition data */}
-  <Route
-    path="dataKompetisi"
-    element={
-      <ProtectedRoute requiredRole="PELATIH">
-        <DataKompetisi />
-      </ProtectedRoute>
-    }
-  />
+          {/* Competition data */}
+          <Route
+            path="dataKompetisi"
+            element={
+              <ProtectedRoute requiredRole="PELATIH">
+                <DataKompetisi />
+              </ProtectedRoute>
+            }
+          />
 
-  {/* ⭐ TAMBAHKAN INI - Bracket Viewer Routes */}
-  <Route
-    path="bracket-viewer"
-    element={
-      <ProtectedRoute requiredRole="PELATIH">
-        <BracketList />
-      </ProtectedRoute>
-    }
-  />
-  <Route
-    path="bracket-viewer/:kelasId"
-    element={
-      <ProtectedRoute requiredRole="PELATIH">
-        <BracketViewer />
-      </ProtectedRoute>
-    }
-  />
-</Route>
+          {/* ⭐ TAMBAHKAN INI - Bracket Viewer Routes */}
+          <Route
+            path="bracket-viewer"
+            element={
+              <ProtectedRoute requiredRole="PELATIH">
+                <BracketList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bracket-viewer/:kelasId"
+            element={
+              <ProtectedRoute requiredRole="PELATIH">
+                <BracketViewer />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
         {/* ✅ Lomba pages - PUBLIC ACCESS */}
         <Route path="/event" element={<LombaLayout />}>
           <Route index element={<Navigate to="/event/home" replace />} />

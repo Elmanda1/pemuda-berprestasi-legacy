@@ -75,7 +75,10 @@ class KompetisiController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'status' => 'required|in:PENDAFTARAN,SEDANG_DIMULAI,SELESAI,DIBATALKAN', // Enum check
-            'lokasi' => 'nullable|string'
+            'lokasi' => 'nullable|string',
+            'primary_color' => 'nullable|string|size:7',
+            'secondary_color' => 'nullable|string|size:7',
+            'logo_url' => 'nullable|string|max:500'
         ]);
 
         if ($validator->fails())

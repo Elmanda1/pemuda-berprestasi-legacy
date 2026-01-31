@@ -1,16 +1,17 @@
 // src/layouts/adminlayout.tsx
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Shield, 
-  Users, 
-  Trophy,  
-  LogOut, 
-  Menu, 
+import {
+  Shield,
+  Users,
+  Trophy,
+  LogOut,
+  Menu,
   X,
   ChevronRight,
   UserCheck,
   CreditCard,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
@@ -64,6 +65,12 @@ const AdminLayout: React.FC = () => {
       path: '/admin/bukti-pembayaran',
       active: location.pathname === '/admin/bukti-pembayaran'
     },
+    {
+      icon: Settings,
+      label: 'Pengaturan',
+      path: '/admin/settings',
+      active: location.pathname === '/admin/settings'
+    },
   ];
 
   if (!isAdmin) {
@@ -76,11 +83,11 @@ const AdminLayout: React.FC = () => {
     <div className="min-h-screen" style={{ backgroundColor: '#F5FBEF' }}>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-72 lg:overflow-y-auto">
-        <div className="h-full shadow-lg border-r" style={{ backgroundColor: '#F5FBEF', borderColor: '#990D35' }}>
+        <div className="h-full shadow-lg border-r border-red/20" style={{ backgroundColor: '#F5FBEF' }}>
           {/* Header */}
-          <div className="p-6 border-b" style={{ borderColor: '#990D35' }}>
+          <div className="p-6 border-b border-red/20">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl shadow-sm" style={{ backgroundColor: '#990D35' }}>
+              <div className="p-2.5 rounded-xl shadow-sm bg-red">
                 <Shield className="text-white" size={24} />
               </div>
               <div>
@@ -100,46 +107,23 @@ const AdminLayout: React.FC = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${
-                  item.active 
-                    ? 'shadow-md' 
-                    : 'hover:shadow-sm'
-                }`}
-                style={{
-                  backgroundColor: item.active ? '#990D35' : 'transparent',
-                  color: item.active ? '#F5FBEF' : '#050505'
-                }}
-                onMouseEnter={(e) => {
-                  if (!item.active) {
-                    e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.1)';
-                    e.currentTarget.style.color = '#990D35';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!item.active) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#050505';
-                  }
-                }}
+                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${item.active
+                  ? 'bg-red text-white shadow-md'
+                  : 'hover:bg-red/10 hover:text-red hover:shadow-sm'
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon 
-                    size={20} 
-                    style={{
-                      color: item.active ? '#F5B700' : '#050505'
-                    }}
-                    className="transition-colors group-hover:text-current"
+                  <item.icon
+                    size={20}
+                    className={`transition-colors ${item.active ? 'text-yellow' : 'text-black group-hover:text-red'}`}
                   />
                   <span className="font-medium text-base">
                     {item.label}
                   </span>
                 </div>
-                <ChevronRight 
-                  size={16} 
-                  style={{
-                    color: item.active ? '#F5B700' : 'rgba(5, 5, 5, 0.4)'
-                  }}
-                  className="transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-current"
+                <ChevronRight
+                  size={16}
+                  className={`transition-all duration-200 group-hover:translate-x-0.5 ${item.active ? 'text-yellow' : 'text-black/40 group-hover:text-red'}`}
                 />
               </button>
             ))}
@@ -149,20 +133,7 @@ const AdminLayout: React.FC = () => {
           <div className="absolute bottom-6 left-6 right-6">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border hover:shadow-sm"
-              style={{ 
-                color: '#990D35', 
-                borderColor: '#990D35',
-                backgroundColor: 'transparent'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.1)';
-                e.currentTarget.style.borderColor = '#990D35';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.borderColor = '#990D35';
-              }}
+              className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-red text-red hover:bg-red/10 hover:shadow-sm"
             >
               <LogOut size={20} />
               <span className="font-medium text-base">
@@ -248,7 +219,7 @@ const AdminLayout: React.FC = () => {
                   <p className="font-semibold text-base" style={{ color: '#050505' }}>
                     {displayName}
                   </p>
-                  <p className="text-sm font-medium" style={{ color: '#990D35' }}>
+                  <p className="text-sm font-medium text-red">
                     Administrator
                   </p>
                 </div>
@@ -263,11 +234,10 @@ const AdminLayout: React.FC = () => {
                     navigate(item.path);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
-                    item.active 
-                      ? 'shadow-md' 
-                      : 'hover:shadow-sm'
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${item.active
+                    ? 'shadow-md'
+                    : 'hover:shadow-sm'
+                    }`}
                   style={{
                     backgroundColor: item.active ? '#990D35' : 'transparent',
                     color: item.active ? '#F5FBEF' : '#050505'
@@ -286,8 +256,8 @@ const AdminLayout: React.FC = () => {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon 
-                      size={20} 
+                    <item.icon
+                      size={20}
                       style={{
                         color: item.active ? '#F5B700' : '#050505'
                       }}
@@ -305,8 +275,8 @@ const AdminLayout: React.FC = () => {
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border hover:shadow-sm"
-                style={{ 
-                  color: '#990D35', 
+                style={{
+                  color: '#990D35',
                   borderColor: '#990D35',
                   backgroundColor: 'transparent'
                 }}
