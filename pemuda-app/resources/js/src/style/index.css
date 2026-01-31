@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* Force RGB color space untuk html2canvas compatibility */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+}
+
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('../../../fonts/BebasNeue-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../fonts/Inter.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../fonts/IBMPlexSans-VariableFont_wdth,wght.ttf') format('truetype');
+}
+
+@theme {
+  /* Convert to RGB format instead of oklch */
+  --color-red: var(--color-primary, rgb(153, 13, 53));
+  /* Fallback to #990D35 */
+  --color-white: rgb(245, 251, 239);
+  /* #F5FBEF */
+  --color-yellow: var(--color-secondary, rgb(245, 183, 0));
+  /* #F5B700 */
+  --color-black: rgb(5, 5, 5);
+  /* #050505 */
+  --font-plex: "IBM Plex Sans", sans-serif;
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --text-judul: 109.66px;
+  --text-h2: 41.89px;
+  --text-h3: 25.89px;
+  --text-isi: 16px;
+}
+
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide buttons when printing */
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure bracket is visible */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  /* Scale down if needed */
+  .inline-flex {
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #F5FBEF;
+}
+
+/* Hide scrollbar completely */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}

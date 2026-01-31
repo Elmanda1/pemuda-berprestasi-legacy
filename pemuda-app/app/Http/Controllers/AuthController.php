@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use App\Models\User;
+
+class AuthController extends Controller
+{
+    /**
+     * Login user and return API token.
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $user = User::with(['admin', 'pelatih', 'admin_kompetisi'])->where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Generate token
+        $token = Str::random(80);
+        $user->forceFill([
+            'api_token' => hash('sha256', $token),
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'token' => $token,
+                'user' => $user
+            ]
+        ]);
+    }
+
+    /**
+     * Get the authenticated User.
+     */
+    public function me(Request $request)
+    {
+        $user = $request->user();
+        if ($user) {
+            $user->load(['admin', 'pelatih', 'admin_kompetisi']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Logout user (Revoke the token).
+     */
+    public function logout(Request $request)
+    {
+        $user = $request->user();
+        if ($user) {
+            $user->forceFill([
+                'api_token' => null,
+            ])->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Successfully logged out'
+        ]);
+    }
+}
