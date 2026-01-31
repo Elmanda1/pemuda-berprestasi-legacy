@@ -34,7 +34,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./pemuda-app/
           server-dir: /pemuda-app/
-          dry-run: true
           exclude: |
             **/.git*
             **/.git*/**
@@ -48,4 +47,3 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./public_html/
           server-dir: /public_html/
-          dry-run: true
