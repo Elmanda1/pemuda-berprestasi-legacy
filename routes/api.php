@@ -97,11 +97,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/', 'KompetisiController@getAll');
         Route::get('{id}', 'KompetisiController@getById');
         Route::get('{id}/brackets/{kelasId?}', 'KompetisiController@getBrackets');
+        Route::get('{id}/brackets/{kelasId}/tanggal', 'KompetisiController@getBracketTanggal');
         Route::get('{id}/medal-tally', 'KompetisiController@getMedalTally'); // For BracketList
+        Route::get('tutorials/{id?}', 'KompetisiController@getTutorials'); // Public tutorials
     });
     // Add public alias for legacy support
     Route::get('public/kompetisi/{id}/medal-tally', 'KompetisiController@getMedalTally');
     Route::get('public/kompetisi/{id}/brackets/{kelasId?}', 'KompetisiController@getBrackets');
+    Route::get('public/kompetisi/tutorials/{id?}', 'KompetisiController@getTutorials');
 
     // Auth Routes continued...
     Route::group(['middleware' => 'auth:api'], function () {
@@ -121,6 +124,11 @@ Route::prefix('v1')->group(function () {
 
             Route::post('{id}/brackets/generate', 'KompetisiController@generateBrackets'); // Admin/Coach? Usually Admin
             Route::get('{id}/atlet', 'KompetisiController@getAtletsByKompetisi'); // List participants
+
+            // Tutorial Management (Admin)
+            Route::get('tutorials', 'KompetisiController@getTutorials');
+            Route::post('tutorials', 'KompetisiController@addTutorial');
+            Route::delete('tutorials/{id}', 'KompetisiController@deleteTutorial');
         });
 
         // Certificate Auth

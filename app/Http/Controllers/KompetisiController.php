@@ -99,8 +99,75 @@ class KompetisiController extends Controller
         if (!$kompetisi)
             return response()->json(['message' => 'Not found'], 404);
 
-        $kompetisi->update($request->all());
+        $data = $request->all();
+
+        // Handle Logo Upload
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            $filename = 'logo_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/kompetisi'), $filename);
+            $data['logo_url'] = '/uploads/kompetisi/' . $filename;
+        }
+
+        // Handle Hero (Poster) Upload
+        if ($request->hasFile('hero')) {
+            $file = $request->file('hero');
+            $filename = 'hero_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/kompetisi'), $filename);
+            $data['poster_image'] = '/uploads/kompetisi/' . $filename;
+        } else if ($request->input('poster_image') === '') {
+            $data['poster_image'] = null;
+        }
+
+        // Additional handling for logo_url if passed as field
+        if (!$request->hasFile('logo') && $request->input('logo_url') === '') {
+            $data['logo_url'] = null;
+        }
+
+        // Normalize boolean strings from FormData
+        if (isset($data['show_antrian'])) {
+            $data['show_antrian'] = ($data['show_antrian'] === 'true' || $data['show_antrian'] === '1' || $data['show_antrian'] === true) ? 1 : 0;
+        }
+        if (isset($data['show_navbar'])) {
+            $data['show_navbar'] = ($data['show_navbar'] === 'true' || $data['show_navbar'] === '1' || $data['show_navbar'] === true) ? 1 : 0;
+        }
+
+        $kompetisi->update($data);
         return response()->json(['success' => true, 'data' => $kompetisi]);
+    }
+
+    public function getTutorials(Request $request, $id = null)
+    {
+        $query = \App\Models\Tutorial::query();
+        if ($id) {
+            $query->where('id_kompetisi', $id);
+        } else if ($request->query('id_kompetisi')) {
+            $query->where('id_kompetisi', $request->query('id_kompetisi'));
+        }
+        return response()->json(['success' => true, 'data' => $query->orderBy('created_at', 'asc')->get()]);
+    }
+
+    public function addTutorial(Request $request)
+    {
+        $data = $request->validate([
+            'id_kompetisi' => 'nullable|exists:tb_kompetisi,id_kompetisi',
+            'title' => 'required|string',
+            'description' => 'nullable|string',
+            'video_id' => 'required|string',
+            'icon_type' => 'nullable|string'
+        ]);
+
+        $tutorial = \App\Models\Tutorial::create($data);
+        return response()->json(['success' => true, 'data' => $tutorial]);
+    }
+
+    public function deleteTutorial($id)
+    {
+        $tutorial = \App\Models\Tutorial::find($id);
+        if (!$tutorial)
+            return response()->json(['message' => 'Not found'], 404);
+        $tutorial->delete();
+        return response()->json(['success' => true]);
     }
 
     // Auth (Admin): Delete
@@ -379,5 +446,29 @@ class KompetisiController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
+    }
+
+    public function getBracketTanggal($id, $kelasId)
+    {
+        $bagan = \App\Models\Bagan::where('id_kompetisi', $id)
+            ->where('id_kelas_kejuaraan', $kelasId)
+            ->first();
+
+        if (!$bagan) {
+            return response()->json(['success' => false, 'message' => 'Bracket not found'], 404);
+        }
+
+        $match = \App\Models\Matches::where('id_bagan', $bagan->id_bagan)
+            ->whereNotNull('tanggal_pertandingan')
+            ->first();
+
+        $tanggal = $match ? $match->tanggal_pertandingan : null;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'tanggal' => $tanggal
+            ]
+        ]);
     }
 }

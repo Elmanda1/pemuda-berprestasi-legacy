@@ -22,7 +22,9 @@ class Kompetisi extends Model
         'website_url',
         'primary_color',
         'secondary_color',
-        'logo_url'
+        'logo_url',
+        'show_antrian',
+        'show_navbar'
     ];
 
     public function penyelenggara()
