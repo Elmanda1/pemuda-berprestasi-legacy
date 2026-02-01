@@ -108,7 +108,7 @@ const LandingPage = () => {
               <div className="relative">
                 <h1 className="text-4xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bebas text-yellow leading-[0.9] tracking-wide drop-shadow-2xl">
                   <span className="block bg-gradient-to-r from-red via-red/95 to-red/90 md:to-white/90 bg-clip-text text-transparent">
-                    {kompetisiDetail?.nama_event || "Sriwijaya International"}
+                    {kompetisiDetail?.hero_title || kompetisiDetail?.nama_event || "Sriwijaya International"}
                   </span>
                   {!kompetisiDetail && (
                     <span className="block bg-gradient-to-r from-red via-red/95 to-red/90 md:to-white/90 bg-clip-text text-transparent">
@@ -129,9 +129,7 @@ const LandingPage = () => {
               {/* Description */}
               <div className="max-w-4xl mx-auto">
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-plex font-light text-white/95 leading-relaxed drop-shadow-lg">
-                  Kompetisi taekwondo internasional bergengsi yang menggabungkan
-                  tradisi dan inovasi, menghadirkan standar kompetisi kelas
-                  dunia untuk para atlet berprestasi.
+                  {kompetisiDetail?.hero_description || "Kompetisi taekwondo internasional bergengsi yang menggabungkan tradisi dan inovasi, menghadirkan standar kompetisi kelas dunia untuk para atlet berprestasi."}
                 </p>
               </div>
             </div>
@@ -215,18 +213,22 @@ const LandingPage = () => {
               {/* Enhanced Description */}
               <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto lg:mx-0">
                 <p className="text-xs sm:text-sm md:text-base lg:text-lg font-plex text-black/85 leading-relaxed font-light px-2 lg:px-0">
-                  Salam hormat Sabum, Sabumnim dan orang tua Atlet Taekwondo
-                  Indonesia. Tahun ini Pengurus Pengprov TISS mengadakan event
-                  Sriwijaya Internasional Championship 2025 Dimana semua itu
-                  dapat terwujud dengan adanya kerjasama dan dukungan dari
-                  seluruh pihak, para insan Taekwondoin Sumatera Selatan, KONI
-                  Sumatera Selatan dan Pemerintah Provinsi Sumatera Selatan.
-                  Pelaksanaan event kejuaraan ini bertempat di GOR RANAU JSC
-                  PALEMBANG Untuk itu kami mengundang semua untuk bergabung pada
-                  kegiatan tersebut. Semoga dengan diadakannya event ini, dapat
-                  menjadi tolak ukur para atlet-atlet muda, serta dapat memenuhi
-                  harapan Insan Taekwondo, agar Atlet dapat dipandang di kancah
-                  Nasional dan Internasional nantinya. Aamiin.
+                  {kompetisiDetail?.about_description || (
+                    <>
+                      Salam hormat Sabum, Sabumnim dan orang tua Atlet Taekwondo
+                      Indonesia. Tahun ini Pengurus Pengprov TISS mengadakan event
+                      Sriwijaya Internasional Championship 2025 Dimana semua itu
+                      dapat terwujud dengan adanya kerjasama dan dukungan dari
+                      seluruh pihak, para insan Taekwondoin Sumatera Selatan, KONI
+                      Sumatera Selatan dan Pemerintah Provinsi Sumatera Selatan.
+                      Pelaksanaan event kejuaraan ini bertempat di GOR RANAU JSC
+                      PALEMBANG Untuk itu kami mengundang semua untuk bergabung pada
+                      kegiatan tersebut. Semoga dengan diadakannya event ini, dapat
+                      menjadi tolak ukur para atlet-atlet muda, serta dapat memenuhi
+                      harapan Insan Taekwondo, agar Atlet dapat dipandang di kancah
+                      Nasional dan Internasional nantinya. Aamiin.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -240,7 +242,7 @@ const LandingPage = () => {
                     {/* Subtle overlay patterns */}
                     <img
                       src={ketua}
-                      alt="Hj. Meilinda, S.Sos.,M.M"
+                      alt={kompetisiDetail?.about_director_name || "Hj. Meilinda, S.Sos.,M.M"}
                       className="h-48 w-36 sm:h-56 sm:w-42 md:h-64 md:w-48 lg:h-72 lg:w-54 xl:h-96 xl:w-72 object-cover group-hover/card:scale-105 transition-transform duration-700"
                     />
                   </div>
@@ -249,10 +251,10 @@ const LandingPage = () => {
                   <div className="text-center space-y-2 md:space-y-3 group-hover/card:scale-105 transition-transform duration-500 px-2">
                     <div className="space-y-1">
                       <h3 className="font-bebas text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
-                        Hj. Meilinda, S.Sos.,M.M
+                        {kompetisiDetail?.about_director_name || "Hj. Meilinda, S.Sos.,M.M"}
                       </h3>
                       <p className="font-plex text-xs md:text-sm lg:text-md 2xl:text-xl text-black/70 font-medium tracking-wide">
-                        Ketua Panitia Kejuaraan Sriwijaya
+                        {kompetisiDetail?.about_director_title || "Ketua Panitia Kejuaraan Sriwijaya"}
                       </p>
                     </div>
                     <div className="w-12 md:w-16 h-0.5 bg-gradient-to-r from-red/60 to-transparent mx-auto"></div>
@@ -404,10 +406,7 @@ const LandingPage = () => {
             </div>
 
             <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-plex text-black/80 max-w-4xl mx-auto leading-relaxed font-light px-4">
-              Berikut adalah detail informasi mengenai kontak dan lokasi
-              pertandingan. Jangan takut untuk menghubungi tim kami kapan saja.
-              Kami siap memberikan informasi detail Sriwijaya Competition 2025
-              serta panduan menuju ke lokasi pertandingan
+              {kompetisiDetail?.contact_description || "Berikut adalah detail informasi mengenai kontak dan lokasi pertandingan. Jangan takut untuk menghubungi tim kami kapan saja. Kami siap memberikan informasi detail Sriwijaya Competition 2025 serta panduan menuju ke lokasi pertandingan"}
             </p>
           </div>
 
@@ -447,29 +446,39 @@ const LandingPage = () => {
                             Telepon
                           </p>
                           <a
-                            href="https://wa.me/6281377592090"
+                            href={`https://wa.me/${(kompetisiDetail?.contact_phone_1).replace(/[^0-9]/g, "")}`}
                             className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
+                            target="_blank"
+                            rel="noopener noreferrer"
                           >
-                            0813-7759-2090
+                            {kompetisiDetail?.contact_phone_1}
                           </a>
-                          <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
-                            (Rora)
-                          </p>
+                          {kompetisiDetail?.contact_phone_1 ? null : (
+                            <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
+                              (Rora)
+                            </p>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm md:text-base font-plex mb-1 font-medium text-transparent">
-                            Telepon
-                          </p>
-                          <a
-                            href="https://wa.me/6285922124908"
-                            className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
-                          >
-                            0859-2212-4908
-                          </a>
-                          <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
-                            (Rizka)
-                          </p>
-                        </div>
+                        { (kompetisiDetail?.contact_phone_2 || (!kompetisiDetail?.contact_phone_1 && !kompetisiDetail?.contact_phone_2)) && (
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm md:text-base font-plex mb-1 font-medium text-transparent">
+                              Telepon
+                            </p>
+                            <a
+                              href={`https://wa.me/${(kompetisiDetail?.contact_phone_2).replace(/[^0-9]/g, "")}`}
+                              className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {kompetisiDetail?.contact_phone_2}
+                            </a>
+                            {kompetisiDetail?.contact_phone_2 ? null : (
+                              <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
+                                (Rizka)
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Instagram Contact */}
@@ -485,12 +494,12 @@ const LandingPage = () => {
                             Instagram
                           </p>
                           <a
-                            href="https://www.instagram.com/sumsel_taekwondo"
+                            href={`https://www.instagram.com/${(kompetisiDetail?.contact_instagram || "sumsel_taekwondo").replace(/^@/, "")}`}
                             className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block break-all"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            @sumsel_taekwondo
+                            @{kompetisiDetail?.contact_instagram?.replace(/^@/, "") || "sumsel_taekwondo"}
                           </a>
                         </div>
                       </div>
@@ -505,13 +514,13 @@ const LandingPage = () => {
                           Lokasi Pertandingan
                         </h4>
                         <p className="text-center text-sm md:text-base font-plex text-black/80 font-medium">
-                          GOR Jakabaring (Gor Ranau JSC), Palembang
+                          {kompetisiDetail?.contact_venue_name || "GOR Jakabaring (Gor Ranau JSC), Palembang"}
                         </p>
                       </div>
                     </div>
                     <div className="w-full h-56 md:h-64 lg:h-80 xl:h-96 border-2 border-red/20 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-red/20 transition-all duration-500 group/map">
                       <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid"
+                        src={kompetisiDetail?.contact_gmaps_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid"}
                         style={{ border: 0 }}
                         allowFullScreen
                         loading="lazy"

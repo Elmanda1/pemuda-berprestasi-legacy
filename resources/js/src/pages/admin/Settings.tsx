@@ -16,10 +16,9 @@ import {
   Plus,
   Video,
   Layout,
-  ExternalLink,
-  ChevronDown,
   ChevronUp,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
 import { apiClient } from '../../config/api';
@@ -41,7 +40,18 @@ const SettingsPage: React.FC = () => {
     secondary_color: '',
     logo_url: '',
     show_antrian: true,
-    show_navbar: true
+    show_navbar: true,
+    hero_title: '',
+    hero_description: '',
+    about_description: '',
+    about_director_name: '',
+    about_director_title: '',
+    contact_description: '',
+    contact_venue_name: '',
+    contact_phone_1: '',
+    contact_phone_2: '',
+    contact_instagram: '',
+    contact_gmaps_url: ''
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -630,7 +640,18 @@ const SettingsPage: React.FC = () => {
         secondary_color: komp.secondary_color || '#F5B700',
         logo_url: komp.logo_url || '',
         show_antrian: komp.show_antrian === 1 || komp.show_antrian === true,
-        show_navbar: komp.show_navbar === 1 || komp.show_navbar === true
+        show_navbar: komp.show_navbar === 1 || komp.show_navbar === true,
+        hero_title: komp.hero_title || '',
+        hero_description: komp.hero_description || '',
+        about_description: komp.about_description || '',
+        about_director_name: komp.about_director_name || '',
+        about_director_title: komp.about_director_title || '',
+        contact_description: komp.contact_description || 'Berikut adalah detail informasi mengenai kontak dan lokasi pertandingan. Jangan takut untuk menghubungi tim kami kapan saja. Kami siap memberikan informasi detail Sriwijaya Competition 2025 serta panduan menuju ke lokasi pertandingan',
+        contact_venue_name: komp.contact_venue_name || 'GOR Jakabaring (Gor Ranau JSC), Palembang',
+        contact_phone_1: komp.contact_phone_1 || '081377592090',
+        contact_phone_2: komp.contact_phone_2 || '085922124908',
+        contact_instagram: komp.contact_instagram || 'sumsel_taekwondo',
+        contact_gmaps_url: komp.contact_gmaps_url || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid'
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -666,12 +687,32 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleSaveTheme = async (id: number) => {
+      // Validation: At least one phone number must be provided
+      if (!editData.contact_phone_1 && !editData.contact_phone_2) {
+          toast.error('Minimal harus ada 1 nomor telepon kontak!');
+          return;
+      }
+
+      const toastId = toast.loading('Menyimpan perubahan...');
       try {
         const formData = new FormData();
         formData.append('primary_color', editData.primary_color);
         formData.append('secondary_color', editData.secondary_color);
         formData.append('show_antrian', editData.show_antrian ? '1' : '0');
         formData.append('show_navbar', editData.show_navbar ? '1' : '0');
+        
+        // Text Content
+        formData.append('hero_title', editData.hero_title);
+        formData.append('hero_description', editData.hero_description);
+        formData.append('about_description', editData.about_description);
+        formData.append('about_director_name', editData.about_director_name);
+        formData.append('about_director_title', editData.about_director_title);
+        formData.append('contact_description', editData.contact_description);
+        formData.append('contact_venue_name', editData.contact_venue_name);
+        formData.append('contact_phone_1', editData.contact_phone_1);
+        formData.append('contact_phone_2', editData.contact_phone_2);
+        formData.append('contact_instagram', editData.contact_instagram);
+        formData.append('contact_gmaps_url', editData.contact_gmaps_url);
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -845,6 +886,154 @@ const SettingsPage: React.FC = () => {
                                 onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
                                 accept="image/*"
                               />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section 2.5: Text Content Customization */}
+                        <div className="pt-6 border-t border-gray-100">
+                          <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <FileText size={18} className="text-red" />
+                            Kustomisasi Konten Teks
+                          </h5>
+                          
+                          <div className="space-y-6">
+                            {/* Hero Section */}
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Hero / Banner Utama</h6>
+                              <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Judul Utama (Event Name)</label>
+                                  <input
+                                    type="text"
+                                    value={editData.hero_title}
+                                    onChange={(e) => setEditData({ ...editData, hero_title: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                    placeholder="Contoh: Sriwijaya International (Kosongkan untuk default)"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Singkat (Subtitle)</label>
+                                  <textarea
+                                    value={editData.hero_description}
+                                    onChange={(e) => setEditData({ ...editData, hero_description: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                    placeholder="Deskripsi singkat event di bawah judul..."
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* About Section */}
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Sambutan / About</h6>
+                              <div className="grid grid-cols-1 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Ketua / Direktur</label>
+                                    <input
+                                      type="text"
+                                      value={editData.about_director_name}
+                                      onChange={(e) => setEditData({ ...editData, about_director_name: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: Hj. Meilinda, S.Sos.,M.M"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Jabatan</label>
+                                    <input
+                                      type="text"
+                                      value={editData.about_director_title}
+                                      onChange={(e) => setEditData({ ...editData, about_director_title: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: Ketua Panitia Pelaksana"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Isi Sambutan / Deskripsi Lengkap</label>
+                                  <textarea
+                                    value={editData.about_description}
+                                    onChange={(e) => setEditData({ ...editData, about_description: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-32"
+                                    placeholder="Teks sambutan lengkap..."
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Contact Section */}
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Kontak & Lokasi</h6>
+                              <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Lokasi / Venue</label>
+                                  <input
+                                    type="text"
+                                    value={editData.contact_venue_name}
+                                    onChange={(e) => setEditData({ ...editData, contact_venue_name: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                    placeholder="Contoh: GOR Jakabaring, Palembang"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Kontak</label>
+                                  <textarea
+                                    value={editData.contact_description}
+                                    onChange={(e) => setEditData({ ...editData, contact_description: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                    placeholder="Informasi tambahan di bagian kontak..."
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 1 (Wajib)</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_phone_1}
+                                      onChange={(e) => setEditData({ ...editData, contact_phone_1: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: 08123456789"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 2 (Opsional)</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_phone_2}
+                                      onChange={(e) => setEditData({ ...editData, contact_phone_2: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: 08123456789"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Username Instagram</label>
+                                    <div className="flex items-center">
+                                      <span className="bg-gray-100 border border-r-0 border-gray-200 px-3 py-2 rounded-l-xl text-gray-500 text-sm">@</span>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_instagram}
+                                        onChange={(e) => setEditData({ ...editData, contact_instagram: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-r-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="sumsel_taekwondo"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Link Embed Google Maps</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_gmaps_url}
+                                      onChange={(e) => setEditData({ ...editData, contact_gmaps_url: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="https://www.google.com/maps/embed?..."
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">*Masukkan URL dari menu Share &gt; Embed a map</p>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

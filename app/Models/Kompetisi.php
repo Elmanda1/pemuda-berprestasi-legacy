@@ -24,7 +24,18 @@ class Kompetisi extends Model
         'secondary_color',
         'logo_url',
         'show_antrian',
-        'show_navbar'
+        'show_navbar',
+        'hero_title',
+        'hero_description',
+        'about_description',
+        'about_director_name',
+        'about_director_title',
+        'contact_description',
+        'contact_venue_name',
+        'contact_phone_1',
+        'contact_phone_2',
+        'contact_instagram',
+        'contact_gmaps_url'
     ];
 
     public function penyelenggara()

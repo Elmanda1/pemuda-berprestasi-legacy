@@ -36,6 +36,17 @@ export interface Kompetisi {
   poster_image?: string;
   show_antrian?: number | boolean;
   show_navbar?: number | boolean;
+  hero_title?: string;
+  hero_description?: string;
+  about_description?: string;
+  about_director_name?: string;
+  about_director_title?: string;
+  contact_description?: string;
+  contact_venue_name?: string;
+  contact_phone_1?: string;
+  contact_phone_2?: string;
+  contact_instagram?: string;
+  contact_gmaps_url?: string;
 }
 
 export interface KelasKejuaraan {
