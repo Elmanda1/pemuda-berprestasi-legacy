@@ -453,9 +453,9 @@ const LandingPage = () => {
                           >
                             {kompetisiDetail?.contact_phone_1}
                           </a>
-                          {kompetisiDetail?.contact_phone_1 ? null : (
-                            <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
-                              (Rora)
+                          {kompetisiDetail?.contact_person_name_1 && (
+                            <p className="text-xs md:text-sm font-semibold text-black/60 font-plex mt-1">
+                              ({kompetisiDetail.contact_person_name_1})
                             </p>
                           )}
                         </div>
@@ -472,9 +472,9 @@ const LandingPage = () => {
                             >
                               {kompetisiDetail?.contact_phone_2}
                             </a>
-                            {kompetisiDetail?.contact_phone_2 ? null : (
-                              <p className="text-xs md:text-sm text-black/60 font-plex mt-1">
-                                (Rizka)
+                            {kompetisiDetail?.contact_person_name_2 && (
+                              <p className="text-xs md:text-sm font-semibold text-black/60 font-plex mt-1">
+                                ({kompetisiDetail.contact_person_name_2})
                               </p>
                             )}
                           </div>

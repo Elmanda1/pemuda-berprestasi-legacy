@@ -47,6 +47,8 @@ export interface Kompetisi {
   contact_phone_2?: string;
   contact_instagram?: string;
   contact_gmaps_url?: string;
+  contact_person_name_1?: string;
+  contact_person_name_2?: string;
 }
 
 export interface KelasKejuaraan {

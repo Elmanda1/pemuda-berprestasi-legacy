@@ -51,7 +51,9 @@ const SettingsPage: React.FC = () => {
     contact_phone_1: '',
     contact_phone_2: '',
     contact_instagram: '',
-    contact_gmaps_url: ''
+    contact_gmaps_url: '',
+    contact_person_name_1: '',
+    contact_person_name_2: ''
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -651,7 +653,9 @@ const SettingsPage: React.FC = () => {
         contact_phone_1: komp.contact_phone_1 || '081377592090',
         contact_phone_2: komp.contact_phone_2 || '085922124908',
         contact_instagram: komp.contact_instagram || 'sumsel_taekwondo',
-        contact_gmaps_url: komp.contact_gmaps_url || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid'
+        contact_gmaps_url: komp.contact_gmaps_url || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid',
+        contact_person_name_1: komp.contact_person_name_1 || 'Rora',
+        contact_person_name_2: komp.contact_person_name_2 || 'Rizka'
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -713,6 +717,8 @@ const SettingsPage: React.FC = () => {
         formData.append('contact_phone_2', editData.contact_phone_2);
         formData.append('contact_instagram', editData.contact_instagram);
         formData.append('contact_gmaps_url', editData.contact_gmaps_url);
+        formData.append('contact_person_name_1', editData.contact_person_name_1);
+        formData.append('contact_person_name_2', editData.contact_person_name_2);
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -1004,6 +1010,28 @@ const SettingsPage: React.FC = () => {
                                       onChange={(e) => setEditData({ ...editData, contact_phone_2: e.target.value })}
                                       className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
                                       placeholder="Contoh: 08123456789"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 1</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_person_name_1}
+                                      onChange={(e) => setEditData({ ...editData, contact_person_name_1: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: Rora"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 2</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_person_name_2}
+                                      onChange={(e) => setEditData({ ...editData, contact_person_name_2: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: Rizka"
                                     />
                                   </div>
                                 </div>

@@ -35,7 +35,9 @@ class Kompetisi extends Model
         'contact_phone_1',
         'contact_phone_2',
         'contact_instagram',
-        'contact_gmaps_url'
+        'contact_gmaps_url',
+        'contact_person_name_1',
+        'contact_person_name_2'
     ];
 
     public function penyelenggara()
