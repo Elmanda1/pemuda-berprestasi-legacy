@@ -1,53 +1,90 @@
-import { useState } from 'react';
-import { X, Play, FileText, User, Award } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Play, FileText, User, Award, Video, HelpCircle, BookOpen } from 'lucide-react';
+import { apiClient } from '../../config/api';
+import { useKompetisi } from '../../context/KompetisiContext';
+import { useParams } from 'react-router-dom';
 
 // Tipe data Tutorial
 interface Tutorial {
-  id: number;
+  id_tutorial: number;
   title: string;
   description: string;
-  videoId: string;
-  thumbnail: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  video_id: string;
+  thumbnail?: string;
+  icon_type?: string;
 }
 
 const TutorialPage = () => {
   const [selectedVideo, setSelectedVideo] = useState<Tutorial | null>(null);
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { idKompetisi } = useParams<{ idKompetisi: string }>();
+  const { kompetisiDetail } = useKompetisi();
 
-  const tutorials: Tutorial[] = [
+  const iconMap: { [key: string]: any } = {
+    FileText,
+    User,
+    Award,
+    Video,
+    HelpCircle,
+    BookOpen
+  };
+
+  useEffect(() => {
+    const fetchTutorials = async () => {
+      try {
+        setLoading(true);
+        // Use provided idKompetisi from URL or fall back to general tutorials
+        const url = idKompetisi
+          ? `/public/kompetisi/tutorials/${idKompetisi}`
+          : '/public/kompetisi/tutorials';
+
+        const res: any = await apiClient.get(url);
+        if (res.success) {
+          setTutorials(res.data);
+        }
+      } catch (err) {
+        console.error("Error fetching tutorials:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTutorials();
+  }, [idKompetisi]);
+
+  const defaultTutorials: Tutorial[] = [
     {
-      id: 1,
+      id_tutorial: 1,
       title: "Registrasi Dojang dan Pelatih",
       description: "Pelajari cara mendaftarkan dojang dan pelatih dalam sistem dengan mudah dan cepat",
-      videoId: "blgvr3mGq_0",
-      thumbnail: `https://img.youtube.com/vi/blgvr3mGq_0/maxresdefault.jpg`,
-      icon: FileText
+      video_id: "blgvr3mGq_0",
+      icon_type: 'FileText'
     },
     {
-      id: 2,
+      id_tutorial: 2,
       title: "Registrasi Atlet",
       description: "Tutorial lengkap untuk mendaftarkan atlet baru ke dalam sistem kompetisi",
-      videoId: "pcggSEjz3-A",
-      thumbnail: `https://img.youtube.com/vi/pcggSEjz3-A/maxresdefault.jpg`,
-      icon: User
+      video_id: "pcggSEjz3-A",
+      icon_type: 'User'
     },
     {
-      id: 3,
+      id_tutorial: 3,
       title: "Registrasi Kompetisi",
       description: "Panduan lengkap mendaftarkan kompetisi dalam sistem manajemen",
-      videoId: "3iqZ_c_u000",
-      thumbnail: `https://img.youtube.com/vi/3iqZ_c_u000/maxresdefault.jpg`,
-      icon: Award
+      video_id: "3iqZ_c_u000",
+      icon_type: 'Award'
     },
     {
-      id: 4,
+      id_tutorial: 4,
       title: "Tutorial Mengambil Sertifikat Atlet",
       description: "Pelajari cara mengambil sertifikat atlet Anda dengan mudah melalui panduan video ini.",
-      videoId: "F43jH1sotQY",
-      thumbnail: `https://img.youtube.com/vi/F43jH1sotQY/maxresdefault.jpg`,
-      icon: Award
+      video_id: "F43jH1sotQY",
+      icon_type: 'Award'
     }
   ];
+
+  const displayTutorials = tutorials.length > 0 ? tutorials : defaultTutorials;
 
   const openModal = (tutorial: Tutorial) => {
     setSelectedVideo(tutorial);
@@ -75,27 +112,29 @@ const TutorialPage = () => {
 
         {/* Tutorial Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {tutorials.map((tutorial, index) => {
-            const IconComponent = tutorial.icon;
+          {displayTutorials.map((tutorial, index) => {
+            const IconComponent = iconMap[tutorial.icon_type || 'Video'] || Video;
+            const thumbnail = tutorial.thumbnail || `https://img.youtube.com/vi/${tutorial.video_id}/maxresdefault.jpg`;
+
             return (
               <div
-                key={tutorial.id}
+                key={tutorial.id_tutorial}
                 className="group cursor-pointer transform transition-all duration-700 hover:-translate-y-3"
                 onClick={() => openModal(tutorial)}
               >
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 border border-gray-100 hover:border-gray-200">
-                  
+
                   {/* Video Thumbnail */}
                   <div className="relative aspect-video bg-gray-900 overflow-hidden">
                     <img
-                      src={tutorial.thumbnail}
+                      src={thumbnail}
                       alt={tutorial.title}
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://via.placeholder.com/640x360/374151/ffffff?text=Video+Tutorial';
                       }}
                     />
-                    
+
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                       <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center backdrop-blur-sm transform scale-0 group-hover:scale-100 transition-transform duration-500">
@@ -121,7 +160,7 @@ const TutorialPage = () => {
                         </h3>
                       </div>
                     </div>
-                    
+
                     <p className="text-gray-600 leading-relaxed font-light">
                       {tutorial.description}
                     </p>
@@ -143,11 +182,11 @@ const TutorialPage = () => {
 
       {/* Modal */}
       {selectedVideo && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={closeModal}
         >
-          <div 
+          <div
             className="relative bg-black rounded-2xl overflow-hidden w-full h-full sm:w-[80vw] sm:h-[80vh] max-w-6xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -161,7 +200,7 @@ const TutorialPage = () => {
 
             {/* Video */}
             <iframe
-              src={`https://www.youtube.com/embed/${selectedVideo.videoId}?autoplay=1&rel=0`}
+              src={`https://www.youtube.com/embed/${selectedVideo.video_id}?autoplay=1&rel=0`}
               title={selectedVideo.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

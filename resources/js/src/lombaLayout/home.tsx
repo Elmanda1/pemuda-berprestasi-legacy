@@ -7,10 +7,12 @@ import { useAuth } from "../context/authContext";
 import toast from "react-hot-toast";
 import ketua from "../assets/photos/ketua.png";
 import { Link } from "react-router-dom";
+import { useKompetisi } from "../context/KompetisiContext";
 
 const LandingPage = () => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const { user } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
 
   const handleJoinClick = () => {
     if (user?.role != "PELATIH") {
@@ -61,7 +63,7 @@ const LandingPage = () => {
       {/* Enhanced Hero Section - Professional & Clean */}
       <div
         className="relative min-h-screen w-full flex items-center justify-center bg-cover bg-center 2xl:bg-top overflow-hidden pt-20 md:pt-16"
-        style={{ backgroundImage: `url(${heroLomba})` }}
+        style={{ backgroundImage: `url(${kompetisiDetail?.poster_image || heroLomba})` }}
       >
         {/* Enhanced Gradient Overlays - More Professional */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/10 to-black/20" />
@@ -90,8 +92,8 @@ const LandingPage = () => {
               <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl scale-125"></div>
 
               <img
-                src={sriwijaya}
-                alt="Sriwijaya International Taekwondo Championship Logo"
+                src={kompetisiDetail?.logo_url || sriwijaya}
+                alt="Championship Logo"
                 className="relative z-10 h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-64 lg:w-64 xl:h-80 xl:w-80 drop-shadow-2xl group-hover:scale-[1.02] transition-transform duration-700"
               />
 
@@ -106,11 +108,13 @@ const LandingPage = () => {
               <div className="relative">
                 <h1 className="text-4xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bebas text-yellow leading-[0.9] tracking-wide drop-shadow-2xl">
                   <span className="block bg-gradient-to-r from-red via-red/95 to-red/90 md:to-white/90 bg-clip-text text-transparent">
-                    Sriwijaya International
+                    {kompetisiDetail?.nama_event || "Sriwijaya International"}
                   </span>
-                  <span className="block bg-gradient-to-r from-red via-red/95 to-red/90 md:to-white/90 bg-clip-text text-transparent">
-                    Taekwondo Championship
-                  </span>
+                  {!kompetisiDetail && (
+                    <span className="block bg-gradient-to-r from-red via-red/95 to-red/90 md:to-white/90 bg-clip-text text-transparent">
+                      Taekwondo Championship
+                    </span>
+                  )}
                 </h1>
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 md:w-32 h-1 bg-gradient-to-r from-yellow to-yellow/60 rounded-full"></div>
               </div>
@@ -153,13 +157,15 @@ const LandingPage = () => {
                   />
                 </svg>
               </button>
-              <Link
-                to="/event/pertandingan/1" // Assuming competition ID 1 for now
-                className="group relative inline-flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 text-base md:text-lg lg:text-xl font-plex font-semibold bg-red text-white hover:bg-red/90 transition-all duration-300 rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-red/30"
-              >
-                <Eye className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform duration-300" />
-                <span className="relative z-10">Lihat Antrean</span>
-              </Link>
+              {(kompetisiDetail?.show_antrian === 1 || kompetisiDetail?.show_antrian === true || !kompetisiDetail) && (
+                <Link
+                  to={`/event/pertandingan/${kompetisiDetail?.id_kompetisi || 1}`}
+                  className="group relative inline-flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 text-base md:text-lg lg:text-xl font-plex font-semibold bg-red text-white hover:bg-red/90 transition-all duration-300 rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-red/30"
+                >
+                  <Eye className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                  <span className="relative z-10">Lihat Antrean</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

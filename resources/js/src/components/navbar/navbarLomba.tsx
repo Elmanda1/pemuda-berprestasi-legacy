@@ -145,7 +145,13 @@ const NavbarLomba = ({ onLogoutRequest }: { onLogoutRequest: () => void }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-8">
-              {navItems.map(({ to, label, icon: Icon }) => (
+              {navItems.filter(item => {
+                // If show_navbar is false, only show "Beranda"
+                if (kompetisiDetail?.show_navbar === 0 || kompetisiDetail?.show_navbar === false) {
+                  return item.label === "Beranda";
+                }
+                return true;
+              }).map(({ to, label, icon: Icon }) => (
                 <Link
                   key={to}
                   to={to}
@@ -297,7 +303,12 @@ const NavbarLomba = ({ onLogoutRequest }: { onLogoutRequest: () => void }) => {
           <div className="px-4 py-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
             {/* Mobile Navigation Links */}
             <div className="space-y-1 mb-5">
-              {navItems.map(({ to, label, icon: Icon }, index) => (
+              {navItems.filter(item => {
+                if (kompetisiDetail?.show_navbar === 0 || kompetisiDetail?.show_navbar === false) {
+                  return item.label === "Beranda";
+                }
+                return true;
+              }).map(({ to, label, icon: Icon }, index) => (
                 <Link
                   key={to}
                   to={to}
