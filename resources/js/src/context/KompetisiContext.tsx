@@ -33,6 +33,9 @@ export interface Kompetisi {
   primary_color?: string;
   logo_url?: string;
   secondary_color?: string;
+  poster_image?: string;
+  show_antrian?: number | boolean;
+  show_navbar?: number | boolean;
 }
 
 export interface KelasKejuaraan {
@@ -233,7 +236,7 @@ export interface KompetisiContextType {
   ) => Promise<any>;
   updateKompetisiTheme: (
     kompetisiId: number,
-    data: { primary_color?: string; logo_url?: string }
+    data: any
   ) => Promise<any>;
 }
 
@@ -518,17 +521,29 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
 
   const updateKompetisiTheme = async (
     kompetisiId: number,
-    data: { primary_color?: string; secondary_color?: string; logo_url?: string }
+    data: any // Can be FormData or Object
   ) => {
     try {
-      const response: any = await apiClient.put(`/kompetisi/${kompetisiId}`, data);
+      let response: any;
+      if (data instanceof FormData) {
+        // Laravel needs _method=PUT to handle multipart PUT
+        data.append('_method', 'PUT');
+        response = await apiClient.postFormData(`/kompetisi/${kompetisiId}`, data);
+      } else {
+        response = await apiClient.put(`/kompetisi/${kompetisiId}`, data);
+      }
 
-      // Update local state
-      setKompetisiList(prev => prev.map(k =>
-        k.id_kompetisi === kompetisiId ? { ...k, ...data } : k
-      ));
+      // Update local state if it's an object, otherwise refetch or partial update
+      // For simplicity, we can fetch list again if it's FormData
+      if (!(data instanceof FormData)) {
+        setKompetisiList(prev => prev.map(k =>
+          k.id_kompetisi === kompetisiId ? { ...k, ...data } : k
+        ));
+      } else {
+        await fetchKompetisiList();
+      }
 
-      if (kompetisiDetail?.id_kompetisi === kompetisiId) {
+      if (kompetisiDetail?.id_kompetisi === kompetisiId && !(data instanceof FormData)) {
         setKompetisiDetail({ ...kompetisiDetail, ...data });
       }
 

@@ -12,9 +12,17 @@ import {
   Trash2,
   RefreshCw,
   Trophy,
-  Palette
+  Palette,
+  Plus,
+  Video,
+  Layout,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  X
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
+import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
 
 const SettingsPage: React.FC = () => {
@@ -28,7 +36,21 @@ const SettingsPage: React.FC = () => {
 
   const { kompetisiList, updateKompetisiTheme, fetchKompetisiList, loadingKompetisi } = useKompetisi();
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editData, setEditData] = useState({ primary_color: '', secondary_color: '', logo_url: '' });
+  const [editData, setEditData] = useState({
+    primary_color: '',
+    secondary_color: '',
+    logo_url: '',
+    show_antrian: true,
+    show_navbar: true
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+
+  // Tutorial state
+  const [showTutorialEditor, setShowTutorialEditor] = useState(false);
+  const [tutorials, setTutorials] = useState<any[]>([]);
+  const [isAddingTutorial, setIsAddingTutorial] = useState(false);
+  const [newTutorial, setNewTutorial] = useState({ title: '', description: '', video_id: '', icon_type: 'FileText' });
 
   React.useEffect(() => {
     if (activeTab === 'kompetisi') {
@@ -606,14 +628,55 @@ const SettingsPage: React.FC = () => {
       setEditData({
         primary_color: komp.primary_color || '#990D35',
         secondary_color: komp.secondary_color || '#F5B700',
-        logo_url: komp.logo_url || ''
+        logo_url: komp.logo_url || '',
+        show_antrian: komp.show_antrian === 1 || komp.show_antrian === true,
+        show_navbar: komp.show_navbar === 1 || komp.show_navbar === true
       });
+      setLogoFile(null);
+      setHeroFile(null);
+      fetchTutorials(komp.id_kompetisi);
+    };
+
+    const fetchTutorials = async (kompId: number) => {
+      try {
+        const res: any = await apiClient.get(`/kompetisi/tutorials/${kompId}`);
+        if (res.success) setTutorials(res.data);
+      } catch (err) {
+        console.error("Error fetching tutorials:", err);
+      }
+    };
+
+    const handleResetTheme = async (id: number) => {
+      if (!window.confirm("Apakah Anda yakin ingin mengatur ulang tema ke default?")) return;
+      try {
+        const formData = new FormData();
+        formData.append('primary_color', '#990D35');
+        formData.append('secondary_color', '#F5B700');
+        formData.append('logo_url', '');
+        formData.append('poster_image', '');
+        formData.append('show_antrian', '1');
+        formData.append('show_navbar', '1');
+
+        await updateKompetisiTheme(id, formData);
+        toast.success("Tema diatur ulang ke default");
+        setEditingId(null);
+      } catch (err) {
+        toast.error("Gagal mengatur ulang tema");
+      }
     };
 
     const handleSaveTheme = async (id: number) => {
       try {
-        await updateKompetisiTheme(id, editData);
-        // ⭐ Set active competition to current one so theme applies to Admin UI
+        const formData = new FormData();
+        formData.append('primary_color', editData.primary_color);
+        formData.append('secondary_color', editData.secondary_color);
+        formData.append('show_antrian', editData.show_antrian ? '1' : '0');
+        formData.append('show_navbar', editData.show_navbar ? '1' : '0');
+
+        if (logoFile) formData.append('logo', logoFile);
+        if (heroFile) formData.append('hero', heroFile);
+
+        await updateKompetisiTheme(id, formData);
         localStorage.setItem('currentKompetisiId', id.toString());
         toast.success("Tema kompetisi berhasil diperbarui");
         setEditingId(null);
@@ -622,117 +685,327 @@ const SettingsPage: React.FC = () => {
       }
     };
 
+    const handleAddTutorial = async () => {
+      if (!editingId) return;
+      try {
+        const res: any = await apiClient.post('/kompetisi/tutorials', {
+          ...newTutorial,
+          id_kompetisi: editingId
+        });
+        if (res.success) {
+          toast.success("Tutorial ditambahkan");
+          setIsAddingTutorial(false);
+          setNewTutorial({ title: '', description: '', video_id: '', icon_type: 'FileText' });
+          fetchTutorials(editingId);
+        }
+      } catch (err) {
+        toast.error("Gagal menambah tutorial");
+      }
+    };
+
+    const handleDeleteTutorial = async (tutId: number) => {
+      try {
+        const res: any = await apiClient.delete(`/kompetisi/tutorials/${tutId}`);
+        if (res.success) {
+          toast.success("Tutorial dihapus");
+          if (editingId) fetchTutorials(editingId);
+        }
+      } catch (err) {
+        toast.error("Gagal menghapus tutorial");
+      }
+    };
+
     return (
       <div className="space-y-6">
-        <div className="p-6 rounded-xl bg-white border border-gray-100">
-          <h3 className="font-inter font-semibold mb-4 text-lg">Kustomisasi Tema Kompetisi</h3>
-          <p className="text-sm text-gray-500 mb-6">Sesuaikan warna identitas dan logo untuk setiap kompetisi.</p>
+        <div className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm">
+          <h3 className="font-bebas text-2xl mb-4 tracking-wide text-red">Kustomisasi Tema Kompetisi</h3>
+          <p className="text-sm text-gray-500 mb-6 font-inter">Sesuaikan warna identitas, logo, hero image, dan tutorial untuk setiap kompetisi.</p>
 
           {loadingKompetisi ? (
             <div className="flex justify-center p-12">
               <RefreshCw className="animate-spin text-red" size={32} />
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-6">
               {kompetisiList.map((komp) => (
                 <div
                   key={komp.id_kompetisi}
-                  className="p-5 rounded-2xl border transition-all duration-300 hover:shadow-md"
-                  style={{ borderColor: editingId === komp.id_kompetisi ? '#990D35' : '#00000010' }}
+                  className="rounded-2xl border bg-white overflow-hidden transition-all duration-300"
+                  style={{ borderColor: editingId === komp.id_kompetisi ? '#990D35' : '#e5e7eb' }}
                 >
-                  <div className={`transition-all duration-300 ${editingId === komp.id_kompetisi ? 'space-y-6' : 'flex flex-col md:flex-row md:items-center justify-between gap-4'}`}>
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold shrink-0 shadow-sm transition-colors duration-300"
-                        style={{ backgroundColor: (editingId === komp.id_kompetisi ? editData.primary_color : komp.primary_color) || '#990D35' }}
-                      >
-                        {komp.nama_event.charAt(0)}
+                  <div className="p-5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold shrink-0 shadow-inner"
+                          style={{ backgroundColor: (editingId === komp.id_kompetisi ? editData.primary_color : komp.primary_color) || '#990D35' }}
+                        >
+                          {komp.nama_event.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-inter font-bold text-gray-900 text-lg leading-tight">{komp.nama_event}</h4>
+                          <p className="text-sm text-gray-500">{komp.lokasi || 'Lokasi tidak diatur'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-inter font-bold text-gray-900 leading-tight">{komp.nama_event}</h4>
-                        <p className="text-sm text-gray-500">{komp.lokasi || 'Lokasi tidak diatur'}</p>
-                      </div>
+
+                      {editingId !== komp.id_kompetisi && (
+                        <button
+                          onClick={() => handleEdit(komp)}
+                          className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-sm font-semibold text-gray-700 hover:border-red/30"
+                        >
+                          <Palette size={18} className="text-red" />
+                          Atur Branding & Sistem
+                        </button>
+                      )}
                     </div>
 
-                    {editingId === komp.id_kompetisi ? (
-                      <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700">Warna Primer</label>
-                            <p className="text-xs text-gray-500 mb-2">Mengganti warna merah/maroon standar</p>
-                            <div className="flex items-center gap-3">
+                    {editingId === komp.id_kompetisi && (
+                      <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* Section 1: Colors */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-3">
+                            <label className="block text-sm font-bold text-gray-700">Warna Kebanggaan (Primer)</label>
+                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                               <input
                                 type="color"
                                 value={editData.primary_color}
                                 onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0 transition-transform hover:scale-105 active:scale-95"
+                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
                               />
                               <input
                                 type="text"
                                 value={editData.primary_color}
                                 onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                className="flex-1 h-16 px-4 py-2.5 rounded-2xl border border-gray-200 text-lg font-mono focus:ring-4 focus:ring-red/10 focus:border-red outline-none transition-all shadow-sm"
+                                className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
                                 placeholder="#990D35"
                               />
                             </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700">Warna Sekunder</label>
-                            <p className="text-xs text-gray-500 mb-2">Mengganti warna kuning/aksen standar</p>
-                            <div className="flex items-center gap-3">
+                          <div className="space-y-3">
+                            <label className="block text-sm font-bold text-gray-700">Warna Aksen (Sekunder)</label>
+                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                               <input
                                 type="color"
                                 value={editData.secondary_color}
                                 onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0 transition-transform hover:scale-105 active:scale-95"
+                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
                               />
                               <input
                                 type="text"
                                 value={editData.secondary_color}
                                 onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                className="flex-1 h-16 px-4 py-2.5 rounded-2xl border border-gray-200 text-lg font-mono focus:ring-4 focus:ring-red/10 focus:border-red outline-none transition-all shadow-sm"
+                                className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
                                 placeholder="#F5B700"
                               />
                             </div>
                           </div>
+                        </div>
 
-                          <div className="space-y-2 md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700">Logo Kompetisi (URL)</label>
-                            <input
-                              type="text"
-                              value={editData.logo_url}
-                              onChange={(e) => setEditData({ ...editData, logo_url: e.target.value })}
-                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-red/20 focus:border-red outline-none transition-all"
-                              placeholder="https://example.com/logo.png"
-                            />
+                        {/* Section 2: Asset Uploads */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                          <div className="space-y-3">
+                            <label className="block text-sm font-bold text-gray-700">Ganti Logo Event</label>
+                            <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                              {logoFile ? (
+                                <img src={URL.createObjectURL(logoFile)} className="h-full w-full object-contain p-2" alt="New Logo" />
+                              ) : editData.logo_url ? (
+                                <img src={editData.logo_url} className="h-full w-full object-contain p-2" alt="Current Logo" />
+                              ) : (
+                                <div className="text-center">
+                                  <Upload className="mx-auto text-gray-400 mb-2" />
+                                  <span className="text-xs text-gray-500">Pilih Logo (PNG/JPG)</span>
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                                accept="image/*"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <label className="block text-sm font-bold text-gray-700">Ganti Hero/Banner Poster</label>
+                            <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                              {heroFile ? (
+                                <img src={URL.createObjectURL(heroFile)} className="h-full w-full object-cover" alt="New Hero" />
+                              ) : komp.poster_image ? (
+                                <img src={komp.poster_image} className="h-full w-full object-cover" alt="Current Hero" />
+                              ) : (
+                                <div className="text-center">
+                                  <Upload className="mx-auto text-gray-400 mb-2" />
+                                  <span className="text-xs text-gray-500">Pilih Banner Utama</span>
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
+                                accept="image/*"
+                              />
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                        {/* Section 3: Visibility Configuration */}
+                        <div className="pt-6 border-t border-gray-100">
+                          <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Layout size={18} className="text-red" />
+                            Konfigurasi Visibility Interface
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                              <div>
+                                <p className="font-semibold text-sm">Tampilkan Antrean</p>
+                                <p className="text-xs text-gray-500">Tampilkan list antrean lapangan di landing page</p>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={editData.show_antrian}
+                                  onChange={(e) => setEditData({ ...editData, show_antrian: e.target.checked })}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
+                              </label>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                              <div>
+                                <p className="font-semibold text-sm">Hide Seluruh Navbar (Kecuali Beranda)</p>
+                                <p className="text-xs text-gray-500">Sembunyikan link menu lain di navbar event</p>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={!editData.show_navbar}
+                                  onChange={(e) => setEditData({ ...editData, show_navbar: !e.target.checked })}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section 4: Tutorial Management */}
+                        <div className="pt-6 border-t border-gray-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="font-bold text-gray-900 flex items-center gap-2">
+                              <Video size={18} className="text-red" />
+                              Manajemen Video Tutorial
+                            </h5>
+                            <button
+                              onClick={() => setIsAddingTutorial(!isAddingTutorial)}
+                              className="px-3 py-1.5 bg-red/10 text-red text-xs font-bold rounded-lg hover:bg-red/20 flex items-center gap-1 transition-all"
+                            >
+                              {isAddingTutorial ? <X size={14} /> : <Plus size={14} />}
+                              {isAddingTutorial ? 'Batal' : 'Tambah Tutorial'}
+                            </button>
+                          </div>
+
+                          {isAddingTutorial && (
+                            <div className="bg-red/5 p-4 rounded-2xl border border-red/10 mb-4 space-y-4 animate-in slide-in-from-right-4 duration-300">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input
+                                  type="text"
+                                  placeholder="Judul Tutorial"
+                                  value={newTutorial.title}
+                                  onChange={e => setNewTutorial({ ...newTutorial, title: e.target.value })}
+                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="URL Video YouTube / ID"
+                                  value={newTutorial.video_id}
+                                  onChange={e => setNewTutorial({ ...newTutorial, video_id: e.target.value })}
+                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
+                                />
+                                <select
+                                  value={newTutorial.icon_type}
+                                  onChange={e => setNewTutorial({ ...newTutorial, icon_type: e.target.value })}
+                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm bg-white"
+                                >
+                                  <option value="FileText">Icon: File</option>
+                                  <option value="User">Icon: User</option>
+                                  <option value="Award">Icon: Trophy</option>
+                                  <option value="Video">Icon: Video</option>
+                                  <option value="HelpCircle">Icon: Help</option>
+                                  <option value="BookOpen">Icon: Book</option>
+                                </select>
+                              </div>
+                              <textarea
+                                placeholder="Deskripsi singkat tutorial..."
+                                value={newTutorial.description}
+                                onChange={e => setNewTutorial({ ...newTutorial, description: e.target.value })}
+                                className="w-full px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm h-16 resize-none"
+                              />
+                              <div className="flex justify-end">
+                                <button
+                                  onClick={handleAddTutorial}
+                                  className="px-6 py-2 bg-red text-white text-sm font-bold rounded-xl hover:opacity-90 shadow-md shadow-red/20"
+                                >
+                                  Simpan Tutorial Baru
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {tutorials.map((tut) => (
+                              <div key={tut.id_tutorial} className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col justify-between group/tut relative">
+                                <div>
+                                  <div className="aspect-video bg-gray-100 rounded-lg mb-2 overflow-hidden relative">
+                                    <img src={`https://img.youtube.com/vi/${tut.video_id}/mqdefault.jpg`} className="w-full h-full object-cover" alt="" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/tut:opacity-100 transition-opacity">
+                                      <Video className="text-white" />
+                                    </div>
+                                  </div>
+                                  <h6 className="font-bold text-sm truncate">{tut.title}</h6>
+                                  <p className="text-[10px] text-gray-500 line-clamp-2">{tut.description}</p>
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteTutorial(tut.id_tutorial)}
+                                  className="mt-3 text-red/60 hover:text-red transition-colors"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                            {tutorials.length === 0 && !isAddingTutorial && (
+                              <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                <p className="text-xs text-gray-400">Belum ada tutorial khusus untuk kompetisi ini.</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions Footer */}
+                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
                           <button
                             onClick={() => setEditingId(null)}
-                            className="px-6 py-2.5 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
+                            className="px-6 py-3 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
                           >
                             Batal
                           </button>
                           <button
+                            onClick={() => handleResetTheme(komp.id_kompetisi)}
+                            className="px-6 py-3 text-red/60 hover:text-red border border-red/10 hover:border-red/30 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                          >
+                            <RefreshCw size={16} />
+                            Reset ke Default
+                          </button>
+                          <button
                             onClick={() => handleSaveTheme(komp.id_kompetisi)}
-                            className="px-8 py-2.5 bg-red text-white rounded-xl text-sm font-semibold hover:opacity-90 shadow-lg shadow-red/20 transition-all flex items-center gap-2"
+                            className="px-10 py-3 bg-red text-white rounded-xl text-sm font-bold shadow-xl shadow-red/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2"
                           >
                             <Save size={18} />
-                            Simpan Perubahan
+                            Simpan Seluruh Perubahan
                           </button>
                         </div>
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => handleEdit(komp)}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-sm font-semibold text-gray-700 active:scale-95"
-                      >
-                        <Palette size={18} className="text-red" />
-                        Atur Branding
-                      </button>
                     )}
                   </div>
                 </div>
