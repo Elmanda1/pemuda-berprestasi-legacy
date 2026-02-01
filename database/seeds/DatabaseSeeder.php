@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
 
         if (file_exists($path)) {
             $this->command->info('Importing SQL Dump...');
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             DB::unprepared(file_get_contents($path));
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             $this->command->info('SQL Dump Imported Successfully!');
 
             // Run additional seeders

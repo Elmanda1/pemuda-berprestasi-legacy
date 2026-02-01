@@ -30,7 +30,7 @@ class UpdateKompetisiAndTutorials extends Migration
         if (!Schema::hasTable('tb_tutorial')) {
             Schema::create('tb_tutorial', function (Blueprint $table) {
                 $table->id('id_tutorial');
-                $table->unsignedBigInteger('id_kompetisi')->nullable();
+                $table->integer('id_kompetisi')->nullable();
                 $table->string('title');
                 $table->text('description')->nullable();
                 $table->string('video_id');
