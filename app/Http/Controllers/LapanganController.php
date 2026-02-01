@@ -69,7 +69,7 @@ class LapanganController extends Controller
     // Get Lapangan by Kompetisi (Grouped by Date)
     public function getByKompetisi($id_kompetisi)
     {
-        $lapangans = Lapangan::with('kelas_list.kelasKejuaraan')
+        $lapangans = Lapangan::with(['kelas_list.kelasKejuaraan', 'antrian'])
             ->where('id_kompetisi', $id_kompetisi)
             ->orderBy('tanggal', 'asc')
             ->orderBy('nama_lapangan', 'asc')
@@ -95,7 +95,11 @@ class LapanganController extends Controller
                                 'nama_kelas' => $lk->kelasKejuaraan ? $lk->kelasKejuaraan->nama_kelas : 'Unknown'
                             ];
                         }),
-                        'antrian' => null
+                        'antrian' => $lap->antrian ? [
+                            'bertanding' => $lap->antrian->bertanding,
+                            'persiapan' => $lap->antrian->persiapan,
+                            'pemanasan' => $lap->antrian->pemanasan,
+                        ] : null
                     ];
                 })
             ];

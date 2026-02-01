@@ -127,7 +127,7 @@ export const CertificateGenerator = ({ atlet, isEditing }: CertificateGeneratorP
       for (const [kompetisiId, pesertaList] of Object.entries(byKompetisi)) {
         try {
           const timestamp = `?_t=${Date.now()}`;
-          const response = await fetch(`/api/public/kompetisi/${kompetisiId}/medal-tally${timestamp}`, {
+          const response = await fetch(`/api/v1/public/kompetisi/${kompetisiId}/medal-tally${timestamp}`, {
             cache: 'no-cache',
             headers: {
               'Cache-Control': 'no-cache',

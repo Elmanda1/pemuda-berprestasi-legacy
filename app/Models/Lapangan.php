@@ -25,4 +25,9 @@ class Lapangan extends Model
     {
         return $this->hasMany(LapanganKelas::class, 'id_lapangan', 'id_lapangan');
     }
+
+    public function antrian()
+    {
+        return $this->hasOne(Antrian::class, 'id_lapangan', 'id_lapangan');
+    }
 }

@@ -127,7 +127,7 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
     if (!idKompetisi) return;
 
     try {
-      const res = await fetch(`/api/lapangan/kompetisi/${idKompetisi}`);
+      const res = await fetch(`/api/v1/lapangan/kompetisi/${idKompetisi}`);
       const data = await res.json();
 
       if (data.success) {
@@ -179,8 +179,8 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
     try {
       const timestamp = forceRefresh ? `&_t=${Date.now()}` : "";
       const url = hari
-        ? `/api/pertandingan/kompetisi/${idKompetisi}?hari=${hari}${timestamp}`
-        : `/api/pertandingan/kompetisi/${idKompetisi}${timestamp}`;
+        ? `/api/v1/pertandingan/kompetisi/${idKompetisi}?hari=${hari}${timestamp}`
+        : `/api/v1/pertandingan/kompetisi/${idKompetisi}${timestamp}`;
 
       console.log("🔍 Fetching match data from:", url);
 

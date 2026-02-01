@@ -351,7 +351,7 @@ const handleUploadBukti = async (file: File, dojangId: string): Promise<void> =>
     }
 
     // Manual fetch tanpa API Client
-    const response = await fetch('/api/v1/api/bukti-transfer', {
+    const response = await fetch('/api/v1/bukti-transfer', {
       method: 'POST',
       body: formData,
       headers: {
@@ -377,7 +377,7 @@ const handleUploadBukti = async (file: File, dojangId: string): Promise<void> =>
 
   const getExistingBuktiFiles = async (dojangId: string): Promise<ExistingBuktiFile[]> => {
     try {
-      const response = await fetch(`/api/bukti-transfer/dojang/${dojangId}`, {
+      const response = await fetch(`/api/v1/bukti-transfer/dojang/${dojangId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -433,7 +433,7 @@ const handleUploadBukti = async (file: File, dojangId: string): Promise<void> =>
 
   const handleDeleteBuktiTransfer = async (fileId: string): Promise<void> => {
     try {
-      const response = await fetch(`/api/v1/api/bukti-transfer/${fileId}`, {
+      const response = await fetch(`/api/v1/bukti-transfer/${fileId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -32,7 +32,7 @@ const adminService = {
   getUsers: async (): Promise<User[]> => {
     try {
       // Mock API call - replace with actual API endpoint
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('/api/v1/admin/users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ const adminService = {
 
   updateUserStatus: async (userId: number, status: 'ACTIVE' | 'INACTIVE'): Promise<void> => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/status`, {
+      const response = await fetch(`/api/v1/admin/users/${userId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ const adminService = {
 
   deleteUser: async (userId: number): Promise<void> => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
