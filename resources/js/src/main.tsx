@@ -10,6 +10,12 @@ import { KompetisiProvider } from './context/KompetisiContext';
 import { RegistrationProvider } from './context/RegistrationContext';
 import { DojangProvider } from './context/dojangContext';
 
+if (process.env.MIX_HIDE_CONSOLE_LOG === 'true') {
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
