@@ -1,75 +1,71 @@
-# Pemuda Berprestasi - Backend API (Laravel 7)
+# Pemuda Berprestasi New
 
-This project is a migration of the `pemuda-berprestasi` Node.js/Express backend to PHP 7.4 and Laravel 7.
+Panduan singkat menjalankan project ini di local environment (Linux).
 
-## Requirements
-- PHP 7.4
-- MySQL 5.7+ / MariaDB
-- Composer
+## 🛠 Prerequisites
+Pastikan sudah terinstall:
+- **Docker** & **Docker Compose**
+- **Node.js** & **NPM**
 
-## Installation
+## 🚀 Cara Menjalankan (Quick Start)
 
-1.  **Clone & Install Dependencies**
-    ```bash
-    git clone ...
-    cd "Pemuda BerprestasiNew"
-    composer install
-    ```
+### 1. Setup Backend & Database
+Gunakan script wrapper `d` untuk menjalankan Docker container.
 
-2.  **Environment Setup**
-    Copy `.env.example` to `.env` and configure your database:
-    ```bash
-    cp .env.example .env
-    php artisan key:generate
-    ```
-    
-    Update `.env`:
-    ```ini
-    DB_CONNECTION=mysql
-    DB_HOST=127.0.0.1
-    DB_PORT=3306
-    DB_DATABASE=your_database
-    DB_USERNAME=your_username
-    DB_PASSWORD=your_password
-    ```
+```bash
+# 1. Jalankan Container (App + Database)
+./d up
+```
+*Tunggu beberapa saat sampai server berjalan.*
 
-3.  **Migrations**
-    Run migrations to set up the database schema:
-    ```bash
-    php artisan migrate
-    ```
+### 2. Setup Dependencies & Database (Hanya saat pertama kali)
+Jika baru pertama kali clone atau reset:
 
-## Project Structure
+```bash
+# Install PHP Dependencies
+./d composer install
 
-### Services
--   **BracketService (`app/Services/BracketService.php`)**: Handles tournament bracket generation, including:
-    -   Power of 2 calculation
-    -   BYE distribution (Interleaved Top/Bottom for mirrored brackets)
-    -   Dojang Separation (Splitting same-dojang members into Left/Right pools)
-    -   Stage naming (Final, Semi Final, Quarter Final, etc.)
+# Generate App Key (jika error 500/key missing)
+./d artisan key:generate
 
-### Controllers
-| Controller | Description | Status |
+# Migrasi Database & Seed Data
+./d artisan migrate:fresh --seed
+```
+
+### 3. Setup Frontend
+Buka terminal baru (tab baru) untuk menjalankan frontend assets.
+
+```bash
+# Install JS Dependencies
+npm install
+
+# Compile & Watch Assets (Auto-update saat edit file)
+npm run watch
+```
+
+---
+
+## ℹ️ Akses Aplikasi
+- **Web**: [http://localhost:8000](http://localhost:8000)
+- **Database Host**: `pemuda-db` (untuk config .env)
+- **Database Port**: `3306`
+- **Username/Pass**: `root` / `root`
+
+## ⌨️ Cheat Sheet Command `./d`
+Script `./d` menggantikan command docker yang panjang.
+
+| Command | Fungsi | Ekuivalen |
 | :--- | :--- | :--- |
-| `AuthController` | Login, Logout, Me | ✅ Implemented |
-| `PelatihController` | Profile management | ✅ Implemented |
-| `DojangController` | Dojang management | ✅ Implemented |
-| `AtletController` | Athlete CRUD & Stats | ✅ Implemented |
-| `KompetisiController` | Event CRUD, Registration, Brackets | ✅ Implemented (Core) |
-| `PertandinganController` | Match Info & Schedule | ✅ Implemented |
-| `CertificateController` | Certificate Generation | ✅ Implemented |
-| `KelasController` | Reference Data (Age, Weight, Poomsae) | ✅ Implemented |
-| `BuktiTransferController` | Upload & List Proofs | ✅ Implemented |
-| `LapanganController` | Venue & Field management | ⚠️ Basic / Placeholder |
+| `./d up` | Nyalakan server | `docker run ...` |
+| `./d artisan [cmd]` | Jalankan artisan | `php artisan [cmd]` |
+| `./d composer [cmd]` | Jalankan composer | `composer [cmd]` |
+| `./d rebuild` | Rebuild image docker | `docker build ...` |
 
-### Routes
-All API routes are defined in `routes/api.php` and are prefixed with `/api/v1`.
+### Contoh Penggunaan:
+```bash
+# Buat controller baru
+./d artisan make:controller TestController
 
-## Development Notes
--   **Authentication**: Uses custom `api_token` column in `tb_users`.
--   **File Storage**: Uploads are stored in `public/uploads` (for legacy compatibility).
--   **Validation**: Uses Laravel's `Validator` facade.
-
-## Pending / To Do
--   **Complex Numbering**: `LapanganController@autoGenerateMatchNumbers` needs complex logic porting from `lapanganService.ts`.
--   **Audit Logs**: `auditLog` features are currently placeholders.
+# Install paket composer baru
+./d composer require laravel/ui
+```

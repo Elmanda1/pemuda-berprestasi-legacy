@@ -1,12 +1,40 @@
 /node_modules
+/public/build
 /public/hot
 /public/storage
 /storage/*.key
 /vendor
 .env
 .env.backup
+.env.production
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+
+# Laravel Storage
+/storage/app/public
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Ignore Bootstrap Cache files but keep the directory
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# Composer & System
+.composer
+auth.json
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Misc
+d
+pemuda-app
