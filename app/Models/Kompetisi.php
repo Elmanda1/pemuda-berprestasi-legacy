@@ -41,11 +41,13 @@ class Kompetisi extends Model
         'event_year',
         'about_director_slogan',
         'registration_description',
-        'registration_steps'
+        'registration_steps',
+        'faq_data'
     ];
 
     protected $casts = [
         'registration_steps' => 'array',
+        'faq_data' => 'array',
         'show_antrian' => 'boolean',
         'show_navbar' => 'boolean'
     ];

@@ -53,6 +53,7 @@ export interface Kompetisi {
   about_director_slogan?: string;
   registration_description?: string;
   registration_steps?: any[];
+  faq_data?: any[];
 }
 
 export interface KelasKejuaraan {
@@ -560,8 +561,12 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
         await fetchKompetisiList();
       }
 
-      if (kompetisiDetail?.id_kompetisi === kompetisiId && !(data instanceof FormData)) {
-        setKompetisiDetail({ ...kompetisiDetail, ...data });
+      if (kompetisiDetail?.id_kompetisi === kompetisiId) {
+        if (!(data instanceof FormData)) {
+          setKompetisiDetail({ ...kompetisiDetail, ...data });
+        } else {
+          await fetchKompetisiById(kompetisiId);
+        }
       }
 
       return response.data || response;

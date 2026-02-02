@@ -1,111 +1,22 @@
+import { useKompetisi } from "../context/KompetisiContext";
 import FaqCard from "../components/faqCard";
 
 const FAQ = () => {
-  // FAQ Data Structure
-  const faqSections = [
-    {
-      title: "Pendaftaran & Persyaratan",
-      description:
-        "Informasi lengkap mengenai proses pendaftaran, syarat peserta, dan dokumen yang diperlukan",
-      questions: [
-        {
-          question: "Kapan periode pendaftaran dibuka dan ditutup?",
-          answer:
-            "Pendaftaran dibuka mulai 1 Agustus 2025 dan ditutup pada 8 November 2025, atau lebih cepat jika kuota sudah terpenuhi.",
-        },
-        {
-          question: "Apa saja persyaratan umum untuk peserta?",
-          answer:
-            "Peserta harus sehat jasmani & rohani, merupakan taekwondoin di bawah naungan PBTI, tidak sedang menjalani sanksi, melampirkan rekomendasi Pengprov/MNA (untuk WNA), BPJS (WNI) atau asuransi (WNA), fotokopi akta kelahiran, sertifikat taekwondo, pas foto 3x4 (2 lembar), dan surat keterangan sehat (khusus prestasi).",
-        },
-        {
-          question: "Berapa biaya pendaftaran untuk kejuaraan ini?",
-          answer:
-            "Biaya pendaftaran adalah Rp 500.000/atlet untuk WNI dan Rp 1.000.000/atlet untuk WNA.",
-        },
-        {
-          question: "Bagaimana cara melakukan pembayaran pendaftaran?",
-          answer:
-            "Pembayaran dilakukan ke Bank Sumsel Babel dengan rekening a.n Panitia UKT Pengprov TISS No. 19309010367. Konfirmasi pembayaran dikirim melalui nomor panitia (Jeje: 0853-7844-1489).",
-        },
-      ],
-    },
-    {
-      title: "Kategori & Kompetisi",
-      description:
-        "Detail mengenai kategori pertandingan yang tersedia dan aturan penilaian",
-      questions: [
-        {
-          question: "Apa saja kategori usia yang dipertandingkan?",
-          answer:
-            "Kategori usia meliputi: Super Pra-Cadet (5–8 tahun, kelahiran 2017–2020), Pra-Cadet (9–11 tahun, kelahiran 2014–2016), Cadet (12–14 tahun, kelahiran 2011–2013), Junior (15–17 tahun, kelahiran 2008–2010), dan Senior (18 tahun ke atas, kelahiran 2007 atau sebelumnya).",
-        },
-        {
-          question: "Apa saja jenis kompetisi yang tersedia?",
-          answer:
-            "Kompetisi terdiri dari Kyorugi (pemula & prestasi), Poomsae (recognized dan freestyle, individu putra/putri), serta kategori beregu sesuai ketentuan.",
-        },
-        {
-          question: "Bagaimana sistem penilaian yang digunakan?",
-          answer:
-            "Kyorugi pemula menggunakan DSS (Digital Scoring System), kyorugi prestasi menggunakan aturan WT Competition Rules, sedangkan Poomsae (pemula & prestasi) menggunakan sistem gugur (battle).",
-        },
-        {
-          question: "Apakah atlet bisa mengikuti lebih dari satu kategori?",
-          answer:
-            "Ya, atlet dapat bertanding di Kyorugi dan Poomsae sekaligus, dengan mendapatkan 2 ID card.",
-        },
-      ],
-    },
-    {
-      title: "Teknis & Fasilitas",
-      description:
-        "Informasi mengenai lokasi, jadwal, fasilitas, dan akomodasi",
-      questions: [
-        {
-          question: "Di mana lokasi penyelenggaraan kejuaraan?",
-          answer:
-            "Kejuaraan akan dilaksanakan di GOR Ranau Jakabaring Sport City (JSC) Palembang, Sumatera Selatan.",
-        },
-        {
-          question: "Kapan jadwal pertandingan berlangsung?",
-          answer:
-            "Pertandingan berlangsung pada 22–26 November 2025. Penimbangan atlet dilakukan 21 November 2025 (10.00–15.00 WIB), dilanjutkan dengan Technical Meeting pada pukul 15.30 WIB.",
-        },
-        {
-          question: "Apa saja fasilitas untuk peserta di venue?",
-          answer:
-            "Tersedia area pemanasan, dukungan medis, shuttle bus di kawasan JSC, serta akses transportasi umum seperti Transmusi, LRT, Grab, dan Gojek.",
-        },
-        {
-          question: "Apakah ada rekomendasi penginapan untuk peserta?",
-          answer:
-            "Ya, panitia merekomendasikan beberapa hotel dekat venue seperti Wyndham Opi Hotel (1,8 km), Opi Indah Hotel (1,7 km), Ayola Sentosa Palembang (5,1 km), dan Ibis Palembang Sanggar (5,2 km).",
-        },
-      ],
-    },
-    {
-      title: "Penghargaan & Hadiah",
-      description: "Detail mengenai penghargaan, medali, dan hadiah pembinaan",
-      questions: [
-        {
-          question: "Apa penghargaan untuk juara umum kategori prestasi?",
-          answer:
-            "Juara Umum 1: Rp 30.000.000 + piala, piagam, dan hadiah sponsor. Juara Umum 2: Rp 15.000.000. Juara Umum 3: Rp 7.500.000.",
-        },
-        {
-          question: "Apa penghargaan untuk juara umum kategori pemula?",
-          answer:
-            "Juara Umum 1: Rp 15.000.000, Juara Umum 2: Rp 10.000.000, Juara Umum 3: Rp 5.000.000, beserta piala, piagam, dan hadiah sponsor.",
-        },
-        {
-          question: "Apakah ada penghargaan individu?",
-          answer:
-            "Ya, atlet terbaik di setiap kategori (Pracadet, Cadet, Junior, Senior, dan Poomsae) akan mendapatkan uang pembinaan Rp 1.000.000 serta piagam penghargaan.",
-        },
-      ],
-    },
-  ];
+  const { kompetisiDetail } = useKompetisi();
+
+  const sections = (() => {
+    const data = kompetisiDetail?.faq_data as any;
+    if (Array.isArray(data) && data.length > 0) return data;
+    if (typeof data === 'string' && data.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error("Failed to parse FAQ data:", e);
+      }
+    }
+    return [];
+  })();
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-white via-yellow/[0.01] to-white pt-10 lg:pt-0">
@@ -150,16 +61,16 @@ const FAQ = () => {
 
             {/* Description */}
             <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-plex text-black/80 max-w-4xl mx-auto leading-relaxed font-light px-2 sm:px-4">
-              Temukan jawaban untuk pertanyaan yang sering diajukan seputar
-              Sriwijaya Competition 2025. Jika tidak menemukan jawaban yang Anda
-              cari, silakan hubungi tim kami.
+              Temukan jawaban untuk pertanyaan yang sering diajukan seputar{" "}
+              {kompetisiDetail?.nama_event || "Sriwijaya Competition 2025"}. Jika
+              tidak menemukan jawaban yang Anda cari, silakan hubungi tim kami.
             </p>
           </div>
         </div>
       </section>
 
       {/* FAQ Sections */}
-      {faqSections.map((section, sectionIndex) => (
+      {sections.map((section: any, sectionIndex: number) => (
         <section
           key={sectionIndex}
           className="relative w-full flex flex-col justify-center items-center bg-gradient-to-br from-white via-yellow/[0.01] to-white overflow-hidden py-6 sm:py-8 md:py-12 lg:py-16"
@@ -188,9 +99,9 @@ const FAQ = () => {
                   <div className="relative">
                     <h2 className="text-3xl sm:text-3xl md:text-5xl lg:text-5xl xl:text-6xl font-bebas leading-[0.9] tracking-wide">
                       <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
-                        {section.title.split(" ")[0]}
+                        {(section.title || "").split(" ")[0]}
                       </span>
-                      {section.title.split(" ").slice(1).length > 0 && (
+                      {(section.title || "").split(" ").slice(1).length > 0 && (
                         <span className="block bg-gradient-to-r from-red/80 via-red/90 to-red bg-clip-text text-transparent">
                           {section.title.split(" ").slice(1).join(" ")}
                         </span>

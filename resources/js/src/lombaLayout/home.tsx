@@ -317,39 +317,55 @@ const LandingPage = () => {
           <div className="max-w-5xl mx-auto">
             {/* Mobile: Single Column, Tablet+: 2 Columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 py-2 md:py-6">
-              {(kompetisiDetail?.registration_steps || registerStep).map((step: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="group relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red/10 hover:border-red/20 shadow-md hover:shadow-lg hover:shadow-red/10 transition-all duration-300 hover:-translate-y-1"
-                >
-                  {/* Mobile Optimized Step Content */}
-                  <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
-                    {/* Step Number - Smaller on Mobile */}
-                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-red to-red/80 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
-                        {step.number || idx + 1}
-                      </span>
+              {(() => {
+                const stepsData = kompetisiDetail?.registration_steps as any;
+                const steps = (() => {
+                  if (Array.isArray(stepsData) && stepsData.length > 0) return stepsData;
+                  if (typeof stepsData === 'string' && stepsData.trim().length > 0) {
+                    try {
+                      const parsed = JSON.parse(stepsData);
+                      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                    } catch (e) {
+                      console.error("Failed to parse registration_steps:", e);
+                    }
+                  }
+                  return registerStep;
+                })();
+
+                return steps.map((step: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="group relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red/10 hover:border-red/20 shadow-md hover:shadow-lg hover:shadow-red/10 transition-all duration-300 hover:-translate-y-1"
+                  >
+                    {/* Mobile Optimized Step Content */}
+                    <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+                      {/* Step Number - Smaller on Mobile */}
+                      <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-red to-red/80 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
+                          {step.number || idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl text-red mb-1 sm:mb-2 leading-tight">
+                          {step.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm md:text-sm text-black/70 font-plex leading-relaxed">
+                          {step.desc}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl text-red mb-1 sm:mb-2 leading-tight">
-                        {step.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm md:text-sm text-black/70 font-plex leading-relaxed">
-                        {step.desc}
-                      </p>
-                    </div>
+                    {/* Decorative elements - Smaller on Mobile */}
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-red/20 rounded-full group-hover:bg-red/40 transition-colors duration-300"></div>
+                    <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 bg-red/15 rounded-full group-hover:bg-red/30 transition-colors duration-300"></div>
+
+                    {/* Hover Effect Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-red/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg sm:rounded-xl"></div>
                   </div>
-
-                  {/* Decorative elements - Smaller on Mobile */}
-                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-red/20 rounded-full group-hover:bg-red/40 transition-colors duration-300"></div>
-                  <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 bg-red/15 rounded-full group-hover:bg-red/30 transition-colors duration-300"></div>
-
-                  {/* Hover Effect Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-red/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg sm:rounded-xl"></div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
 
             {/* Mobile CTA Button */}
@@ -445,7 +461,7 @@ const LandingPage = () => {
                             Telepon
                           </p>
                           <a
-                            href={`https://wa.me/${(kompetisiDetail?.contact_phone_1).replace(/[^0-9]/g, "")}`}
+                            href={`https://wa.me/${(kompetisiDetail?.contact_phone_1 || "").replace(/[^0-9]/g, "")}`}
                             className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -464,7 +480,7 @@ const LandingPage = () => {
                               Telepon
                             </p>
                             <a
-                              href={`https://wa.me/${(kompetisiDetail?.contact_phone_2).replace(/[^0-9]/g, "")}`}
+                              href={`https://wa.me/${(kompetisiDetail?.contact_phone_2 || "").replace(/[^0-9]/g, "")}`}
                               className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
                               target="_blank"
                               rel="noopener noreferrer"

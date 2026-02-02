@@ -16,9 +16,12 @@ import {
   Plus,
   Video,
   Layout,
+  FileText,
+  HelpCircle,
+  MessageCircle,
+  ChevronDown,
   ChevronUp,
-  X,
-  FileText
+  X
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
 import { apiClient } from '../../config/api';
@@ -57,7 +60,8 @@ const SettingsPage: React.FC = () => {
     event_year: '',
     about_director_slogan: '',
     registration_description: '',
-    registration_steps: [] as any[]
+    registration_steps: [] as any[],
+    faq_data: [] as any[]
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -663,12 +667,25 @@ const SettingsPage: React.FC = () => {
         event_year: komp.event_year || '2025',
         about_director_slogan: komp.about_director_slogan || '“SALAM TAEKWONDO INDONESIA PROVINSI SUMATERA SELATAN”',
         registration_description: komp.registration_description || 'Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta Sriwijaya Competition 2025 dengan mudah dan efisien.',
-        registration_steps: Array.isArray(komp.registration_steps) ? komp.registration_steps : [
-          { number: 1, title: 'Buat Akun', desc: 'Daftar di website resmi kejuaraan dengan mengisi informasi pribadi dan data tim secara lengkap.' },
-          { number: 2, title: 'Login dan Pilih Kategori', desc: 'Masuk menggunakan akun yang sudah terdaftar lalu pilih kategori lomba sesuai kelompok usia dan kemampuan.' },
-          { number: 3, title: 'Unggah Dokumen', desc: 'Upload dokumen yang dibutuhkan seperti kartu identitas, foto, dan bukti pembayaran.' },
-          { number: 4, title: 'Konfirmasi & Selesai', desc: 'Periksa kembali data yang telah diisi, lalu konfirmasi pendaftaran untuk mendapatkan nomor peserta.' },
-        ]
+        registration_steps: (() => {
+          if (Array.isArray(komp.registration_steps)) return komp.registration_steps;
+          if (typeof komp.registration_steps === 'string') {
+            try { return JSON.parse(komp.registration_steps); } catch (e) { return []; }
+          }
+          return [
+            { number: 1, title: 'Buat Akun', desc: 'Daftar di website resmi kejuaraan dengan mengisi informasi pribadi dan data tim secara lengkap.' },
+            { number: 2, title: 'Login dan Pilih Kategori', desc: 'Masuk menggunakan akun yang sudah terdaftar lalu pilih kategori lomba sesuai kelompok usia dan kemampuan.' },
+            { number: 3, title: 'Unggah Dokumen', desc: 'Upload dokumen yang dibutuhkan seperti kartu identitas, foto, d bukti pembayaran.' },
+            { number: 4, title: 'Konfirmasi & Selesai', desc: 'Periksa kembali data yang telah diisi, lalu konfirmasi pendaftaran untuk mendapatkan nomor peserta.' },
+          ];
+        })(),
+        faq_data: (() => {
+          if (Array.isArray(komp.faq_data)) return komp.faq_data;
+          if (typeof komp.faq_data === 'string') {
+            try { return JSON.parse(komp.faq_data); } catch (e) { return []; }
+          }
+          return [];
+        })()
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -736,6 +753,7 @@ const SettingsPage: React.FC = () => {
         formData.append('about_director_slogan', editData.about_director_slogan);
         formData.append('registration_description', editData.registration_description);
         formData.append('registration_steps', JSON.stringify(editData.registration_steps));
+        formData.append('faq_data', JSON.stringify(editData.faq_data));
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -1130,7 +1148,7 @@ const SettingsPage: React.FC = () => {
                                           ]
                                         });
                                       }}
-                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all"
+                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
                                     >
                                       <Plus size={20} />
                                       Tambah Step
@@ -1140,7 +1158,7 @@ const SettingsPage: React.FC = () => {
                                     {editData.registration_steps.map((step, idx) => (
                                       <div key={idx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 relative group">
                                         <div className="flex items-center gap-3">
-                                          <div className="w-6 h-6 bg-red text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                                          <div className="w-6 h-6 bg-red text-white text-sm font-bold rounded-full flex items-center justify-center shrink-0">
                                             {idx + 1}
                                           </div>
                                           <input
@@ -1161,7 +1179,7 @@ const SettingsPage: React.FC = () => {
                                               const reordered = newSteps.map((s, i) => ({ ...s, number: i + 1 }));
                                               setEditData({ ...editData, registration_steps: reordered });
                                             }}
-                                            className="text-red hover:scale-103 transition-colors opacity-0 group-hover:opacity-100"
+                                            className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                                           >
                                             <Trash2 size={20} />
                                           </button>
@@ -1182,8 +1200,144 @@ const SettingsPage: React.FC = () => {
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
+
+                             {/* FAQ Management Section */}
+                             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                               <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider flex items-center justify-between">
+                                 FAQ (Kategori & Pertanyaan)
+                                 <button
+                                   onClick={() => {
+                                     setEditData({
+                                       ...editData,
+                                       faq_data: [
+                                         ...editData.faq_data || [],
+                                         { title: 'Kategori Baru', description: 'Deskripsi kategori...', questions: [{ question: 'Pertanyaan Baru', answer: 'Jawaban...' }] }
+                                       ]
+                                     });
+                                   }}
+                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
+                                 >
+                                   <Plus size={20} />
+                                   Tambah Kategori
+                                 </button>
+                               </h6>
+                               <div className="space-y-6">
+                                 {(editData.faq_data || []).map((section: any, sIdx: number) => (
+                                   <div key={sIdx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4 relative group">
+                                     <div className="flex items-start justify-between gap-4">
+                                       <div className="flex-1 space-y-2">
+                                         <input
+                                           type="text"
+                                           value={section.title}
+                                           onChange={(e) => {
+                                             const newFaq = [...editData.faq_data];
+                                             newFaq[sIdx].title = e.target.value;
+                                             setEditData({ ...editData, faq_data: newFaq });
+                                           }}
+                                           className="w-full font-bold text-base bg-transparent border-b border-gray-100 focus:border-red outline-none pb-1"
+                                           placeholder="Judul Kategori FAQ"
+                                         />
+                                         <input
+                                           type="text"
+                                           value={section.description}
+                                           onChange={(e) => {
+                                             const newFaq = [...editData.faq_data];
+                                             newFaq[sIdx].description = e.target.value;
+                                             setEditData({ ...editData, faq_data: newFaq });
+                                           }}
+                                           className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 p-0"
+                                           placeholder="Deskripsi singkat kategori..."
+                                         />
+                                       </div>
+                                       <button
+                                         onClick={() => {
+                                           const newFaq = editData.faq_data.filter((_: any, i: number) => i !== sIdx);
+                                           setEditData({ ...editData, faq_data: newFaq });
+                                         }}
+                                         className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                         title="Hapus Kategori"
+                                       >
+                                         <Trash2 size={20} />
+                                       </button>
+                                     </div>
+
+                                     <div className="pl-4 border-l-2 border-red/10 space-y-4">
+                                       <div className="flex items-center justify-between">
+                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daftar Pertanyaan</span>
+                                         <button
+                                           onClick={() => {
+                                             const newFaq = [...editData.faq_data];
+                                             newFaq[sIdx].questions = [
+                                               ...newFaq[sIdx].questions || [],
+                                               { question: 'Pertanyaan Baru', answer: 'Jawaban...' }
+                                             ];
+                                             setEditData({ ...editData, faq_data: newFaq });
+                                           }}
+                                           className="flex items-center gap-1 text-sm text-red font-bold cursor-pointer hover:underline pr-4 transition-all"
+                                         >
+                                           <Plus size={20} />
+                                           Tambah Pertanyaan
+                                         </button>
+                                       </div>
+                                       
+                                       <div className="space-y-3">
+                                         {(section.questions || []).map((q: any, qIdx: number) => (
+                                           <div key={qIdx} className="bg-gray-50/50 p-3 rounded-lg border border-red space-y-2 relative group">
+                                             <div className="flex items-center justify-between gap-2">
+                                               <div className="flex items-center gap-2 flex-1">
+                                                 <HelpCircle size={16} className="text-red/60" />
+                                                 <input
+                                                   type="text"
+                                                   value={q.question}
+                                                   onChange={(e) => {
+                                                     const newFaq = [...editData.faq_data];
+                                                     newFaq[sIdx].questions[qIdx].question = e.target.value;
+                                                     setEditData({ ...editData, faq_data: newFaq });
+                                                   }}
+                                                   className="w-full text-sm font-semibold bg-transparent border-none focus:ring-0 p-0"
+                                                   placeholder="Pertanyaan..."
+                                                 />
+                                               </div>
+                                             <button
+                                                onClick={() => {
+                                                  const newFaq = [...editData.faq_data];
+                                                  newFaq[sIdx].questions = newFaq[sIdx].questions.filter((_: any, i: number) => i !== qIdx);
+                                                  setEditData({ ...editData, faq_data: newFaq });
+                                                }}
+                                                className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                              >
+                                                <Trash2 size={20} />
+                                              </button>
+                                             </div>
+                                             <div className="flex items-start gap-2">
+                                               <MessageCircle size={16} className="text-gray-400" />
+                                               <textarea
+                                                 value={q.answer}
+                                                 onChange={(e) => {
+                                                   const newFaq = [...editData.faq_data];
+                                                   newFaq[sIdx].questions[qIdx].answer = e.target.value;
+                                                   setEditData({ ...editData, faq_data: newFaq });
+                                                 }}
+                                                 className="w-full text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 h-16 resize-none"
+                                                 placeholder="Jawaban..."
+                                               />
+                                             </div>
+                                           </div>
+                                         ))}
+                                       </div>
+                                     </div>
+                                   </div>
+                                 ))}
+                                 {(!editData.faq_data || editData.faq_data.length === 0) && (
+                                   <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">
+                                     <HelpCircle className="mx-auto text-gray-300 mb-2" size={24} />
+                                     <p className="text-xs text-gray-400">Belum ada data FAQ. Tambahkan kategori pertama Anda.</p>
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                           </div>
+                         </div>
 
                         {/* Section 3: Visibility Configuration */}
                         <div className="pt-6 border-t border-gray-100">

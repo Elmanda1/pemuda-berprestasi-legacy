@@ -12,6 +12,7 @@ import {
   UserCheck,
   CreditCard,
   Settings,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
@@ -128,6 +129,19 @@ const AdminLayout: React.FC = () => {
               </button>
             ))}
           </nav>
+
+          {/* Back to Homepage Button */}
+          <div className="absolute bottom-28 left-6 right-6">
+            <a
+              href="/"
+              className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
+            >
+              <Home size={20} className="text-red" />
+              <span className="font-medium text-base">
+                Landing Page
+              </span>
+            </a>
+          </div>
 
           {/* Logout Button */}
           <div className="absolute bottom-6 left-6 right-6">
@@ -270,6 +284,19 @@ const AdminLayout: React.FC = () => {
                 </button>
               ))}
             </nav>
+
+            {/* Back to Homepage Button */}
+            <div className="absolute bottom-28 left-6 right-6">
+              <a
+                href="/"
+                className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
+              >
+                <Home size={20} style={{ color: '#990D35' }} />
+                <span className="font-medium text-base" style={{ color: '#050505' }}>
+                  Landing Page
+                </span>
+              </a>
+            </div>
 
             <div className="absolute bottom-6 left-6 right-6">
               <button
