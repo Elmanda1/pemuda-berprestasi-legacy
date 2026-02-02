@@ -37,7 +37,17 @@ class Kompetisi extends Model
         'contact_instagram',
         'contact_gmaps_url',
         'contact_person_name_1',
-        'contact_person_name_2'
+        'contact_person_name_2',
+        'event_year',
+        'about_director_slogan',
+        'registration_description',
+        'registration_steps'
+    ];
+
+    protected $casts = [
+        'registration_steps' => 'array',
+        'show_antrian' => 'boolean',
+        'show_navbar' => 'boolean'
     ];
 
     public function penyelenggara()

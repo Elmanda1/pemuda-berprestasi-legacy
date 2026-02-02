@@ -122,7 +122,7 @@ const LandingPage = () => {
               {/* Year Badge */}
               <div className="inline-block bg-yellow/10 backdrop-blur-sm border border-yellow/30 rounded-xl px-6 py-3">
                 <span className="text-2xl md:text-3xl lg:text-4xl font-bebas bg-gradient-to-r from-yellow to-yellow/90 bg-clip-text text-transparent">
-                  2025
+                  {kompetisiDetail?.event_year || "2025"}
                 </span>
               </div>
 
@@ -259,7 +259,7 @@ const LandingPage = () => {
                     </div>
                     <div className="w-12 md:w-16 h-0.5 bg-gradient-to-r from-red/60 to-transparent mx-auto"></div>
                     <p className="text-xs md:text-sm xl:text-md text-black/60 font-plex leading-relaxed max-w-sm">
-                      “SALAM TAEKWONDO INDONESIA PROVINSI SUMATERA SELATAN”
+                      {kompetisiDetail?.about_director_slogan || "“SALAM TAEKWONDO INDONESIA PROVINSI SUMATERA SELATAN”"}
                     </p>
                   </div>
                 </div>
@@ -309,8 +309,7 @@ const LandingPage = () => {
             </div>
 
             <p className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-4 font-plex text-black/80 max-w-3xl mx-auto leading-relaxed font-light">
-              Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta
-              Sriwijaya Competition 2025 dengan mudah dan efisien.
+              {kompetisiDetail?.registration_description || `Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta ${kompetisiDetail?.nama_event || "Sriwijaya Competition"} ${kompetisiDetail?.event_year || "2025"} dengan mudah dan efisien.`}
             </p>
           </div>
 
@@ -318,9 +317,9 @@ const LandingPage = () => {
           <div className="max-w-5xl mx-auto">
             {/* Mobile: Single Column, Tablet+: 2 Columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 py-2 md:py-6">
-              {registerStep.map((step) => (
+              {(kompetisiDetail?.registration_steps || registerStep).map((step: any, idx: number) => (
                 <div
-                  key={step.number}
+                  key={idx}
                   className="group relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red/10 hover:border-red/20 shadow-md hover:shadow-lg hover:shadow-red/10 transition-all duration-300 hover:-translate-y-1"
                 >
                   {/* Mobile Optimized Step Content */}
@@ -328,7 +327,7 @@ const LandingPage = () => {
                     {/* Step Number - Smaller on Mobile */}
                     <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-red to-red/80 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
-                        {step.number}
+                        {step.number || idx + 1}
                       </span>
                     </div>
 

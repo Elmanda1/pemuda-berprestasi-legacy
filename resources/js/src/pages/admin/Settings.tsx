@@ -53,7 +53,11 @@ const SettingsPage: React.FC = () => {
     contact_instagram: '',
     contact_gmaps_url: '',
     contact_person_name_1: '',
-    contact_person_name_2: ''
+    contact_person_name_2: '',
+    event_year: '',
+    about_director_slogan: '',
+    registration_description: '',
+    registration_steps: [] as any[]
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -655,7 +659,16 @@ const SettingsPage: React.FC = () => {
         contact_instagram: komp.contact_instagram || 'sumsel_taekwondo',
         contact_gmaps_url: komp.contact_gmaps_url || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.2808245295255!2d104.7919914!3d-3.0190341000000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e3b9da396d2b289%3A0xcc3623bbbb92bd93!2sGOR%20Jakabaring!5e0!3m2!1sen!2sid!4v1757524240866!5m2!1sen!2sid',
         contact_person_name_1: komp.contact_person_name_1 || 'Rora',
-        contact_person_name_2: komp.contact_person_name_2 || 'Rizka'
+        contact_person_name_2: komp.contact_person_name_2 || 'Rizka',
+        event_year: komp.event_year || '2025',
+        about_director_slogan: komp.about_director_slogan || '“SALAM TAEKWONDO INDONESIA PROVINSI SUMATERA SELATAN”',
+        registration_description: komp.registration_description || 'Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta Sriwijaya Competition 2025 dengan mudah dan efisien.',
+        registration_steps: Array.isArray(komp.registration_steps) ? komp.registration_steps : [
+          { number: 1, title: 'Buat Akun', desc: 'Daftar di website resmi kejuaraan dengan mengisi informasi pribadi dan data tim secara lengkap.' },
+          { number: 2, title: 'Login dan Pilih Kategori', desc: 'Masuk menggunakan akun yang sudah terdaftar lalu pilih kategori lomba sesuai kelompok usia dan kemampuan.' },
+          { number: 3, title: 'Unggah Dokumen', desc: 'Upload dokumen yang dibutuhkan seperti kartu identitas, foto, dan bukti pembayaran.' },
+          { number: 4, title: 'Konfirmasi & Selesai', desc: 'Periksa kembali data yang telah diisi, lalu konfirmasi pendaftaran untuk mendapatkan nomor peserta.' },
+        ]
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -719,6 +732,10 @@ const SettingsPage: React.FC = () => {
         formData.append('contact_gmaps_url', editData.contact_gmaps_url);
         formData.append('contact_person_name_1', editData.contact_person_name_1);
         formData.append('contact_person_name_2', editData.contact_person_name_2);
+        formData.append('event_year', editData.event_year);
+        formData.append('about_director_slogan', editData.about_director_slogan);
+        formData.append('registration_description', editData.registration_description);
+        formData.append('registration_steps', JSON.stringify(editData.registration_steps));
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -910,13 +927,25 @@ const SettingsPage: React.FC = () => {
                               <div className="grid grid-cols-1 gap-4">
                                 <div>
                                   <label className="block text-xs font-semibold text-gray-500 mb-1">Judul Utama (Event Name)</label>
-                                  <input
-                                    type="text"
-                                    value={editData.hero_title}
-                                    onChange={(e) => setEditData({ ...editData, hero_title: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                    placeholder="Contoh: Sriwijaya International (Kosongkan untuk default)"
-                                  />
+                                  <div className="flex gap-4">
+                                    <input
+                                      type="text"
+                                      value={editData.hero_title}
+                                      onChange={(e) => setEditData({ ...editData, hero_title: e.target.value })}
+                                      className="flex-1 px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: Sriwijaya International (Kosongkan untuk default)"
+                                    />
+                                    <div className="w-32">
+                                      <label className="block text-[10px] font-bold text-gray-400 uppercase">Tahun</label>
+                                      <input
+                                        type="text"
+                                        value={editData.event_year}
+                                        onChange={(e) => setEditData({ ...editData, event_year: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="2025"
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Singkat (Subtitle)</label>
@@ -955,6 +984,16 @@ const SettingsPage: React.FC = () => {
                                       placeholder="Contoh: Ketua Panitia Pelaksana"
                                     />
                                   </div>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Slogan Sambutan (Quote)</label>
+                                  <input
+                                    type="text"
+                                    value={editData.about_director_slogan}
+                                    onChange={(e) => setEditData({ ...editData, about_director_slogan: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                    placeholder="Contoh: SALAM TAEKWONDO INDONESIA..."
+                                  />
                                 </div>
                                 <div>
                                   <label className="block text-xs font-semibold text-gray-500 mb-1">Isi Sambutan / Deskripsi Lengkap</label>
@@ -1059,6 +1098,86 @@ const SettingsPage: React.FC = () => {
                                       placeholder="https://www.google.com/maps/embed?..."
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">*Masukkan URL dari menu Share &gt; Embed a map</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Registration Steps Section */}
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Panduan Pendaftaran</h6>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Panduan</label>
+                                  <textarea
+                                    value={editData.registration_description}
+                                    onChange={(e) => setEditData({ ...editData, registration_description: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                    placeholder="Kalimat pengantar di bagian panduan pendaftaran..."
+                                  />
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-gray-700 uppercase">Langkah-langkah (Steps)</label>
+                                    <button
+                                      onClick={() => {
+                                        const nextNum = editData.registration_steps.length + 1;
+                                        setEditData({
+                                          ...editData,
+                                          registration_steps: [
+                                            ...editData.registration_steps,
+                                            { number: nextNum, title: 'Langkah Baru', desc: 'Deskripsi langkah...' }
+                                          ]
+                                        });
+                                      }}
+                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all"
+                                    >
+                                      <Plus size={20} />
+                                      Tambah Step
+                                    </button>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-3">
+                                    {editData.registration_steps.map((step, idx) => (
+                                      <div key={idx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 relative group">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-6 h-6 bg-red text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">
+                                            {idx + 1}
+                                          </div>
+                                          <input
+                                            type="text"
+                                            value={step.title}
+                                            onChange={(e) => {
+                                              const newSteps = [...editData.registration_steps];
+                                              newSteps[idx].title = e.target.value;
+                                              setEditData({ ...editData, registration_steps: newSteps });
+                                            }}
+                                            className="flex-1 font-bold text-sm bg-transparent border-b border-transparent focus:border-red outline-none"
+                                            placeholder="Judul Step"
+                                          />
+                                          <button
+                                            onClick={() => {
+                                              const newSteps = editData.registration_steps.filter((_, i) => i !== idx);
+                                              // reorder numbers
+                                              const reordered = newSteps.map((s, i) => ({ ...s, number: i + 1 }));
+                                              setEditData({ ...editData, registration_steps: reordered });
+                                            }}
+                                            className="text-red hover:scale-103 transition-colors opacity-0 group-hover:opacity-100"
+                                          >
+                                            <Trash2 size={20} />
+                                          </button>
+                                        </div>
+                                        <textarea
+                                          value={step.desc}
+                                          onChange={(e) => {
+                                            const newSteps = [...editData.registration_steps];
+                                            newSteps[idx].desc = e.target.value;
+                                            setEditData({ ...editData, registration_steps: newSteps });
+                                          }}
+                                          className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 resize-none h-12 p-0"
+                                          placeholder="Deskripsi langkah..."
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
                               </div>

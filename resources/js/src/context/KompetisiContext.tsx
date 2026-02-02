@@ -49,6 +49,10 @@ export interface Kompetisi {
   contact_gmaps_url?: string;
   contact_person_name_1?: string;
   contact_person_name_2?: string;
+  event_year?: string;
+  about_director_slogan?: string;
+  registration_description?: string;
+  registration_steps?: any[];
 }
 
 export interface KelasKejuaraan {
