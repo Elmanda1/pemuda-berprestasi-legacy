@@ -3,43 +3,33 @@ import {
   TimelineCardKanan,
 } from "../components/TimelineCard";
 import { useNavigate } from "react-router-dom";
-
-const events = [
-  {
-    event: "registrasi",
-    time: "1 Agustus - 8 November 2025",
-    side: "left",
-    month: "November",
-  },
-  {
-    event: "Penimbangan",
-    time: "21 November 2025 10.00 - 15.00",
-    side: "right",
-    month: "November",
-  },
-  {
-    event: "technical meeting",
-    time: "21 November 2025 15.30 - selesai",
-    side: "left",
-    month: "November",
-  },
-  {
-    event: "Pertandingan",
-    time: "22 -26 November 2025",
-    side: "right",
-    month: "November",
-  },
-];
-
-// Group events by month
-const groupedEvents = events.reduce((acc, curr) => {
-  if (!acc[curr.month]) acc[curr.month] = [];
-  acc[curr.month].push(curr);
-  return acc;
-}, {} as Record<string, typeof events>);
+import { useKompetisi } from "../context/KompetisiContext";
 
 export default function Timeline() {
   const navigate = useNavigate();
+  const { kompetisiDetail } = useKompetisi();
+
+  const rawEvents = (() => {
+    const data = kompetisiDetail?.timeline_data as any;
+    if (Array.isArray(data) && data.length > 0) return data;
+    if (typeof data === 'string' && data.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error("Failed to parse timeline data:", e);
+      }
+    }
+    return [];
+  })();
+
+  // Group events by month
+  const groupedEvents = rawEvents.reduce((acc: any, curr: any) => {
+    const month = curr.month || "Lainnya";
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(curr);
+    return acc;
+  }, {} as Record<string, any[]>);
 
   const handleDaftarSekarang = () => {
     navigate("/lomba/home");
@@ -120,7 +110,7 @@ export default function Timeline() {
                 {/* Enhanced Timeline Events */}
                 <div className="relative w-full z-10">
                   <div className="flex flex-col items-center justify-center">
-                    {monthEvents.map((item, index) => (
+                    {(monthEvents as any[]).map((item, index) => (
                       <div key={index} className="w-full">
                         {/* Desktop Layout */}
                         <div className="hidden md:flex w-full items-start justify-center relative group mb-8 md:mb-12">

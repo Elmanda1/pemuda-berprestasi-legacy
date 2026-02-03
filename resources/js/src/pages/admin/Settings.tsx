@@ -21,6 +21,9 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
+  Calendar,
+  Clock,
+  ArrowLeftRight,
   X
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
@@ -61,7 +64,8 @@ const SettingsPage: React.FC = () => {
     about_director_slogan: '',
     registration_description: '',
     registration_steps: [] as any[],
-    faq_data: [] as any[]
+    faq_data: [] as any[],
+    timeline_data: [] as any[]
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -685,6 +689,18 @@ const SettingsPage: React.FC = () => {
             try { return JSON.parse(komp.faq_data); } catch (e) { return []; }
           }
           return [];
+        })(),
+        timeline_data: (() => {
+          if (Array.isArray(komp.timeline_data)) return komp.timeline_data;
+          if (typeof komp.timeline_data === 'string') {
+            try { return JSON.parse(komp.timeline_data); } catch (e) { return []; }
+          }
+          return [
+            { event: 'Registrasi', time: '1 Agustus - 8 November 2025', side: 'left', month: 'Agustus - November' },
+            { event: 'Penimbangan', time: '21 November 2025 10.00 - 15.00', side: 'right', month: 'November' },
+            { event: 'Technical Meeting', time: '21 November 2025 15.30 - selesai', side: 'left', month: 'November' },
+            { event: 'Pertandingan', time: '22 -26 November 2025', side: 'right', month: 'November' },
+          ];
         })()
       });
       setLogoFile(null);
@@ -754,6 +770,7 @@ const SettingsPage: React.FC = () => {
         formData.append('registration_description', editData.registration_description);
         formData.append('registration_steps', JSON.stringify(editData.registration_steps));
         formData.append('faq_data', JSON.stringify(editData.faq_data));
+        formData.append('timeline_data', JSON.stringify(editData.timeline_data));
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -1339,6 +1356,118 @@ const SettingsPage: React.FC = () => {
                            </div>
                          </div>
 
+                              {/* Timeline Management Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-6">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider flex items-center justify-between">
+                                  Timeline (Jadwal Kegiatan)
+                                  <button
+                                    onClick={() => {
+                                      setEditData({
+                                        ...editData,
+                                        timeline_data: [
+                                          ...editData.timeline_data || [],
+                                          { event: 'Kegiatan Baru', time: 'Waktu...', side: 'left', month: 'Bulan...' }
+                                        ]
+                                      });
+                                    }}
+                                    className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
+                                  >
+                                    <Plus size={20} />
+                                    Tambah Event
+                                  </button>
+                                </h6>
+                                <div className="space-y-4">
+                                  {(editData.timeline_data || []).map((item: any, idx: number) => (
+                                    <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3 relative group">
+                                      <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                              <Calendar size={10} /> Nama Kegiatan
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={item.event}
+                                              onChange={(e) => {
+                                                const newTimeline = [...editData.timeline_data];
+                                                newTimeline[idx].event = e.target.value;
+                                                setEditData({ ...editData, timeline_data: newTimeline });
+                                              }}
+                                              className="w-full font-bold text-sm bg-transparent border-b border-gray-50 focus:border-red outline-none pb-1"
+                                              placeholder="Nama Kegiatan"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                              <Clock size={10} /> Waktu / Tanggal
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={item.time}
+                                              onChange={(e) => {
+                                                const newTimeline = [...editData.timeline_data];
+                                                newTimeline[idx].time = e.target.value;
+                                                setEditData({ ...editData, timeline_data: newTimeline });
+                                              }}
+                                              className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-50 focus:border-red outline-none pb-1"
+                                              placeholder="Contoh: 1 Agustus - 8 Nov"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                              <Calendar size={10} /> Bulan (Group)
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={item.month}
+                                              onChange={(e) => {
+                                                const newTimeline = [...editData.timeline_data];
+                                                newTimeline[idx].month = e.target.value;
+                                                setEditData({ ...editData, timeline_data: newTimeline });
+                                              }}
+                                              className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-50 focus:border-red outline-none pb-1"
+                                              placeholder="Contoh: November"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                              <ArrowLeftRight size={10} /> Sisi Tampilan (Desktop)
+                                            </label>
+                                            <select
+                                              value={item.side}
+                                              onChange={(e) => {
+                                                const newTimeline = [...editData.timeline_data];
+                                                newTimeline[idx].side = e.target.value;
+                                                setEditData({ ...editData, timeline_data: newTimeline });
+                                              }}
+                                              className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-50 focus:border-red outline-none pb-1 cursor-pointer"
+                                            >
+                                              <option value="left text-right">Kiri</option>
+                                              <option value="right">Kanan</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            const newTimeline = editData.timeline_data.filter((_: any, i: number) => i !== idx);
+                                            setEditData({ ...editData, timeline_data: newTimeline });
+                                          }}
+                                          className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                          title="Hapus Event"
+                                        >
+                                          <Trash2 size={20} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {(!editData.timeline_data || editData.timeline_data.length === 0) && (
+                                    <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">
+                                      <Calendar className="mx-auto text-gray-300 mb-2" size={24} />
+                                      <p className="text-xs text-gray-400">Belum ada data Timeline. Tambahkan kegiatan pertama Anda.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                         {/* Section 3: Visibility Configuration */}
                         <div className="pt-6 border-t border-gray-100">
                           <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
