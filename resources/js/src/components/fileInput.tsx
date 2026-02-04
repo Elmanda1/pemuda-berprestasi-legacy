@@ -10,6 +10,7 @@ interface FileInputProps {
   className?: string;
   file?: File | null;
   placeholder?: string;
+  style?: React.CSSProperties;
 }
 
 const FileInput: React.FC<FileInputProps> = ({
@@ -19,7 +20,8 @@ const FileInput: React.FC<FileInputProps> = ({
   disabled = false,
   className = "",
   file,
-  placeholder = "Pilih file..."
+  placeholder = "Pilih file...",
+  style
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -76,7 +78,7 @@ const FileInput: React.FC<FileInputProps> = ({
   };
 
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative w-full ${className}`} style={style}>
       <input
         ref={fileInputRef}
         type="file"
@@ -93,8 +95,8 @@ const FileInput: React.FC<FileInputProps> = ({
           flex items-center justify-between w-full px-3 py-3 sm:px-4
           border-2 border-dashed rounded-xl cursor-pointer
           transition-all duration-300 min-h-[48px] sm:min-h-[52px]
-          ${disabled 
-            ? 'bg-gray-100 border-gray-300 cursor-not-allowed' 
+          ${disabled
+            ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
             : 'border-red/30 hover:border-red/50 bg-white/50 hover:bg-white/70'
           }
         `}

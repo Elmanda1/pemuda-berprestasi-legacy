@@ -43,7 +43,8 @@ class Kompetisi extends Model
         'registration_description',
         'registration_steps',
         'faq_data',
-        'timeline_data'
+        'timeline_data',
+        'template_type'
     ];
 
     protected $casts = [

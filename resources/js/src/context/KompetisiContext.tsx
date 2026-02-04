@@ -55,6 +55,7 @@ export interface Kompetisi {
   registration_steps?: any[];
   faq_data?: any[];
   timeline_data?: any[];
+  template_type?: string;
 }
 
 export interface KelasKejuaraan {

@@ -8,6 +8,7 @@ import { apiClient } from "../../config/api";
 import Select from "react-select";
 import toast from 'react-hot-toast';
 import FileInput from "../../components/fileInput";
+import { useKompetisi } from "../../context/KompetisiContext";
 
 interface FileState {
   fotoKtp?: File | null;
@@ -40,13 +41,13 @@ interface SelectOption {
 }
 
 // Tambahkan setelah import statements
-const FilePreview = ({ 
-  file, 
-  existingPath, 
-  onRemove, 
+const FilePreview = ({
+  file,
+  existingPath,
+  onRemove,
   disabled,
-  label 
-}: { 
+  label
+}: {
   file: File | null;
   existingPath?: string;
   onRemove: () => void;
@@ -56,7 +57,19 @@ const FilePreview = ({
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
-  
+  const { kompetisiDetail } = useKompetisi();
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? '#0a0a0a' : '#FFF5F7',
+    cardBg: isModern ? '#111111' : '#FFFFFF',
+    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
+    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
+    primary: isModern ? '#DC2626' : '#DC2626',
+    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+  };
+
   useEffect(() => {
     if (file) {
       try {
@@ -75,93 +88,93 @@ const FilePreview = ({
   }, [file]);
 
   const hasFile = file || existingPath;
-  
-const getDisplayFileName = () => {
-  if (file) return file.name;
-  if (existingPath) {
-    try {
-      // Cek jika existingPath adalah object atau bukan string valid
-      if (typeof existingPath !== 'string' || existingPath.includes('[object Object]')) {
-        console.warn('Invalid file path from backend:', existingPath);
+
+  const getDisplayFileName = () => {
+    if (file) return file.name;
+    if (existingPath) {
+      try {
+        // Cek jika existingPath adalah object atau bukan string valid
+        if (typeof existingPath !== 'string' || existingPath.includes('[object Object]')) {
+          console.warn('Invalid file path from backend:', existingPath);
+          return `${label} (File tersimpan)`;
+        }
+
+        const fileName = existingPath.split('/').pop() || label;
+        return fileName.length > 50 ? `${label} (File tersimpan)` : fileName;
+      } catch (error) {
+        console.error('Error processing file path:', error);
         return `${label} (File tersimpan)`;
       }
-      
-      const fileName = existingPath.split('/').pop() || label;
-      return fileName.length > 50 ? `${label} (File tersimpan)` : fileName;
-    } catch (error) {
-      console.error('Error processing file path:', error);
-      return `${label} (File tersimpan)`;
     }
-  }
-  return label;
-};
+    return label;
+  };
 
-const handleDownload = async () => {
-  if (!existingPath || typeof existingPath !== 'string' || existingPath.includes('[object Object]')) {
-    toast.error('Path file tidak valid');
-    return;
-  }
-  
-  try {
-    const baseUrl = '/api/v1';
-    
-    // FIX: Clean path untuk avoid double path
-    let cleanPath = existingPath;
-    if (existingPath.startsWith('/uploads/pelatih/')) {
-      cleanPath = existingPath.replace('/uploads/pelatih/', '');
-    }
-    
-    const downloadUrl = `${baseUrl}/uploads/pelatih/${cleanPath}`;
-    
-    const testResponse = await fetch(downloadUrl, { method: 'HEAD' });
-    if (!testResponse.ok) {
-      toast.error('File tidak ditemukan di server');
+  const handleDownload = async () => {
+    if (!existingPath || typeof existingPath !== 'string' || existingPath.includes('[object Object]')) {
+      toast.error('Path file tidak valid');
       return;
     }
-    
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = getDisplayFileName();
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success(`Download ${label} berhasil!`);
-    
-  } catch (error) {
-    console.error('Download error:', error);
-    toast.error('Gagal mendownload file');
-  }
-};
 
-const getPreviewUrl = () => {
-  if (file && previewUrl) return previewUrl;
-  
-  if (existingPath && typeof existingPath === 'string' && !existingPath.includes('[object Object]')) {
-    const baseUrl = '/api/v1';
-    
-    // FIX: Clean path untuk avoid double path
-    let cleanPath = existingPath;
-    if (existingPath.startsWith('/uploads/pelatih/')) {
-      cleanPath = existingPath.replace('/uploads/pelatih/', '');
+    try {
+      const baseUrl = '/api/v1';
+
+      // FIX: Clean path untuk avoid double path
+      let cleanPath = existingPath;
+      if (existingPath.startsWith('/uploads/pelatih/')) {
+        cleanPath = existingPath.replace('/uploads/pelatih/', '');
+      }
+
+      const downloadUrl = `${baseUrl}/uploads/pelatih/${cleanPath}`;
+
+      const testResponse = await fetch(downloadUrl, { method: 'HEAD' });
+      if (!testResponse.ok) {
+        toast.error('File tidak ditemukan di server');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = getDisplayFileName();
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Download ${label} berhasil!`);
+
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Gagal mendownload file');
     }
-    
-    const staticUrl = `${baseUrl}/uploads/pelatih/${cleanPath}`;
-    return staticUrl;
-  }
-  
-  return null;
-};
+  };
 
-const isImageFile = () => {
-  if (file) return file.type.startsWith('image/');
-  if (existingPath && typeof existingPath === 'string' && !existingPath.includes('[object Object]')) {
-    const ext = existingPath.toLowerCase().split('.').pop();
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
-  }
-  return false;
-};
+  const getPreviewUrl = () => {
+    if (file && previewUrl) return previewUrl;
+
+    if (existingPath && typeof existingPath === 'string' && !existingPath.includes('[object Object]')) {
+      const baseUrl = '/api/v1';
+
+      // FIX: Clean path untuk avoid double path
+      let cleanPath = existingPath;
+      if (existingPath.startsWith('/uploads/pelatih/')) {
+        cleanPath = existingPath.replace('/uploads/pelatih/', '');
+      }
+
+      const staticUrl = `${baseUrl}/uploads/pelatih/${cleanPath}`;
+      return staticUrl;
+    }
+
+    return null;
+  };
+
+  const isImageFile = () => {
+    if (file) return file.type.startsWith('image/');
+    if (existingPath && typeof existingPath === 'string' && !existingPath.includes('[object Object]')) {
+      const ext = existingPath.toLowerCase().split('.').pop();
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+    }
+    return false;
+  };
 
   if (!hasFile) return null;
 
@@ -169,27 +182,28 @@ const isImageFile = () => {
   const fileName = getDisplayFileName();
 
   return (
-    <div className="mt-2 p-3 bg-white/70 rounded-xl border border-red/20">
+    <div className={`mt-2 p-3 rounded-xl border`} style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.7)', borderColor: theme.border }}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-black/70">
+        <span className="text-sm font-medium" style={{ color: theme.textSecondary }}>
           {file ? `File baru: ${fileName}` : fileName}
         </span>
         {!disabled && (
           <button
             onClick={onRemove}
-            className="p-1 hover:bg-red/10 rounded-full transition-colors"
+            className="p-1 rounded-full transition-colors"
+            style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)' }}
             type="button"
           >
-            <X size={16} className="text-red" />
+            <X size={16} style={{ color: theme.primary }} />
           </button>
         )}
       </div>
-      
+
       <div className="flex gap-2">
         {displayUrl && !previewError && isImageFile() && (
           <div className="relative w-20 h-20 flex-shrink-0">
-            <img 
-              src={displayUrl} 
+            <img
+              src={displayUrl}
               alt={`Preview ${label}`}
               className="w-full h-full object-cover rounded-lg border border-gray-200"
               onError={(e) => {
@@ -199,13 +213,13 @@ const isImageFile = () => {
             />
           </div>
         )}
-        
+
         {(!displayUrl || previewError || !isImageFile()) && (
           <div className="flex items-center gap-2 text-sm text-gray-600 w-20 h-20 border rounded-lg justify-center bg-gray-50">
             <IdCard size={24} className="text-gray-400" />
           </div>
         )}
-        
+
         <div className="flex flex-col gap-1 flex-1">
           {displayUrl && (
             <button
@@ -219,7 +233,7 @@ const isImageFile = () => {
               {isImageFile() ? 'Lihat Gambar' : 'Buka File'}
             </button>
           )}
-          
+
           {existingPath && (
             <button
               onClick={handleDownload}
@@ -230,7 +244,7 @@ const isImageFile = () => {
               Download
             </button>
           )}
-          
+
           <div className="text-xs text-gray-500">
             {file ? 'File baru' : existingPath ? 'File tersimpan' : 'Tidak ada file'}
           </div>
@@ -241,16 +255,27 @@ const isImageFile = () => {
 };
 
 // Ganti baris 199
-const PasswordResetModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm 
+const PasswordResetModal = ({
+  isOpen,
+  onClose,
+  onConfirm
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { kompetisiDetail } = useKompetisi();
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    cardBg: isModern ? '#111111' : '#FFFFFF',
+    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
+    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
+    primary: isModern ? '#DC2626' : '#DC2626',
+    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+  };
 
   if (!isOpen) return null;
 
@@ -266,37 +291,39 @@ const PasswordResetModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop with blur effect */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
-      
+
       {/* Modal Container */}
       <div className="relative w-full max-w-md transform transition-all duration-300 scale-100 opacity-100">
         {/* Background decorative elements */}
         <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-red/10 to-red/5 rounded-full blur-xl animate-pulse" />
         <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-red/8 to-red/3 rounded-full blur-lg animate-pulse animation-delay-1000" />
-        
+
         {/* Main Modal */}
-        <div className="relative bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border border-red/10 overflow-hidden">
+        <div className="relative backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border overflow-hidden"
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
           {/* Glass morphism overlay */}
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]" />
-          
+          <div className="absolute inset-0 backdrop-blur-[1px]" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)' }} />
+
           {/* Header */}
-          <div className="relative px-6 py-5 border-b border-red/10 bg-gradient-to-r from-red/[0.02] via-transparent to-red/[0.02]">
+          <div className="relative px-6 py-5 border-b" style={{ borderColor: theme.border }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-red/10 rounded-xl">
-                  <Shield className="text-red w-6 h-6" />
+                <div className="p-2.5 rounded-xl" style={{ backgroundColor: theme.primary + '1A' }}>
+                  <Shield className="w-6 h-6" style={{ color: theme.primary }} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bebas tracking-wide bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
+                  <h3 className="text-xl font-bebas tracking-wide bg-clip-text text-transparent"
+                    style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}CC)` }}>
                     GANTI PASSWORD
                   </h3>
-                  <p className="text-xs text-black/60 font-plex">Konfirmasi tindakan keamanan</p>
+                  <p className="text-xs font-plex" style={{ color: theme.textSecondary }}>Konfirmasi tindakan keamanan</p>
                 </div>
               </div>
-              
+
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-red/10 rounded-lg transition-colors duration-200 group"
@@ -313,7 +340,7 @@ const PasswordResetModal = ({
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full mb-2">
                 <AlertTriangle className="w-8 h-8 text-amber-600" />
               </div>
-              
+
               <div className="space-y-2">
                 <h4 className="text-lg font-bebas tracking-wide text-black/90">
                   LOGOUT DIPERLUKAN
@@ -356,7 +383,7 @@ const PasswordResetModal = ({
               >
                 Batal
               </button>
-              
+
               <button
                 onClick={handleConfirm}
                 disabled={isLoading}
@@ -431,32 +458,47 @@ const provinsiOptions = Object.keys(provinsiKotaData).map(provinsi => ({
 
 const Settings = () => {
   const { user, token, logout } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const navigate = useNavigate();
+
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? '#0a0a0a' : '#FFF5F7',
+    cardBg: isModern ? '#111111' : '#FFFFFF',
+    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
+    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
+    primary: isModern ? '#DC2626' : '#DC2626',
+    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+    shadow: isModern ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
+    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+  };
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [files, setFiles] = useState<{
-  fotoKtp?: File | null;
-  sertifikatSabuk?: File | null;
-  fotoKtpPath?: string;
-  sertifikatSabukPath?: string;
-}>({
-  fotoKtp: null,
-  sertifikatSabuk: null,
-  fotoKtpPath: undefined,
-  sertifikatSabukPath: undefined,
-});
+    fotoKtp?: File | null;
+    sertifikatSabuk?: File | null;
+    fotoKtpPath?: string;
+    sertifikatSabukPath?: string;
+  }>({
+    fotoKtp: null,
+    sertifikatSabuk: null,
+    fotoKtpPath: undefined,
+    sertifikatSabukPath: undefined,
+  });
 
   // Update handleCancel function:
-const handleCancel = () => {
-  setIsEditing(false);
-  setFormData(initialData);
-  setFiles((prev: FileState) => ({
-    ...prev,
-    fotoKtp: null,
-    sertifikatSabuk: null
-  }));
-};
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData(initialData);
+    setFiles((prev: FileState) => ({
+      ...prev,
+      fotoKtp: null,
+      sertifikatSabuk: null
+    }));
+  };
 
   const [formData, setFormData] = useState<{
     email: string;
@@ -488,34 +530,34 @@ const handleCancel = () => {
   ];
 
   // Get city options based on selected province
-const kotaOptions: SelectOption[] = formData.Provinsi ? 
-  (provinsiKotaData[formData.Provinsi as keyof typeof provinsiKotaData]?.map((kota: string) => ({
-    value: kota,
-    label: kota
-  })) || []) : [];
+  const kotaOptions: SelectOption[] = formData.Provinsi ?
+    (provinsiKotaData[formData.Provinsi as keyof typeof provinsiKotaData]?.map((kota: string) => ({
+      value: kota,
+      label: kota
+    })) || []) : [];
 
-const handleProvinsiChange = (selectedOption: SelectOption | null) => {
-  setFormData({ 
-    ...formData, 
-    Provinsi: selectedOption?.value || "",
-    kota: ""
-  });
-};
+  const handleProvinsiChange = (selectedOption: SelectOption | null) => {
+    setFormData({
+      ...formData,
+      Provinsi: selectedOption?.value || "",
+      kota: ""
+    });
+  };
 
-const handleKotaChange = (selectedOption: SelectOption | null) => {
-  setFormData({ ...formData, kota: selectedOption?.value || "" });
-};
+  const handleKotaChange = (selectedOption: SelectOption | null) => {
+    setFormData({ ...formData, kota: selectedOption?.value || "" });
+  };
 
-const getSelectValue = (options: SelectOption[], value: string) => {
-  return options.find((option: SelectOption) => option.value === value) || null;
-};
+  const getSelectValue = (options: SelectOption[], value: string) => {
+    return options.find((option: SelectOption) => option.value === value) || null;
+  };
 
   // Handle password reset with modal
   const handlePasswordReset = async () => {
     try {
       // Clear auth context/tokens
       await logout();
-      
+
       // Redirect to reset password page
       window.location.href = '/api/v1/resetpassword';
     } catch (error) {
@@ -531,31 +573,31 @@ const getSelectValue = (options: SelectOption[], value: string) => {
     }
   }, [token]);
 
-// Update fetchFiles function
-useEffect(() => {
-  const fetchFiles = async () => {
-    if (!user) return;
-    try {
-      const res = await apiClient.get('/pelatih/files') as ApiResponse;
-      if (res.success) {
-        // Pastikan path yang diterima adalah string valid
-        const fotoKtpPath = res.data?.foto_ktp;
-        const sertifikatSabukPath = res.data?.sertifikat_sabuk;
-        
-        setFiles({
-          fotoKtp: null,
-          sertifikatSabuk: null,
-          fotoKtpPath: (typeof fotoKtpPath === 'string' && !fotoKtpPath.includes('[object Object]')) ? fotoKtpPath : undefined,
-          sertifikatSabukPath: (typeof sertifikatSabukPath === 'string' && !sertifikatSabukPath.includes('[object Object]')) ? sertifikatSabukPath : undefined
-        });
+  // Update fetchFiles function
+  useEffect(() => {
+    const fetchFiles = async () => {
+      if (!user) return;
+      try {
+        const res = await apiClient.get('/pelatih/files') as ApiResponse;
+        if (res.success) {
+          // Pastikan path yang diterima adalah string valid
+          const fotoKtpPath = res.data?.foto_ktp;
+          const sertifikatSabukPath = res.data?.sertifikat_sabuk;
+
+          setFiles({
+            fotoKtp: null,
+            sertifikatSabuk: null,
+            fotoKtpPath: (typeof fotoKtpPath === 'string' && !fotoKtpPath.includes('[object Object]')) ? fotoKtpPath : undefined,
+            sertifikatSabukPath: (typeof sertifikatSabukPath === 'string' && !sertifikatSabukPath.includes('[object Object]')) ? sertifikatSabukPath : undefined
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching files:', err);
+        toast.error('Gagal mengambil file');
       }
-    } catch (err) {
-      console.error('Error fetching files:', err);
-      toast.error('Gagal mengambil file');
-    }
-  };
-  fetchFiles();
-}, [user]);
+    };
+    fetchFiles();
+  }, [user]);
 
   // Fetch profile data dari API pelatih saat component mount
   useEffect(() => {
@@ -564,8 +606,8 @@ useEffect(() => {
 
       try {
         setLoading(true);
-const response = await apiClient.get('/pelatih/profile') as ApiResponse;
-        
+        const response = await apiClient.get('/pelatih/profile') as ApiResponse;
+
         if (response.success) {
           const profileData = response.data;
           const data = {
@@ -594,79 +636,79 @@ const response = await apiClient.get('/pelatih/profile') as ApiResponse;
   }, [user]);
 
   // Ganti handleUpdate function dengan:
-const handleUpdate = async () => {
-  try {
-    setLoading(true);
-    
-    // Update data text
-    const updateData = {
-      nama_pelatih: formData.name?.trim() || null,
-      no_telp: formData.no_telp?.trim() || null,
-      nik: formData.nik?.trim() || null,
-      tanggal_lahir: formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : null,
-      kota: formData.kota?.trim() || null,
-      provinsi: formData.Provinsi?.trim() || null,
-      alamat: formData.Alamat?.trim() || null,
-      jenis_kelamin: formData.jenis_kelamin || null,
-    };
+  const handleUpdate = async () => {
+    try {
+      setLoading(true);
 
-    const filteredData = Object.fromEntries(
-      Object.entries(updateData).filter(([_, value]) => value !== null && value !== '')
-    );
+      // Update data text
+      const updateData = {
+        nama_pelatih: formData.name?.trim() || null,
+        no_telp: formData.no_telp?.trim() || null,
+        nik: formData.nik?.trim() || null,
+        tanggal_lahir: formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : null,
+        kota: formData.kota?.trim() || null,
+        provinsi: formData.Provinsi?.trim() || null,
+        alamat: formData.Alamat?.trim() || null,
+        jenis_kelamin: formData.jenis_kelamin || null,
+      };
 
-const response = await apiClient.put("/pelatih/profile", filteredData) as ApiResponse;
-    
-    if (!response.success) {
-      toast.error(response.message || "Gagal memperbarui profil");
-      return;
+      const filteredData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, value]) => value !== null && value !== '')
+      );
+
+      const response = await apiClient.put("/pelatih/profile", filteredData) as ApiResponse;
+
+      if (!response.success) {
+        toast.error(response.message || "Gagal memperbarui profil");
+        return;
+      }
+
+      // Upload files jika ada
+      if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
+        const formDataToSend = new FormData();
+
+        if (files.fotoKtp instanceof File) {
+          formDataToSend.append("foto_ktp", files.fotoKtp);
+        }
+        if (files.sertifikatSabuk instanceof File) {
+          formDataToSend.append("sertifikat_sabuk", files.sertifikatSabuk);
+        }
+
+        const uploadRes = await apiClient.postFormData("/pelatih/upload", formDataToSend) as ApiResponse;
+
+        console.log('Upload response:', uploadRes); // Debug log
+
+        if (uploadRes.success) {
+          // Validasi response data
+          const newFotoKtpPath = uploadRes.data?.foto_ktp;
+          const newSertifikatPath = uploadRes.data?.sertifikat_sabuk;
+
+          setFiles(prev => ({
+            ...prev,
+            fotoKtp: null,
+            sertifikatSabuk: null,
+            fotoKtpPath: (typeof newFotoKtpPath === 'string' && !newFotoKtpPath.includes('[object Object]'))
+              ? newFotoKtpPath : prev.fotoKtpPath,
+            sertifikatSabukPath: (typeof newSertifikatPath === 'string' && !newSertifikatPath.includes('[object Object]'))
+              ? newSertifikatPath : prev.sertifikatSabukPath
+          }));
+          toast.success("File berhasil diupload");
+        } else {
+          toast.error(uploadRes.message || "Upload file gagal");
+          return;
+        }
+      }
+
+      setIsEditing(false);
+      toast.success("Profil berhasil diperbarui");
+
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Pastikan semua data sudah sesuai");
+    } finally {
+      setLoading(false);
     }
-
-    // Upload files jika ada
-if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
-  const formDataToSend = new FormData();
-  
-  if (files.fotoKtp instanceof File) {
-    formDataToSend.append("foto_ktp", files.fotoKtp);
-  }
-  if (files.sertifikatSabuk instanceof File) {
-    formDataToSend.append("sertifikat_sabuk", files.sertifikatSabuk);
-  }
-
-  const uploadRes = await apiClient.postFormData("/pelatih/upload", formDataToSend) as ApiResponse;
-  
-  console.log('Upload response:', uploadRes); // Debug log
-  
-  if (uploadRes.success) {
-    // Validasi response data
-    const newFotoKtpPath = uploadRes.data?.foto_ktp;
-    const newSertifikatPath = uploadRes.data?.sertifikat_sabuk;
-    
-    setFiles(prev => ({
-      ...prev,
-      fotoKtp: null,
-      sertifikatSabuk: null,
-      fotoKtpPath: (typeof newFotoKtpPath === 'string' && !newFotoKtpPath.includes('[object Object]')) 
-        ? newFotoKtpPath : prev.fotoKtpPath,
-      sertifikatSabukPath: (typeof newSertifikatPath === 'string' && !newSertifikatPath.includes('[object Object]'))
-        ? newSertifikatPath : prev.sertifikatSabukPath
-    }));
-    toast.success("File berhasil diupload");
-  } else {
-    toast.error(uploadRes.message || "Upload file gagal");
-    return;
-  }
-}
-
-    setIsEditing(false);
-    toast.success("Profil berhasil diperbarui");
-    
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    toast.error("Pastikan semua data sudah sesuai");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Redirect jika tidak login
   useEffect(() => {
@@ -679,23 +721,23 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
   // Loading state
   if (loading && !formData.name) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white via-red/[0.02] to-white flex items-center justify-center overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center overflow-hidden transition-colors duration-300" style={{ background: theme.gradient }}>
         {/* Animated Background Elements - Responsive */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 border border-red/[0.08] rounded-full animate-pulse opacity-40"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-36 sm:w-56 lg:w-72 h-36 sm:h-56 lg:h-72 border border-red/[0.06] rounded-full animate-pulse opacity-30 animation-delay-1000"></div>
+          <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 border rounded-full animate-pulse opacity-40" style={{ borderColor: theme.border }}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-36 sm:w-56 lg:w-72 h-36 sm:h-56 lg:h-72 border rounded-full animate-pulse opacity-30 animation-delay-1000" style={{ borderColor: theme.border }}></div>
         </div>
-        
+
         <div className="text-center relative z-10 px-4">
           <div className="relative">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-red/20 border-t-red rounded-full animate-spin mx-auto mb-4 sm:mb-6"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 border-2 border-red/30 border-t-red/80 rounded-full animate-spin animation-reverse"></div>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4 sm:mb-6" style={{ borderColor: theme.primary, borderTopColor: 'transparent' }}></div>
           </div>
           <div className="space-y-2">
-            <p className="text-lg sm:text-xl font-bebas tracking-wide bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
+            <p className="text-lg sm:text-xl font-bebas tracking-wide bg-clip-text text-transparent"
+              style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}CC)` }}>
               MEMUAT PROFIL
             </p>
-            <p className="text-black/60 font-plex text-sm">Tunggu sebentar...</p>
+            <p className="font-plex text-sm" style={{ color: theme.textSecondary }}>Tunggu sebentar...</p>
           </div>
         </div>
       </div>
@@ -703,28 +745,29 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-red/[0.02] to-white overflow-hidden">
+    <div className="min-h-screen overflow-hidden transition-colors duration-300" style={{ background: theme.gradient }}>
       {/* Animated Background Elements - Responsive */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 border border-red/[0.08] rounded-full animate-pulse opacity-40"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-36 sm:w-56 lg:w-72 h-36 sm:h-56 lg:h-72 border border-red/[0.06] rounded-full animate-pulse opacity-30 animation-delay-1000"></div>
-        <div className="absolute top-1/2 right-1/3 w-1 h-1 sm:w-2 sm:h-2 bg-red/20 rounded-full animate-bounce opacity-60"></div>
-        <div className="absolute bottom-1/3 left-1/4 w-1 h-1 bg-red/30 rounded-full animate-bounce animation-delay-500"></div>
+        <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 border rounded-full animate-pulse opacity-40" style={{ borderColor: theme.border }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-36 sm:w-56 lg:w-72 h-36 sm:h-56 lg:h-72 border rounded-full animate-pulse opacity-30 animation-delay-1000" style={{ borderColor: theme.border }}></div>
+        <div className="absolute top-1/2 right-1/3 w-1 h-1 sm:w-2 sm:h-2 rounded-full animate-bounce opacity-60" style={{ backgroundColor: theme.primary }}></div>
+        <div className="absolute bottom-1/3 left-1/4 w-1 h-1 rounded-full animate-bounce animation-delay-500" style={{ backgroundColor: theme.primary }}></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 relative z-10">
-        
+
         {/* Header - Mobile Optimized */}
         <div className="mb-6 sm:mb-8 lg:mb-12">
-          <Link 
-            to='/' 
-            className="inline-flex items-center gap-2 sm:gap-3 text-black/70 hover:text-red transition-all duration-300 group mb-6 sm:mb-8"
+          <Link
+            to='/'
+            className="inline-flex items-center gap-2 sm:gap-3 transition-all duration-300 group mb-6 sm:mb-8"
+            style={{ color: theme.textSecondary }}
           >
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="flex items-center gap-2 transition-colors duration-200"
-              style={{ 
-                color: '#990D35',
+              style={{
+                color: theme.primary,
                 fontFamily: 'IBM Plex Sans, sans-serif'
               }}
               title="Kembali ke Beranda"
@@ -733,35 +776,37 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
               <span className="font-medium">Beranda</span>
             </button>
           </Link>
-          
+
           {/* Enhanced Header - Mobile Responsive */}
           <div className="relative">
             {/* Section Label */}
             <div className="inline-block group mb-3 sm:mb-4">
-              <span className="text-red font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.15em] sm:tracking-[0.2em] border-l-3 sm:border-l-4 border-red pl-4 sm:pl-6 relative">
+              <span className="font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.15em] sm:tracking-[0.2em] border-l-3 sm:border-l-4 pl-4 sm:pl-6 relative"
+                style={{ color: theme.primary, borderColor: theme.primary }}>
                 Pengaturan Akun
-                <div className="absolute -left-1 top-0 bottom-0 w-1 bg-red/20 group-hover:bg-red/40 transition-colors duration-300"></div>
+                <div className="absolute -left-1 top-0 bottom-0 w-1 transition-colors duration-300"
+                  style={{ backgroundColor: theme.primary + '33' }}></div>
               </span>
             </div>
-            
+
             {/* Main Title - Mobile Responsive */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
               <div className="p-3 sm:p-4 flex bg-gradient-to-br from-red to-red/90 rounded-xl sm:rounded-2xl shadow-lg w-fit">
                 <SettingsIcon className="text-white" size={24} />
               </div>
               <div className="space-y-1 sm:space-y-2">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas leading-[0.85] tracking-wide">
-                  <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas leading-[0.85] tracking-wide" style={{ color: theme.textPrimary }}>
+                  <span className="bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}E6)` }}>
                     Kelola Profil
                   </span>
-                  <span className="block bg-gradient-to-r from-red/90 via-red to-red/90 bg-clip-text text-transparent">
+                  <span className="block bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}E6, ${theme.primary}, ${theme.primary}E6)` }}>
                     Anda
                   </span>
                 </h1>
-                <div className="w-16 sm:w-24 h-0.5 sm:h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
+                <div className="w-16 sm:w-24 h-0.5 sm:h-1 rounded-full" style={{ background: `linear-gradient(to right, ${theme.primary}, ${theme.primary}99)` }}></div>
               </div>
             </div>
-            <p className="font-plex text-black/70 text-sm sm:text-base lg:text-lg max-w-2xl leading-relaxed">
+            <p className="font-plex text-sm sm:text-base lg:text-lg max-w-2xl leading-relaxed" style={{ color: theme.textSecondary }}>
               Perbarui informasi personal dan kelola pengaturan keamanan akun Anda dengan mudah dan aman.
             </p>
           </div>
@@ -769,44 +814,46 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
         {/* Main Content - Improved Grid Responsiveness */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 max-w-7xl mx-auto">
-          
+
           {/* Profile Card - Mobile First */}
           <div className="lg:col-span-4">
             <div className="relative group">
               {/* Decorative background elements - Responsive */}
               <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-12 h-12 sm:w-20 sm:h-20 bg-gradient-to-br from-red/8 to-red/4 rounded-full blur-sm group-hover:scale-110 transition-transform duration-700"></div>
               <div className="absolute -bottom-3 -left-3 sm:-bottom-6 sm:-left-6 w-10 h-10 sm:w-16 sm:h-16 bg-gradient-to-br from-red/6 to-red/3 rounded-full blur-sm group-hover:scale-110 transition-transform duration-700 animation-delay-200"></div>
-              
-              <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border border-red/10 group-hover:shadow-2xl group-hover:shadow-red/10 transition-all duration-500">
+
+              <div className="relative backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border transition-all duration-500"
+                style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
                 {/* Glass morphism overlay */}
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl"></div>
-                
+                <div className="absolute inset-0 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)' }}></div>
+
                 <div className="relative text-center space-y-4 sm:space-y-6">
                   <div className="relative inline-block">
-                    <div 
-                      onClick={() => toast.error("Fitur upload foto akan segera hadir")} 
+                    <div
+                      onClick={() => toast.error("Fitur upload foto akan segera hadir")}
                       className='h-20 w-20 sm:h-28 sm:w-28 rounded-xl sm:rounded-full overflow-hidden shadow-lg bg-gradient-to-br from-red/70 to-red/90 mx-auto cursor-pointer hover:border-red/40 hover:shadow-xl transition-all duration-300 hover:scale-105 group/avatar'
                     >
                       <div className="w-full h-full flex items-center justify-center text-white group-hover/avatar:bg-red/90 transition-colors duration-300">
-                        <User strokeWidth={1.5} size={32} className="sm:w-10 sm:h-10"/>
+                        <User strokeWidth={1.5} size={32} className="sm:w-10 sm:h-10" />
                       </div>
                     </div>
                     {/* Online indicator - Responsive */}
                     <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 w-4 h-4 sm:w-6 sm:h-6 bg-green-500 border-2 sm:border-4 border-white rounded-full shadow-sm"></div>
                   </div>
-                  
+
                   <div className="space-y-1 sm:space-y-2">
-                    <h3 className="font-bebas text-lg sm:text-2xl tracking-wide bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
+                    <h3 className="font-bebas text-lg sm:text-2xl tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}CC)` }}>
                       {formData.name || user?.pelatih?.nama_pelatih || 'Pengguna'}
                     </h3>
-                    <p className="font-plex text-black/60 text-xs sm:text-sm bg-red/5 px-2 sm:px-3 py-1 rounded-full inline-block">
+                    <p className="font-plex text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full inline-block"
+                      style={{ color: theme.textSecondary, backgroundColor: theme.primary + '0D' }}>
                       {formData.email}
                     </p>
                   </div>
-                  
+
                   {/* Enhanced Account Actions - Mobile Optimized */}
                   <div className="space-y-3 sm:space-y-4 pt-2 sm:pt-4">
-                    <button 
+                    <button
                       onClick={() => setShowPasswordModal(true)}
                       className="group/btn w-full flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-red to-red/90 text-white rounded-lg sm:rounded-xl font-plex font-medium hover:from-red/90 hover:to-red hover:shadow-lg hover:shadow-red/25 transition-all duration-300 hover:-translate-y-0.5 text-sm sm:text-base"
                     >
@@ -828,27 +875,30 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
               {/* Decorative elements - Responsive */}
               <div className="absolute top-1/4 -right-1 sm:-right-2 w-2 h-2 sm:w-3 sm:h-3 bg-red/30 rounded-full animate-ping"></div>
               <div className="absolute bottom-1/3 -left-0.5 sm:-left-1 w-1 h-1 sm:w-2 sm:h-2 bg-red/20 rounded-full animate-ping animation-delay-1000"></div>
-              
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl border border-red/10 overflow-hidden group-hover:shadow-2xl group-hover:shadow-red/10 transition-all duration-500">
+
+              <div className="backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl border overflow-hidden transition-all duration-500"
+                style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
                 {/* Glass morphism overlay */}
-                <div className="absolute inset-0 bg-white/5 backdrop-blur-[0.5px]"></div>
-                
+                <div className="absolute inset-0 backdrop-blur-[0.5px]" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.05)' }}></div>
+
                 {/* Enhanced Form Header - Mobile Responsive */}
-                <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-red/10 bg-gradient-to-r from-red/[0.02] via-transparent to-red/[0.02]">
+                <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b"
+                  style={{ borderColor: theme.border, background: 'local' }}>
                   {/* Mobile Layout - Stacked */}
                   <div className="block sm:hidden space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-red/10 rounded-lg">
-                        <User className="text-red" size={20} />
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: theme.primary + '1A' }}>
+                        <User size={20} style={{ color: theme.primary }} />
                       </div>
                       <div>
-                        <h2 className="text-xl font-bebas tracking-wide bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
+                        <h2 className="text-xl font-bebas tracking-wide bg-clip-text text-transparent"
+                          style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}CC)` }}>
                           INFORMASI PERSONAL
                         </h2>
-                        <p className="font-plex text-black/60 text-xs">Kelola data pribadi Anda</p>
+                        <p className="font-plex text-xs" style={{ color: theme.textSecondary }}>Kelola data pribadi Anda</p>
                       </div>
                     </div>
-                    
+
                     {/* Mobile Action Button */}
                     {!isEditing ? (
                       <button
@@ -866,7 +916,8 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                         <button
                           onClick={handleCancel}
                           disabled={loading}
-                          className="flex-1 px-4 py-3 border-2 border-red/30 text-red hover:bg-red/5 hover:border-red/50 rounded-xl font-plex font-medium transition-all duration-300 hover:shadow-lg disabled:opacity-50 text-sm"
+                          className="flex-1 px-4 py-3 border-2 rounded-xl font-plex font-medium transition-all duration-300 hover:shadow-lg disabled:opacity-50 text-sm"
+                          style={{ borderColor: theme.primary, color: theme.primary, backgroundColor: 'transparent' }}
                         >
                           Batal
                         </button>
@@ -889,17 +940,18 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                   {/* Desktop Layout - Horizontal */}
                   <div className="hidden sm:flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-red/10 rounded-xl">
-                        <User className="text-red" size={24} />
+                      <div className="p-3 rounded-xl" style={{ backgroundColor: theme.primary + '1A' }}>
+                        <User size={24} style={{ color: theme.primary }} />
                       </div>
                       <div>
-                        <h2 className="text-2xl md:text-3xl font-bebas tracking-wide bg-gradient-to-r from-red to-red/80 bg-clip-text text-transparent">
+                        <h2 className="text-2xl md:text-3xl font-bebas tracking-wide bg-clip-text text-transparent"
+                          style={{ backgroundImage: `linear-gradient(to right, ${theme.primary}, ${theme.primary}CC)` }}>
                           INFORMASI PERSONAL
                         </h2>
-                        <p className="font-plex text-black/60 text-sm">Kelola data pribadi Anda dengan aman</p>
+                        <p className="font-plex text-sm" style={{ color: theme.textSecondary }}>Kelola data pribadi Anda dengan aman</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-3">
                       {!isEditing ? (
                         <button
@@ -917,7 +969,8 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                           <button
                             onClick={handleCancel}
                             disabled={loading}
-                            className="px-6 py-3 border-2 border-red/30 text-red hover:bg-red/5 hover:border-red/50 rounded-xl font-plex font-medium transition-all duration-300 hover:shadow-lg disabled:opacity-50"
+                            className="px-6 py-3 border-2 rounded-xl font-plex font-medium transition-all duration-300 hover:shadow-lg disabled:opacity-50"
+                            style={{ borderColor: theme.primary, color: theme.primary, backgroundColor: 'transparent' }}
                           >
                             Batal
                           </button>
@@ -942,10 +995,10 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                 {/* Form Fields - Mobile Optimized */}
                 <div className="relative p-4 sm:p-6 lg:p-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    
+
                     {/* Email (Read Only) */}
                     <div className="md:col-span-2 space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Alamat Email
                       </label>
                       <TextInput
@@ -959,7 +1012,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* NIK */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Nomor Induk Kependudukan
                       </label>
                       <TextInput
@@ -970,11 +1023,11 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                         placeholder="Masukkan NIK"
                         icon={<IdCard className={isEditing ? "text-red/60" : "text-gray-400"} size={20} />}
                       />
-                    </div>                  
-                    
+                    </div>
+
                     {/* Nama */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Nama Lengkap
                       </label>
                       <TextInput
@@ -989,7 +1042,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Phone */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Nomor Telepon
                       </label>
                       <TextInput
@@ -1004,7 +1057,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Tanggal Lahir */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Tanggal Lahir
                       </label>
                       <TextInput
@@ -1020,7 +1073,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Gender */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Jenis Kelamin
                       </label>
                       <div className='relative'>
@@ -1035,20 +1088,20 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                           placeholder="Pilih jenis kelamin"
                           classNames={{
                             control: () =>
-                              `flex items-center border-2 ${
-                                isEditing 
-                                  ? 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80' 
-                                  : 'border-gray-200 bg-gray-50'
+                              `flex items-center border-2 ${isEditing
+                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
+                                : 'border-gray-200 bg-gray-50'
                               } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            menu: () => "border border-red/20 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50",
+                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
+                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
                             option: ({ isFocused, isSelected }) =>
                               [
                                 "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200",
-                                isFocused ? "bg-red/10 text-red" : "text-black/80",
-                                isSelected ? "bg-red text-white" : ""
+                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
+                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
                               ].join(" "),
                           }}
                         />
@@ -1058,7 +1111,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Provinsi */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Provinsi
                       </label>
                       <div className='relative'>
@@ -1075,21 +1128,20 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                           placeholder="Pilih provinsi"
                           classNames={{
                             control: () =>
-                              `flex items-center border-2 ${
-                                isEditing 
-                                  ? 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80' 
-                                  : 'border-gray-200 bg-gray-50'
+                              `flex items-center border-2 ${isEditing
+                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
+                                : 'border-gray-200 bg-gray-50'
                               } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            singleValue: () => "text-black/80 font-plex text-sm",
-                            menu: () => "border border-red/20 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50",
+                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
+                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
                             option: ({ isFocused, isSelected }) =>
                               [
                                 "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200 hover:text-red",
-                                isFocused ? "bg-red/10 text-red" : "text-black/80",
-                                isSelected ? "bg-red text-white" : ""
+                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
+                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
                               ].join(" "),
                           }}
                         />
@@ -1099,7 +1151,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Kota */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Kota
                       </label>
                       <div className='relative'>
@@ -1116,21 +1168,20 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                           placeholder={formData.Provinsi ? "Pilih kota" : "Pilih provinsi dulu"}
                           classNames={{
                             control: () =>
-                              `flex items-center border-2 ${
-                                isEditing && formData.Provinsi
-                                  ? 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80' 
-                                  : 'border-gray-200 bg-gray-50'
+                              `flex items-center border-2 ${isEditing && formData.Provinsi
+                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
+                                : 'border-gray-200 bg-gray-50'
                               } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            singleValue: () => "text-black/80 font-plex text-sm",
-                            menu: () => "border border-red/20 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50",
+                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
+                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
                             option: ({ isFocused, isSelected }) =>
                               [
                                 "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200 hover:text-red",
-                                isFocused ? "bg-red/10 text-red" : "text-black/80",
-                                isSelected ? "bg-red text-white" : ""
+                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
+                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
                               ].join(" "),
                           }}
                         />
@@ -1140,7 +1191,7 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
 
                     {/* Alamat */}
                     <div className="md:col-span-2 space-y-2 sm:space-y-3">
-                      <label className="block font-plex font-semibold text-black/80 text-sm">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
                         Alamat Lengkap
                       </label>
                       <div className="relative">
@@ -1152,11 +1203,11 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                           onChange={(e) => setFormData({ ...formData, Alamat: e.target.value })}
                           disabled={!isEditing}
                           rows={3}
-                          className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white/80 backdrop-blur-sm placeholder-gray-400 text-black/80 font-plex border-2 ${
-                            isEditing 
-                              ? 'border-red/20 hover:border-red/40 focus:border-red bg-white' 
-                              : 'border-gray-200 bg-gray-50'
-                          } rounded-xl text-sm transition-all duration-300 hover:shadow-lg focus:shadow-lg resize-none`}
+                          className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 backdrop-blur-sm placeholder-gray-400 font-plex border-2 ${isEditing
+                            ? isModern ? 'border-white/10 hover:border-white/30 focus:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus:border-red bg-white'
+                            : 'border-gray-200 bg-gray-50'
+                            } rounded-xl text-sm transition-all duration-300 hover:shadow-lg focus:shadow-lg resize-none`}
+                          style={{ color: isEditing ? theme.textPrimary : '#1F2937' }}
                           placeholder="Masukkan alamat lengkap"
                         />
                         {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
@@ -1164,66 +1215,66 @@ if (files.fotoKtp instanceof File || files.sertifikatSabuk instanceof File) {
                     </div>
 
                     <div className="space-y-2 sm:space-y-3">
-  <label className="block font-plex font-semibold text-black/80 text-sm">
-    Upload Foto KTP
-  </label>
-  <div className="relative">
-    <FileInput
-      accept="image/*"
-      disabled={!isEditing}
-      onChange={(e) => setFiles(prev => ({
-        ...prev, 
-        fotoKtp: e.target.files?.[0] || null
-      }))}
-      className="border-red/20 bg-white/50 backdrop-blur-sm rounded-xl hover:border-red transition-all duration-300"
-    />
-    {!isEditing && (
-      <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />
-    )}
-  </div>
-  <FilePreview
-    file={files.fotoKtp || null}
-    existingPath={files.fotoKtpPath}
-    onRemove={() => setFiles(prev => ({
-      ...prev, 
-      fotoKtp: null,
-      fotoKtpPath: undefined
-    }))}
-    disabled={!isEditing}
-    label="Foto KTP"
-  />
-</div>
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
+                        Upload Foto KTP
+                      </label>
+                      <div className="relative">
+                        <FileInput
+                          accept="image/*"
+                          disabled={!isEditing}
+                          onChange={(e) => setFiles(prev => ({
+                            ...prev,
+                            fotoKtp: e.target.files?.[0] || null
+                          }))}
+                          className="border-red/20 bg-white/50 backdrop-blur-sm rounded-xl hover:border-red transition-all duration-300"
+                        />
+                        {!isEditing && (
+                          <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />
+                        )}
+                      </div>
+                      <FilePreview
+                        file={files.fotoKtp || null}
+                        existingPath={files.fotoKtpPath}
+                        onRemove={() => setFiles(prev => ({
+                          ...prev,
+                          fotoKtp: null,
+                          fotoKtpPath: undefined
+                        }))}
+                        disabled={!isEditing}
+                        label="Foto KTP"
+                      />
+                    </div>
 
-<div className="space-y-2 sm:space-y-3">
-  <label className="block font-plex font-semibold text-black/80 text-sm">
-    Upload Sertifikat Sabuk
-  </label>
-  <div className="relative">
-    <FileInput
-      accept="image/*,application/pdf"
-      disabled={!isEditing}
-      onChange={(e) => setFiles(prev => ({
-        ...prev, 
-        sertifikatSabuk: e.target.files?.[0] || null
-      }))}
-      className="border-red/20 bg-white/50 backdrop-blur-sm rounded-xl hover:border-red transition-all duration-300"
-    />
-    {!isEditing && (
-      <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />
-    )}
-  </div>
-  <FilePreview
-    file={files.sertifikatSabuk || null}
-    existingPath={files.sertifikatSabukPath}
-    onRemove={() => setFiles(prev => ({
-      ...prev, 
-      sertifikatSabuk: null,
-      sertifikatSabukPath: undefined
-    }))}
-    disabled={!isEditing}
-    label="Sertifikat Sabuk"
-  />
-</div>
+                    <div className="space-y-2 sm:space-y-3">
+                      <label className="block font-plex font-semibold text-sm" style={{ color: theme.textPrimary }}>
+                        Upload Sertifikat Sabuk
+                      </label>
+                      <div className="relative">
+                        <FileInput
+                          accept="image/*,application/pdf"
+                          disabled={!isEditing}
+                          onChange={(e) => setFiles(prev => ({
+                            ...prev,
+                            sertifikatSabuk: e.target.files?.[0] || null
+                          }))}
+                          className="border-red/20 bg-white/50 backdrop-blur-sm rounded-xl hover:border-red transition-all duration-300"
+                        />
+                        {!isEditing && (
+                          <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />
+                        )}
+                      </div>
+                      <FilePreview
+                        file={files.sertifikatSabuk || null}
+                        existingPath={files.sertifikatSabukPath}
+                        onRemove={() => setFiles(prev => ({
+                          ...prev,
+                          sertifikatSabuk: null,
+                          sertifikatSabukPath: undefined
+                        }))}
+                        disabled={!isEditing}
+                        label="Sertifikat Sabuk"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

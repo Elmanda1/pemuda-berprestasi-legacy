@@ -12,6 +12,7 @@ export interface TextInputProps {
   max?: string;
   step?: string;
   maxLength?: number;
+  style?: React.CSSProperties;
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -28,12 +29,11 @@ const TextInput: React.FC<TextInputProps> = ({
       </div>
     )}
     <input
-      type={type} 
+      type={type}
       disabled={disabled}
       {...props}
-      className={`placeholder-red/50 w-full ${icon ? 'pl-12' : 'pl-4'} pr-4 py-3 border-2 rounded-xl font-plex transition-all duration-300 focus:outline-none ${
-        disabled ? 'bg-gray-100 cursor-not-allowed' : 'hover:border-red/40'
-      } ${className}`}
+      className={`placeholder-red/50 w-full ${icon ? 'pl-12' : 'pl-4'} pr-4 py-3 border-2 rounded-xl font-plex transition-all duration-300 focus:outline-none ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'hover:border-red/40'
+        } ${className}`}
     />
   </div>
 );

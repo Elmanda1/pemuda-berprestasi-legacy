@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react"; // Change to type-only import
-import { Phone, Mail, MapPin, Map, Building, Flag, Menu, Award, Eye, Download, Upload, X} from 'lucide-react';
+import { Phone, Mail, MapPin, Map, Building, Flag, Menu, Award, Eye, Download, Upload, X } from 'lucide-react';
 import NavbarDashboard from "../../components/navbar/navbarDashboard"; // Import NavbarDashboard
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiClient } from "../../config/api";
 import { PDFDocument, rgb } from "pdf-lib";
+import { useKompetisi } from "../../context/KompetisiContext";
 
 // Types untuk components
 interface TextInputProps {
@@ -54,18 +55,29 @@ interface FormDataType {
   alamat: string;
 }
 
-export const TextInput: React.FC<TextInputProps> = ({ placeholder, className, icon, value, disabled,type , onChange }) => {
+export const TextInput: React.FC<TextInputProps> = ({ placeholder, className, icon, value, disabled, type, onChange }) => {
+  const { kompetisiDetail } = useKompetisi();
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const inputBg = isModern ? 'bg-white/5' : 'bg-white/80';
+  const borderColor = isModern ? 'border-white/10 group-focus-within:border-red' : 'border-red/20 group-focus-within:border-red'; // Keep red focus for brand? Or white?
+  // User requested "theme hitam" (black theme). Usually brand color (Red) is still used for accents.
+  const iconColor = isModern ? 'text-red/80 group-focus-within:text-red' : 'text-red/60 group-focus-within:text-red';
+  const textColor = isModern ? 'text-white' : 'text-black/80';
+  const placeholderColor = isModern ? 'placeholder-white/30' : 'placeholder-red/30';
+
   return (
     <div className={`relative group ${className}`}>
-      <div className="flex items-center border-2 border-red/20 hover:border-red/40 focus-within:border-red rounded-xl px-4 py-3 gap-3 bg-white/80 backdrop-blur-sm transition-all duration-300 hover:shadow-lg">
-        {icon && <span className="text-red/60 group-focus-within:text-red transition-colors">{icon}</span>}
+      <div className={`flex items-center border-2 rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg ${inputBg} ${borderColor}`}>
+        {icon && <span className={`${iconColor} transition-colors`}>{icon}</span>}
         <input
           value={value}
           type={type}
           onChange={onChange}
           disabled={disabled}
           placeholder={placeholder}
-          className="w-full outline-none bg-transparent placeholder-red/30 text-black/80 font-plex"
+          className={`w-full outline-none bg-transparent font-plex ${textColor} ${placeholderColor}`}
         />
       </div>
       {disabled && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
@@ -73,7 +85,7 @@ export const TextInput: React.FC<TextInputProps> = ({ placeholder, className, ic
   );
 };
 
-export const GeneralButton: React.FC<GeneralButtonProps> = ({ label, className,disabled, onClick }) => (
+export const GeneralButton: React.FC<GeneralButtonProps> = ({ label, className, disabled, onClick }) => (
   <button
     disabled={disabled}
     onClick={onClick}
@@ -83,13 +95,13 @@ export const GeneralButton: React.FC<GeneralButtonProps> = ({ label, className,d
   </button>
 );
 
-const FilePreview = ({ 
-  file, 
-  existingPath, 
-  onRemove, 
+const FilePreview = ({
+  file,
+  existingPath,
+  onRemove,
   disabled,
-  label 
-}: { 
+  label
+}: {
   file: File | null;
   existingPath?: string;
   onRemove: () => void;
@@ -117,7 +129,7 @@ const FilePreview = ({
   }, [file]);
 
   const hasFile = file || existingPath;
-  
+
   const getDisplayFileName = () => {
     if (file) return file.name;
     if (existingPath) {
@@ -132,18 +144,18 @@ const FilePreview = ({
       toast.error('Tidak ada file untuk didownload');
       return;
     }
-    
+
     try {
       const baseUrl = '/api/v1';
       const downloadUrl = `${baseUrl}${existingPath}`;
       console.log(`📥 Downloading logo from: ${downloadUrl}`);
-      
+
       const testResponse = await fetch(downloadUrl, { method: 'HEAD' });
       if (!testResponse.ok) {
         toast.error('Logo tidak ditemukan di server');
         return;
       }
-      
+
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = getDisplayFileName();
@@ -151,9 +163,9 @@ const FilePreview = ({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success(`Download ${label} berhasil!`);
-      
+
     } catch (error) {
       console.error('❌ Download error:', error);
       toast.error('Gagal mendownload file');
@@ -162,14 +174,14 @@ const FilePreview = ({
 
   const getPreviewUrl = () => {
     if (file && previewUrl) return previewUrl;
-    
+
     if (existingPath) {
       const baseUrl = '/api/v1';
       const staticUrl = `${baseUrl}${existingPath}`;
       console.log("🌐 Logo Preview URL:", staticUrl);
       return staticUrl;
     }
-    
+
     return null;
   };
 
@@ -187,10 +199,19 @@ const FilePreview = ({
   const displayUrl = getPreviewUrl();
   const fileName = getDisplayFileName();
 
+  /* Hook logic needs to be inside component, but this is inside FilePreview */
+  const { kompetisiDetail } = useKompetisi();
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const previewBg = isModern ? 'bg-white/5' : 'bg-white/70';
+  const borderColor = isModern ? 'border-white/10' : 'border-red/20';
+  const textColor = isModern ? 'text-white/70' : 'text-black/70';
+
   return (
-    <div className="mt-2 p-3 bg-white/70 rounded-xl border border-red/20">
+    <div className={`mt-2 p-3 rounded-xl border ${previewBg} ${borderColor}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-black/70">
+        <span className={`text-sm font-medium ${textColor}`}>
           {file ? `File baru: ${fileName}` : fileName}
         </span>
         {!disabled && (
@@ -203,13 +224,13 @@ const FilePreview = ({
           </button>
         )}
       </div>
-      
+
       <div className="flex gap-2">
         {/* Preview Image */}
         {displayUrl && !previewError && isImageFile() && (
           <div className="relative w-20 h-20 flex-shrink-0">
-            <img 
-              src={displayUrl} 
+            <img
+              src={displayUrl}
               alt={`Preview ${label}`}
               className="w-full h-full object-cover rounded-lg border border-gray-200"
               onError={(e) => {
@@ -220,14 +241,14 @@ const FilePreview = ({
             />
           </div>
         )}
-        
+
         {/* File icon untuk non-image atau jika preview error */}
         {(!displayUrl || previewError || !isImageFile()) && (
           <div className="flex items-center gap-2 text-sm text-gray-600 w-20 h-20 border rounded-lg justify-center bg-gray-50">
             <Upload size={24} className="text-gray-400" />
           </div>
         )}
-        
+
         {/* Action Buttons */}
         <div className="flex flex-col gap-1 flex-1">
           {/* View/Preview Button */}
@@ -244,7 +265,7 @@ const FilePreview = ({
               Lihat Logo
             </button>
           )}
-          
+
           {/* Download button */}
           {existingPath && (
             <button
@@ -256,7 +277,7 @@ const FilePreview = ({
               Download
             </button>
           )}
-          
+
           {/* Status indicator */}
           <div className="text-xs text-gray-500">
             {file ? '📎 Logo baru' : existingPath ? '💾 Logo tersimpan' : 'Tidak ada logo'}
@@ -271,7 +292,22 @@ const Dojang = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { user, token } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const navigate = useNavigate();
+
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? '#0a0a0a' : '#FFF5F7',
+    cardBg: isModern ? '#111111' : '#FFFFFF',
+    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
+    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
+    primary: isModern ? '#DC2626' : '#DC2626',
+    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+    shadow: isModern ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
+    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+  };
 
   const [userDojang, setUserDojang] = useState<DojangData | null>(null);
   const [formData, setFormData] = useState<FormDataType | null>(null);
@@ -279,7 +315,7 @@ const Dojang = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasApprovedParticipants, setHasApprovedParticipants] = useState(false);
-  const [checkingParticipants, setCheckingParticipants] = useState(false);  
+  const [checkingParticipants, setCheckingParticipants] = useState(false);
 
   // ✅ FUNCTION: Generate Dojang Certificate
   const generateDojangCertificate = async () => {
@@ -290,11 +326,11 @@ const Dojang = () => {
 
     try {
       setLoading(true);
-      
+
       const templatePath = `/templates/piagam.pdf`;
       const existingPdfBytes = await fetch(templatePath)
         .then(res => res.arrayBuffer());
-      
+
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
@@ -336,10 +372,10 @@ const Dojang = () => {
       link.href = url;
       link.download = `Sertifikat-Dojang-${userDojang.nama_dojang.replace(/\s/g, '-')}.pdf`;
       link.click();
-      
+
       URL.revokeObjectURL(url);
       toast.success("Sertifikat dojang berhasil didownload!");
-      
+
     } catch (error: any) {
       console.error('Error generating dojang certificate:', error);
       toast.error('Gagal generate sertifikat dojang');
@@ -374,13 +410,13 @@ const Dojang = () => {
       try {
         setLoading(true);
         console.log('🔄 Fetching dojang data...');
-        
+
         const response = await apiClient.get("/dojang/my-dojang");
         console.log('📋 Raw API Response:', response);
-        
+
         const dojangData = response.data || response;
         console.log('📊 Dojang data:', dojangData);
-        
+
         if (!dojangData || !dojangData.id_dojang || !dojangData.nama_dojang) {
           console.log('⚠️ Invalid dojang data:', dojangData);
           toast.error("Data dojang tidak valid atau belum ada");
@@ -388,9 +424,9 @@ const Dojang = () => {
           setFormData(null);
           return;
         }
-        
+
         console.log('✅ Valid dojang data:', dojangData.nama_dojang);
-        
+
         setUserDojang(dojangData);
         setFormData({
           name: dojangData.nama_dojang || "",
@@ -403,7 +439,7 @@ const Dojang = () => {
           kelurahan: dojangData.kelurahan || "",
           alamat: dojangData.alamat || "",
         });
-        
+
         if (dojangData.logo) {
           setLogoPreview(`/uploads/dojang/logos/${dojangData.logo}`);
         } else if (dojangData.logo_url) {
@@ -414,15 +450,15 @@ const Dojang = () => {
         try {
           setCheckingParticipants(true);
           console.log('🔎 Checking approved participants for dojang:', dojangData.id_dojang);
-          
+
           // ✅ OPTIMIZED: Use dedicated endpoint for checking approved participants
           const checkResp = await apiClient.get(`/dojang/${dojangData.id_dojang}/has-approved-participants`);
-          
+
           console.log('📋 Approved participants check response:', checkResp);
-          
+
           // Handle response structure
           let hasApproved = false;
-          
+
           if (typeof checkResp === 'boolean') {
             hasApproved = checkResp;
           } else if (checkResp?.hasApproved !== undefined) {
@@ -433,22 +469,22 @@ const Dojang = () => {
 
           setHasApprovedParticipants(hasApproved);
           console.log(`🎯 Final result - hasApprovedParticipants: ${hasApproved} for dojang ${dojangData.id_dojang}`);
-          
+
           if (!hasApproved) {
             console.log('ℹ️ No APPROVED participants found. Certificate button will be disabled.');
           } else {
             console.log('✅ Found APPROVED participants. Certificate button will be enabled.');
           }
-          
+
         } catch (errCheck: any) {
           console.error('❌ Error checking approved participants:', errCheck);
           console.error('❌ Error details:', errCheck?.message || errCheck);
-          
+
           // Fallback: try alternative method with atlet endpoint
           console.log('🔄 Trying fallback method with atlet endpoint...');
           try {
             const atletResp = await apiClient.get(`/atlet/by-dojang/${dojangData.id_dojang}`);
-            
+
             let atletList: any[] = [];
             if (Array.isArray(atletResp)) {
               atletList = atletResp;
@@ -470,10 +506,10 @@ const Dojang = () => {
         } finally {
           setCheckingParticipants(false);
         }
-        
+
       } catch (err: any) {
         console.error('❌ Error fetching dojang:', err);
-        
+
         if (err.response?.status === 404) {
           toast.error("Pelatih belum memiliki dojang");
         } else if (err.response?.status === 401) {
@@ -481,7 +517,7 @@ const Dojang = () => {
         } else {
           toast.error(err.response?.data?.message || "Gagal mengambil data dojang");
         }
-        
+
         setUserDojang(null);
         setFormData(null);
       } finally {
@@ -495,168 +531,168 @@ const Dojang = () => {
   // ... rest of the component (handleCancel, handleLogoChange, removeLogo, handleUpdate, return JSX)
 
   const handleCancel = () => {
-  setIsEditing(false);
-  setLogoFile(null);
-  setLogoPreview(userDojang?.logo_url || null);
-  
-  if (userDojang) {
-    setFormData({
-      name: userDojang.nama_dojang,
-      email: userDojang.email,
-      phone: userDojang.no_telp,
-      negara: userDojang.negara,
-      provinsi: userDojang.provinsi,
-      kota: userDojang.kota,
-      kecamatan: userDojang.kecamatan,
-      kelurahan: userDojang.kelurahan,
-      alamat: userDojang.alamat,
-    });
-  }
-  
-  // Reset file inputs
-  const fileInputDesktop = document.getElementById('logo-upload') as HTMLInputElement;
-  const fileInputMobile = document.getElementById('logo-upload-mobile') as HTMLInputElement;
-  if (fileInputDesktop) fileInputDesktop.value = '';
-  if (fileInputMobile) fileInputMobile.value = '';
-};
+    setIsEditing(false);
+    setLogoFile(null);
+    setLogoPreview(userDojang?.logo_url || null);
+
+    if (userDojang) {
+      setFormData({
+        name: userDojang.nama_dojang,
+        email: userDojang.email,
+        phone: userDojang.no_telp,
+        negara: userDojang.negara,
+        provinsi: userDojang.provinsi,
+        kota: userDojang.kota,
+        kecamatan: userDojang.kecamatan,
+        kelurahan: userDojang.kelurahan,
+        alamat: userDojang.alamat,
+      });
+    }
+
+    // Reset file inputs
+    const fileInputDesktop = document.getElementById('logo-upload') as HTMLInputElement;
+    const fileInputMobile = document.getElementById('logo-upload-mobile') as HTMLInputElement;
+    if (fileInputDesktop) fileInputDesktop.value = '';
+    if (fileInputMobile) fileInputMobile.value = '';
+  };
 
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
-  const file = e.target?.files?.[0];
-  if (file) {
-    // Validasi ukuran file (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Ukuran file maksimal 5MB");
-      return;
+    const file = e.target?.files?.[0];
+    if (file) {
+      // Validasi ukuran file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+
+      // Validasi tipe file
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Format file harus JPG, PNG, JPEG, atau WebP");
+        return;
+      }
+
+      setLogoFile(file);
+
+      toast.success(`Logo ${file.name} berhasil dipilih`);
     }
+  };
 
-    // Validasi tipe file
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Format file harus JPG, PNG, JPEG, atau WebP");
-      return;
-    }
-
-    setLogoFile(file);
-    
-    toast.success(`Logo ${file.name} berhasil dipilih`);
-  }
-};
-
-const removeLogo = () => {
-  setLogoFile(null);
-  setLogoPreview(userDojang?.logo_url || null);
-  
-  const fileInputDesktop = document.getElementById('logo-upload') as HTMLInputElement;
-  const fileInputMobile = document.getElementById('logo-upload-mobile') as HTMLInputElement;
-  
-  if (fileInputDesktop) fileInputDesktop.value = '';
-  if (fileInputMobile) fileInputMobile.value = '';
-  
-  toast.success("Logo berhasil dihapus");
-};
-
-const handleUpdate = async () => {
-  if (!userDojang || !formData) {
-    toast.error("Data tidak lengkap");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    const updateFormData = new FormData();
-    
-    updateFormData.append('nama_dojang', formData.name.trim());
-    updateFormData.append('email', formData.email.trim());
-    updateFormData.append('no_telp', formData.phone.trim());
-    updateFormData.append('negara', formData.negara.trim());
-    updateFormData.append('provinsi', formData.provinsi.trim());
-    updateFormData.append('kota', formData.kota.trim());
-    updateFormData.append('kecamatan', formData.kecamatan.trim());
-    updateFormData.append('kelurahan', formData.kelurahan.trim());
-    updateFormData.append('alamat', formData.alamat.trim());
-    
-    if (logoFile) {
-      updateFormData.append('logo', logoFile);
-      console.log('📤 Uploading logo:', logoFile.name);
-    }
-
-    console.log('📤 Updating dojang ID:', userDojang.id_dojang);
-    
-    // ✅ PERBAIKAN: Gunakan putFormData instead of put
-    const response = await apiClient.putFormData(
-      `/dojang/${userDojang.id_dojang}`, 
-      updateFormData
-    ) as any;
-
-    console.log('📋 Full Response:', response);
-    
-    // ✅ PERBAIKAN: Handle response format dari backend
-    // Backend mengembalikan: { success: true, data: {...} }
-    let updatedData;
-    if (response.success && response.data) {
-      updatedData = response.data;
-      console.log('📊 Using success/data structure');
-    } else if (response.data) {
-      updatedData = response.data;
-      console.log('📊 Using data structure');
-    } else {
-      updatedData = response;
-      console.log('📊 Using direct response');
-    }
-    
-    console.log('📊 Final processed data:', updatedData);
-    
-    if (!updatedData || !updatedData.nama_dojang) {
-      console.error('❌ Invalid response data structure');
-      throw new Error("Response data tidak valid");
-    }
-    
-    console.log('✅ Setting new state with:', updatedData.nama_dojang);
-    
-    // Update state
-    setUserDojang(updatedData);
-    setFormData({
-      name: updatedData.nama_dojang || "",
-      email: updatedData.email || "",
-      phone: updatedData.no_telp || "",
-      negara: updatedData.negara || "",
-      provinsi: updatedData.provinsi || "",
-      kota: updatedData.kota || "",
-      kecamatan: updatedData.kecamatan || "",
-      kelurahan: updatedData.kelurahan || "",
-      alamat: updatedData.alamat || "",
-    });
-
-if (updatedData.logo) {
-  setLogoPreview(`/uploads/dojang/logos/${updatedData.logo}`);
-  console.log('📷 Updated logo URL:', `/uploads/dojang/logos/${updatedData.logo}`);
-} else if (updatedData.logo_url) {
-  setLogoPreview(updatedData.logo_url);
-  console.log('📷 Updated logo URL:', updatedData.logo_url);
-}
-
-    
+  const removeLogo = () => {
     setLogoFile(null);
-    setIsEditing(false);
-    toast.success("Data dojang berhasil diperbarui");
+    setLogoPreview(userDojang?.logo_url || null);
 
-  } catch (err: any) {
-    console.error("❌ Error updating dojang:", err);
-    console.error("❌ Error response:", err.response);
-    toast.error(err.response?.data?.message || err.message || "Update dojang gagal");
-  } finally {
-    setLoading(false);
-  }
-};
+    const fileInputDesktop = document.getElementById('logo-upload') as HTMLInputElement;
+    const fileInputMobile = document.getElementById('logo-upload-mobile') as HTMLInputElement;
+
+    if (fileInputDesktop) fileInputDesktop.value = '';
+    if (fileInputMobile) fileInputMobile.value = '';
+
+    toast.success("Logo berhasil dihapus");
+  };
+
+  const handleUpdate = async () => {
+    if (!userDojang || !formData) {
+      toast.error("Data tidak lengkap");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const updateFormData = new FormData();
+
+      updateFormData.append('nama_dojang', formData.name.trim());
+      updateFormData.append('email', formData.email.trim());
+      updateFormData.append('no_telp', formData.phone.trim());
+      updateFormData.append('negara', formData.negara.trim());
+      updateFormData.append('provinsi', formData.provinsi.trim());
+      updateFormData.append('kota', formData.kota.trim());
+      updateFormData.append('kecamatan', formData.kecamatan.trim());
+      updateFormData.append('kelurahan', formData.kelurahan.trim());
+      updateFormData.append('alamat', formData.alamat.trim());
+
+      if (logoFile) {
+        updateFormData.append('logo', logoFile);
+        console.log('📤 Uploading logo:', logoFile.name);
+      }
+
+      console.log('📤 Updating dojang ID:', userDojang.id_dojang);
+
+      // ✅ PERBAIKAN: Gunakan putFormData instead of put
+      const response = await apiClient.putFormData(
+        `/dojang/${userDojang.id_dojang}`,
+        updateFormData
+      ) as any;
+
+      console.log('📋 Full Response:', response);
+
+      // ✅ PERBAIKAN: Handle response format dari backend
+      // Backend mengembalikan: { success: true, data: {...} }
+      let updatedData;
+      if (response.success && response.data) {
+        updatedData = response.data;
+        console.log('📊 Using success/data structure');
+      } else if (response.data) {
+        updatedData = response.data;
+        console.log('📊 Using data structure');
+      } else {
+        updatedData = response;
+        console.log('📊 Using direct response');
+      }
+
+      console.log('📊 Final processed data:', updatedData);
+
+      if (!updatedData || !updatedData.nama_dojang) {
+        console.error('❌ Invalid response data structure');
+        throw new Error("Response data tidak valid");
+      }
+
+      console.log('✅ Setting new state with:', updatedData.nama_dojang);
+
+      // Update state
+      setUserDojang(updatedData);
+      setFormData({
+        name: updatedData.nama_dojang || "",
+        email: updatedData.email || "",
+        phone: updatedData.no_telp || "",
+        negara: updatedData.negara || "",
+        provinsi: updatedData.provinsi || "",
+        kota: updatedData.kota || "",
+        kecamatan: updatedData.kecamatan || "",
+        kelurahan: updatedData.kelurahan || "",
+        alamat: updatedData.alamat || "",
+      });
+
+      if (updatedData.logo) {
+        setLogoPreview(`/uploads/dojang/logos/${updatedData.logo}`);
+        console.log('📷 Updated logo URL:', `/uploads/dojang/logos/${updatedData.logo}`);
+      } else if (updatedData.logo_url) {
+        setLogoPreview(updatedData.logo_url);
+        console.log('📷 Updated logo URL:', updatedData.logo_url);
+      }
+
+
+      setLogoFile(null);
+      setIsEditing(false);
+      toast.success("Data dojang berhasil diperbarui");
+
+    } catch (err: any) {
+      console.error("❌ Error updating dojang:", err);
+      console.error("❌ Error response:", err.response);
+      toast.error(err.response?.data?.message || err.message || "Update dojang gagal");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!formData) {
     return (
-      <div className="min-h-screen max-w-screen bg-gradient-to-br from-white via-red/5 to-yellow/10">
+      <div className="min-h-screen max-w-screen transition-colors duration-300" style={{ background: theme.gradient }}>
         <NavbarDashboard />
         <div className="lg:ml-72 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red mb-4"></div>
-            <p className="text-red font-plex text-lg">Memuat data dojang...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: theme.primary }}></div>
+            <p className="font-plex text-lg" style={{ color: theme.primary }}>Memuat data dojang...</p>
           </div>
         </div>
       </div>
@@ -664,34 +700,38 @@ if (updatedData.logo) {
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-gradient-to-br from-white via-red/5 to-yellow/10">
+    <div className="min-h-screen max-w-screen transition-colors duration-300" style={{ background: theme.gradient }}>
       {/* Desktop Navbar */}
       <NavbarDashboard />
 
       {/* Main Content */}
       <div className="lg:ml-72 min-h-screen">
-        <div className="bg-white/40 backdrop-blur-md border-white/30 w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8">
-          
+        <div className="w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8 border-l"
+          style={{ borderColor: theme.border }}>
+
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
             {/* Mobile Menu Button */}
             <div className="lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-3 rounded-xl hover:bg-white/50 transition-all duration-300 border border-red/20"
+                className="p-3 rounded-xl hover:bg-white/10 transition-all duration-300 border"
+                style={{ borderColor: theme.border }}
                 aria-label="Open menu"
               >
-                <Menu size={24} className="text-red" />
+                <Menu size={24} style={{ color: theme.primary }} />
               </button>
             </div>
 
             {/* Title and Stats */}
             <div className="space-y-4 lg:space-y-6 flex-1 w-full">
               <div>
-                <h1 className="font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl text-black/80 tracking-wider">
+                <h1 className="font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl tracking-wider"
+                  style={{ color: theme.textPrimary }}>
                   DATA DOJANG
                 </h1>
-                <p className="font-plex text-black/60 text-base lg:text-lg mt-2">
+                <p className="font-plex text-base lg:text-lg mt-2"
+                  style={{ color: theme.textSecondary }}>
                   Kelola informasi dojang dan lokasi pelatihan
                 </p>
               </div>
@@ -699,68 +739,69 @@ if (updatedData.logo) {
           </div>
 
           {/* Form Section */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl border border-white/50">
+          <div className="backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl border"
+            style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 lg:gap-4 mb-4 lg:mb-6">
               <div className="flex gap-3 lg:gap-4 items-center">
-                <div className="p-2 bg-red/10 rounded-xl">
-                  <Building className="text-red" size={18} />
+                <div className="p-2 rounded-xl" style={{ backgroundColor: theme.primary + '20' }}>
+                  <Building size={18} style={{ color: theme.primary }} />
                 </div>
-                <h2 className="font-bebas text-xl lg:text-2xl text-black/80 tracking-wide">
+                <h2 className="font-bebas text-xl lg:text-2xl tracking-wide"
+                  style={{ color: theme.textPrimary }}>
                   INFORMASI DOJANG
                 </h2>
               </div>
-              
+
               {/* Action Buttons */}
-{/* Action Buttons */}
-<div className="flex gap-2 lg:gap-3">
-  {user?.role === 'ADMIN' ? (
-    <></> // kosongkan tombol untuk admin
-  ) : (
-    !isEditing ? (
-      <>
-        {/* Download Sertifikat Dojang Button */}
-        <GeneralButton
-          label={
-            checkingParticipants 
-              ? "Checking..." 
-              : hasApprovedParticipants 
-                ? "Download Sertifikat Partisipasi Kejuaraan" 
-                : "Belum Ada Peserta"
-          }
-          className={`${
-            hasApprovedParticipants
-              ? "text-white bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600"
-              : "text-gray-400 bg-gray-200 cursor-not-allowed"
-          } border-0 shadow-lg flex items-center gap-2 text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3`}
-          onClick={generateDojangCertificate}
-          disabled={loading || checkingParticipants || !hasApprovedParticipants}
-        />
-        
-        {/* Ubah Data Dojang Button */}
-        <GeneralButton
-          label="Ubah Data Dojang"
-          className="text-white bg-gradient-to-r from-red to-red/80 hover:from-red/90 hover:to-red/70 border-0 shadow-lg flex items-center gap-2 w-full sm:w-auto text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3"
-          onClick={() => setIsEditing(true)}
-        />
-      </>
-    ) : (
-      <div className="flex gap-2 lg:gap-3 w-full sm:w-auto">
-        <GeneralButton
-          label="Batal"
-          className="text-red bg-white hover:bg-red/5 border-2 border-red/30 hover:border-red/50 flex-1 sm:flex-none text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3"
-          onClick={handleCancel}
-          disabled={loading}
-        />
-        <GeneralButton
-          label={loading ? "Menyimpan..." : "Simpan"}
-          className="text-white bg-gradient-to-r from-red to-red/80 hover:from-red/90 hover:to-red/70 border-0 shadow-lg flex items-center gap-2 flex-1 sm:flex-none text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleUpdate}
-          disabled={loading}
-        />
-      </div>
-    )
-  )}
-</div>
+              {/* Action Buttons */}
+              <div className="flex gap-2 lg:gap-3">
+                {user?.role === 'ADMIN' ? (
+                  <></> // kosongkan tombol untuk admin
+                ) : (
+                  !isEditing ? (
+                    <>
+                      {/* Download Sertifikat Dojang Button */}
+                      <GeneralButton
+                        label={
+                          checkingParticipants
+                            ? "Checking..."
+                            : hasApprovedParticipants
+                              ? "Download Sertifikat Partisipasi Kejuaraan"
+                              : "Belum Ada Peserta"
+                        }
+                        className={`${hasApprovedParticipants
+                          ? "text-white bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600"
+                          : "text-gray-400 bg-gray-200 cursor-not-allowed"
+                          } border-0 shadow-lg flex items-center gap-2 text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3`}
+                        onClick={generateDojangCertificate}
+                        disabled={loading || checkingParticipants || !hasApprovedParticipants}
+                      />
+
+                      {/* Ubah Data Dojang Button */}
+                      <GeneralButton
+                        label="Ubah Data Dojang"
+                        className="text-white bg-gradient-to-r from-red to-red/80 hover:from-red/90 hover:to-red/70 border-0 shadow-lg flex items-center gap-2 w-full sm:w-auto text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3"
+                        onClick={() => setIsEditing(true)}
+                      />
+                    </>
+                  ) : (
+                    <div className="flex gap-2 lg:gap-3 w-full sm:w-auto">
+                      <GeneralButton
+                        label="Batal"
+                        className="text-red bg-white hover:bg-red/5 border-2 border-red/30 hover:border-red/50 flex-1 sm:flex-none text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3"
+                        onClick={handleCancel}
+                        disabled={loading}
+                      />
+                      <GeneralButton
+                        label={loading ? "Menyimpan..." : "Simpan"}
+                        className="text-white bg-gradient-to-r from-red to-red/80 hover:from-red/90 hover:to-red/70 border-0 shadow-lg flex items-center gap-2 flex-1 sm:flex-none text-sm lg:text-base px-4 lg:px-6 py-2.5 lg:py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleUpdate}
+                        disabled={loading}
+                      />
+                    </div>
+                  )
+                )}
+              </div>
             </div>
 
             {/* Loading State */}
@@ -773,43 +814,43 @@ if (updatedData.logo) {
               </div>
             )}
 
-{/* Desktop Form */}
-{userDojang && !loading && (
-  <div className="hidden lg:block space-y-6">
-    {/* Logo Section - Desktop */}
-<div className="bg-white/80 rounded-xl p-6 shadow-md border border-white/50 mb-6">
-  <h3 className="font-bebas text-lg lg:text-xl text-black/80 mb-4 flex items-center gap-2">
-    <Upload size={20} className="text-red" />
-    LOGO DOJANG
-  </h3>
-  
-  <div className="space-y-3">
-    {/* File Input untuk Upload Logo */}
-    <div className="space-y-2">
-      <label className="block font-plex font-medium text-black/70 text-sm">Upload Logo Dojang</label>
-      <div className="relative">
-        <input
-          id="logo-upload"
-          type="file"
-          accept="image/jpeg,image/png,image/jpg,image/webp"
-          onChange={handleLogoChange}
-          className="w-full p-3 border-2 border-red/20 hover:border-red/40 focus:border-red rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-plex file:bg-red/10 file:text-red hover:file:bg-red/20"
-          disabled={loading || !isEditing}
-        />
-        {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
-      </div>
-    </div>
-    
-    {/* FilePreview Component */}
-    <FilePreview
-      file={logoFile}
-      existingPath={logoPreview || userDojang?.logo_url}
-      onRemove={removeLogo}
-      disabled={!isEditing}
-      label="Logo Dojang"
-    />
-  </div>
-</div>
+            {/* Desktop Form */}
+            {userDojang && !loading && (
+              <div className="hidden lg:block space-y-6">
+                {/* Logo Section - Desktop */}
+                <div className="bg-white/80 rounded-xl p-6 shadow-md border border-white/50 mb-6">
+                  <h3 className="font-bebas text-lg lg:text-xl text-black/80 mb-4 flex items-center gap-2">
+                    <Upload size={20} className="text-red" />
+                    LOGO DOJANG
+                  </h3>
+
+                  <div className="space-y-3">
+                    {/* File Input untuk Upload Logo */}
+                    <div className="space-y-2">
+                      <label className="block font-plex font-medium text-black/70 text-sm">Upload Logo Dojang</label>
+                      <div className="relative">
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/jpeg,image/png,image/jpg,image/webp"
+                          onChange={handleLogoChange}
+                          className="w-full p-3 border-2 border-red/20 hover:border-red/40 focus:border-red rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-plex file:bg-red/10 file:text-red hover:file:bg-red/20"
+                          disabled={loading || !isEditing}
+                        />
+                        {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
+                      </div>
+                    </div>
+
+                    {/* FilePreview Component */}
+                    <FilePreview
+                      file={logoFile}
+                      existingPath={logoPreview || userDojang?.logo_url}
+                      onRemove={removeLogo}
+                      disabled={!isEditing}
+                      label="Logo Dojang"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="block font-plex font-medium text-black/70 text-sm">
@@ -940,50 +981,50 @@ if (updatedData.logo) {
               </div>
             )}
 
-{/* Mobile Form */}
-{userDojang && !loading && (
-  <div className="lg:hidden space-y-4">
-    {/* Logo Section - Mobile */}
-<div className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50">
-  <h3 className="font-bebas text-lg text-black/80 mb-3 flex items-center gap-2">
-    <Upload size={18} className="text-red" />
-    LOGO DOJANG
-  </h3>
-  
-  <div className="space-y-3">
-    {/* File Input untuk Upload Logo */}
-    <div className="space-y-2">
-      <label className="block font-plex font-medium text-black/70 text-xs">Upload Logo Dojang</label>
-      <div className="relative">
-        <input
-          id="logo-upload-mobile"
-          type="file"
-          accept="image/jpeg,image/png,image/jpg,image/webp"
-          onChange={handleLogoChange}
-          className="w-full p-2.5 text-sm border-2 border-red/20 hover:border-red/40 focus:border-red rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-plex file:bg-red/10 file:text-red hover:file:bg-red/20"
-          disabled={loading || !isEditing}
-        />
-        {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
-      </div>
-    </div>
-    
-    {/* FilePreview Component untuk Mobile */}
-    <FilePreview
-      file={logoFile}
-      existingPath={logoPreview || userDojang?.logo_url}
-      onRemove={removeLogo}
-      disabled={!isEditing}
-      label="Logo Dojang"
-    />
-  </div>
-</div>
+            {/* Mobile Form */}
+            {userDojang && !loading && (
+              <div className="lg:hidden space-y-4">
+                {/* Logo Section - Mobile */}
+                <div className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50">
+                  <h3 className="font-bebas text-lg text-black/80 mb-3 flex items-center gap-2">
+                    <Upload size={18} className="text-red" />
+                    LOGO DOJANG
+                  </h3>
 
-    {/* Basic Info Card - EXISTING CODE TETAP SAMA */}
-    <div className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50">
-      <h3 className="font-bebas text-lg text-black/80 mb-3 flex items-center gap-2">
-        <Building size={18} className="text-red" />
-        INFORMASI DASAR
-      </h3>
+                  <div className="space-y-3">
+                    {/* File Input untuk Upload Logo */}
+                    <div className="space-y-2">
+                      <label className="block font-plex font-medium text-black/70 text-xs">Upload Logo Dojang</label>
+                      <div className="relative">
+                        <input
+                          id="logo-upload-mobile"
+                          type="file"
+                          accept="image/jpeg,image/png,image/jpg,image/webp"
+                          onChange={handleLogoChange}
+                          className="w-full p-2.5 text-sm border-2 border-red/20 hover:border-red/40 focus:border-red rounded-xl bg-white/80 backdrop-blur-sm transition-all duration-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-plex file:bg-red/10 file:text-red hover:file:bg-red/20"
+                          disabled={loading || !isEditing}
+                        />
+                        {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
+                      </div>
+                    </div>
+
+                    {/* FilePreview Component untuk Mobile */}
+                    <FilePreview
+                      file={logoFile}
+                      existingPath={logoPreview || userDojang?.logo_url}
+                      onRemove={removeLogo}
+                      disabled={!isEditing}
+                      label="Logo Dojang"
+                    />
+                  </div>
+                </div>
+
+                {/* Basic Info Card - EXISTING CODE TETAP SAMA */}
+                <div className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50">
+                  <h3 className="font-bebas text-lg text-black/80 mb-3 flex items-center gap-2">
+                    <Building size={18} className="text-red" />
+                    INFORMASI DASAR
+                  </h3>
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <label className="block font-plex font-medium text-black/70 text-xs">Nama Dojang</label>
