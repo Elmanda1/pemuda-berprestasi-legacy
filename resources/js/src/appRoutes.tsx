@@ -386,6 +386,23 @@ export default function AppRoutes() {
           />
         </Route>
 
+        {/* ✅ DYNAMIC COMPETITION ROUTES (Using Slug) */}
+        <Route path="/:slug" element={<LombaLayout />}>
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<LandingPage />} />
+          <Route path="faq" element={<FAQ />} />
+          <Route path="timeline" element={<Timeline />} />
+          <Route path="live-streaming" element={<LiveStreamingPage />} />
+          <Route
+            path="pertandingan"
+            element={<LapanganLiveViewWrapper />}
+          />
+          <Route
+            path="medal-tally"
+            element={<MedalTallyWrapper />}
+          />
+        </Route>
+
         {/* Root redirect */}
         <Route path="/" element={<Home />} />
 

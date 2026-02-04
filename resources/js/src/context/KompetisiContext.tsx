@@ -57,6 +57,7 @@ export interface Kompetisi {
   timeline_data?: any[];
   template_type?: string;
   modules_enabled?: string | any; // JSON string or object
+  slug?: string;
 }
 
 export interface KelasKejuaraan {
@@ -227,6 +228,7 @@ export interface KompetisiContextType {
 
   fetchKompetisiList: () => Promise<void>;
   fetchKompetisiById: (id_kompetisi: number) => Promise<void>;
+  fetchKompetisiBySlug: (slug: string) => Promise<void>;
   fetchKelasKejuaraanByKompetisi: (id_kompetisi: number) => Promise<void>;
   fetchAtletByKompetisi: (
     id_kompetisi: number,
@@ -257,6 +259,9 @@ export interface KompetisiContextType {
   ) => Promise<any>;
   updateKompetisiTheme: (
     kompetisiId: number,
+    data: any
+  ) => Promise<any>;
+  createKompetisi: (
     data: any
   ) => Promise<any>;
 }
@@ -325,6 +330,25 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoadingKompetisi(false);
       console.log("[fetchKompetisiById] done");
+    }
+  };
+
+  const fetchKompetisiBySlug = async (slug: string) => {
+    setLoadingKompetisi(true);
+    setErrorKompetisi(null);
+    try {
+      const res: any = await apiClient.get(`/kompetisi/slug/${slug}`);
+      setKompetisiDetail(res.data || res || null);
+    } catch (err: any) {
+      console.error("[fetchKompetisiBySlug] error:", err);
+      setErrorKompetisi(
+        err.response?.data?.message ||
+        err.message ||
+        "Gagal mengambil detail kompetisi"
+      );
+    } finally {
+      setLoadingKompetisi(false);
+      console.log("[fetchKompetisiBySlug] done");
     }
   };
 
@@ -579,6 +603,26 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const createKompetisi = async (
+    data: any // Can be FormData or Object
+  ) => {
+    try {
+      let response: any;
+      if (data instanceof FormData) {
+        response = await apiClient.postFormData(`/kompetisi`, data);
+      } else {
+        response = await apiClient.post(`/kompetisi`, data);
+      }
+
+      await fetchKompetisiList();
+
+      return response.data || response;
+    } catch (error: any) {
+      console.error("❌ Error creating kompetisi:", error);
+      throw error;
+    }
+  };
+
   return (
     <KompetisiContext.Provider
       value={{
@@ -596,6 +640,7 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
         errorKelasKejuaraan,
         fetchKompetisiList,
         fetchKompetisiById,
+        fetchKompetisiBySlug,
         fetchKelasKejuaraanByKompetisi,
         fetchAtletByKompetisi,
         fetchAllAtletByKompetisi,
@@ -603,6 +648,7 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
         deleteParticipant,
         updateParticipantClass,
         updateKompetisiTheme,
+        createKompetisi,
         setAtletPage,
         setAtletLimit,
       }}

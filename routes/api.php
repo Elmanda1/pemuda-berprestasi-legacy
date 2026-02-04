@@ -96,6 +96,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('kompetisi')->group(function () {
         Route::get('/', 'KompetisiController@getAll');
         Route::get('{id}', 'KompetisiController@getById');
+        Route::get('slug/{slug}', 'KompetisiController@getBySlug');
         Route::get('{id}/brackets/{kelasId?}', 'KompetisiController@getBrackets');
         Route::get('{id}/brackets/{kelasId}/tanggal', 'KompetisiController@getBracketTanggal');
         Route::get('{id}/medal-tally', 'KompetisiController@getMedalTally'); // For BracketList

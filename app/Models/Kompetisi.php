@@ -45,7 +45,8 @@ class Kompetisi extends Model
         'faq_data',
         'timeline_data',
         'template_type',
-        'modules_enabled'
+        'modules_enabled',
+        'slug'
     ];
 
     protected $casts = [

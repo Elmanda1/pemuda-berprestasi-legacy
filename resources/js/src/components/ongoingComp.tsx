@@ -1,12 +1,21 @@
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import CompCard from "./compCard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useKompetisi } from "../context/KompetisiContext";
 
 const OngoingComp = () => {
-  const { kompetisiDetail } = useKompetisi();
+  const { kompetisiDetail, kompetisiList, fetchKompetisiList, loadingKompetisi } = useKompetisi();
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const templateType = kompetisiDetail?.template_type || 'default';
   const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  useEffect(() => {
+    if (kompetisiList.length === 0) {
+      fetchKompetisiList();
+    }
+  }, []);
 
   const theme = {
     bg: isModern ? "bg-black" : "bg-gradient-to-br from-white via-red/[0.02] to-white",
@@ -16,14 +25,20 @@ const OngoingComp = () => {
     cardBg: isModern ? "bg-[#111] border-red-900/20" : "bg-white/90 border-red/10",
   };
 
-  const handleNavClick = () => {
-    toast.error("Hanya ada satu kompetisi untuk sekarang", {
-      style: {
-        background: '#990D35',
-        color: 'white',
-        fontFamily: 'IBM Plex Sans'
-      }
-    });
+  const handlePrev = () => {
+    if (kompetisiList.length <= 1) {
+      toast.error("Hanya ada satu kompetisi untuk sekarang");
+      return;
+    }
+    setCurrentIndex((prev) => (prev === 0 ? kompetisiList.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    if (kompetisiList.length <= 1) {
+      toast.error("Hanya ada satu kompetisi untuk sekarang");
+      return;
+    }
+    setCurrentIndex((prev) => (prev === kompetisiList.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -32,7 +47,6 @@ const OngoingComp = () => {
 
         {/* Enhanced Header Section */}
         <div className="text-left mb-12 md:mb-16 lg:mb-20 max-w-4xl">
-          {/* Section Label with Animation */}
           <div className="inline-block group mb-4 md:mb-6">
             <span className="text-red font-plex font-semibold text-sm uppercase tracking-[0.2em] border-l-4 border-red pl-4 md:pl-6 relative">
               Kompetisi Terkini
@@ -40,7 +54,6 @@ const OngoingComp = () => {
             </span>
           </div>
 
-          {/* Main Heading with Gradient Text */}
           <div className="relative mb-4 md:mb-6">
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bebas leading-[0.85] tracking-wide">
               <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
@@ -50,7 +63,6 @@ const OngoingComp = () => {
                 Competitions
               </span>
             </h2>
-            {/* Subtle underline accent */}
             <div className="absolute -bottom-2 left-0 w-16 md:w-24 h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
           </div>
 
@@ -61,54 +73,69 @@ const OngoingComp = () => {
 
         {/* Enhanced Competition Card Section */}
         <div className="mb-12 md:mb-16 lg:mb-20">
-          {/* Desktop Layout */}
-          <div className="hidden lg:flex items-center justify-center gap-8 xl:gap-12 w-full">
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => handleNavClick()}
-                className={`group relative p-4 xl:p-6 rounded-2xl xl:rounded-3xl backdrop-blur-md border hover:border-red/20 hover:bg-red transition-all duration-500 hover:shadow-2xl hover:shadow-red/25 ${theme.cardBg}`}
-              >
-                <ChevronLeft
-                  size={28}
-                  className="xl:w-8 xl:h-8 text-red group-hover:text-white transition-all duration-300"
-                />
-              </button>
+          {loadingKompetisi && kompetisiList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 text-red animate-spin mb-4" />
+              <p className="text-red font-plex font-medium">Memuat kompetisi...</p>
             </div>
+          ) : (
+            <>
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex items-center justify-center gap-8 xl:gap-12 w-full">
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={handlePrev}
+                    className={`group relative p-4 xl:p-6 rounded-2xl xl:rounded-3xl backdrop-blur-md border hover:border-red/20 hover:bg-red transition-all duration-500 hover:shadow-2xl hover:shadow-red/25 ${theme.cardBg}`}
+                  >
+                    <ChevronLeft
+                      size={28}
+                      className="xl:w-8 xl:h-8 text-red group-hover:text-white transition-all duration-300"
+                    />
+                  </button>
+                </div>
 
-            <div className="flex-1 max-w-6xl flex justify-center">
-              <CompCard />
-            </div>
+                <div className="flex-1 max-w-6xl flex justify-center transition-all duration-500 transform">
+                  <CompCard kompetisi={kompetisiList[currentIndex]} />
+                </div>
 
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => handleNavClick()}
-                className={`group relative p-4 xl:p-6 rounded-2xl xl:rounded-3xl backdrop-blur-md border hover:border-red/20 hover:bg-red transition-all duration-500 hover:shadow-2xl hover:shadow-red/25 ${theme.cardBg}`}
-              >
-                <ChevronRight
-                  size={28}
-                  className="xl:w-8 xl:h-8 text-red group-hover:text-white transition-all duration-300"
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* Enhanced Mobile Layout */}
-          <div className="lg:hidden flex flex-col items-center">
-            <div className="w-full max-w-4xl mb-6 flex justify-center">
-              <div className="border-2 border-red/20 rounded-xl md:rounded-2xl p-1 bg-gradient-to-r from-red/5 to-red/10 shadow-lg">
-                <CompCard />
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={handleNext}
+                    className={`group relative p-4 xl:p-6 rounded-2xl xl:rounded-3xl backdrop-blur-md border hover:border-red/20 hover:bg-red transition-all duration-500 hover:shadow-2xl hover:shadow-red/25 ${theme.cardBg}`}
+                  >
+                    <ChevronRight
+                      size={28}
+                      className="xl:w-8 xl:h-8 text-red group-hover:text-white transition-all duration-300"
+                    />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex justify-center items-center gap-3">
-              <div className="relative">
-                <div className="w-3 h-3 md:w-4 md:h-4 bg-gradient-to-r from-red to-red/80 rounded-full shadow-sm"></div>
-                <div className="absolute inset-0 w-3 h-3 md:w-4 md:h-4 bg-red/30 rounded-full animate-ping"></div>
+              {/* Enhanced Mobile Layout */}
+              <div className="lg:hidden flex flex-col items-center">
+                <div className="w-full max-w-4xl mb-6 flex justify-center">
+                  <div className="border-2 border-red/20 rounded-xl md:rounded-2xl p-1 bg-gradient-to-r from-red/5 to-red/10 shadow-lg w-full">
+                    <CompCard kompetisi={kompetisiList[currentIndex]} />
+                  </div>
+                </div>
+
+                {kompetisiList.length > 1 && (
+                  <div className="flex justify-center items-center gap-3">
+                    {kompetisiList.map((_, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setCurrentIndex(idx)}
+                        className={`transition-all duration-300 cursor-pointer rounded-full ${currentIndex === idx
+                            ? "w-6 md:w-8 h-2.5 md:h-3 bg-red shadow-sm"
+                            : "w-2.5 h-2.5 md:w-3 md:h-3 bg-red/20 hover:bg-red/40"
+                          }`}
+                      ></div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-red/20 rounded-full hover:bg-red/40 transition-colors duration-300 cursor-pointer"></div>
-              <div className="w-2.5 h-2.5 md:w-3 md:h-3 bg-red/20 rounded-full hover:bg-red/40 transition-colors duration-300 cursor-pointer"></div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
       </div>

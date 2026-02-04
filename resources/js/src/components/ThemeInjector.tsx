@@ -8,23 +8,31 @@ import { useAuth } from '../context/authContext';
  * Menginjeksikan CSS Variables ke :root berdasarkan kompetisi yang aktif
  */
 const ThemeInjector: React.FC = () => {
-    const { kompetisiDetail, fetchKompetisiById } = useKompetisi();
+    const { kompetisiDetail, fetchKompetisiById, fetchKompetisiBySlug } = useKompetisi();
     const { user } = useAuth();
-    const { idKompetisi } = useParams<{ idKompetisi: string }>();
+    const { idKompetisi, slug } = useParams<{ idKompetisi?: string, slug?: string }>();
     const location = useLocation();
 
     useEffect(() => {
         let targetId: number | null = null;
 
-        // priority 1: URL parameter
+        // priority 1: Slug from URL
+        if (slug) {
+            if (!kompetisiDetail || kompetisiDetail.slug !== slug) {
+                fetchKompetisiBySlug(slug);
+            }
+            return;
+        }
+
+        // priority 2: ID parameter
         if (idKompetisi) {
             targetId = parseInt(idKompetisi);
         }
-        // priority 2: Admin Kompetisi user
+        // priority 3: Admin Kompetisi user
         else if (user?.role === "ADMIN_KOMPETISI" && user.admin_kompetisi?.id_kompetisi) {
             targetId = user.admin_kompetisi.id_kompetisi;
         }
-        // priority 3: Local storage fallback for general admin or persistent view
+        // priority 4: Local storage fallback for general admin or persistent view
         else {
             const storedId = localStorage.getItem('currentKompetisiId');
             if (storedId) targetId = parseInt(storedId);
@@ -33,7 +41,7 @@ const ThemeInjector: React.FC = () => {
         if (targetId && (!kompetisiDetail || kompetisiDetail.id_kompetisi !== targetId)) {
             fetchKompetisiById(targetId);
         }
-    }, [idKompetisi, user, location.pathname]);
+    }, [idKompetisi, slug, user, location.pathname]);
 
     useEffect(() => {
         const root = document.documentElement.style;

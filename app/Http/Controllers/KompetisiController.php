@@ -10,8 +10,12 @@ use App\Models\PesertaKompetisi;
 use App\Models\PesertaTim;
 use App\Models\Atlet;
 use App\Models\Penyelenggara;
+use App\Models\User;
+use App\Models\AdminKompetisi;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class KompetisiController extends Controller
@@ -66,6 +70,21 @@ class KompetisiController extends Controller
         return response()->json(['success' => true, 'data' => $kompetisi]);
     }
 
+    // Public: Get By Slug
+    public function getBySlug($slug)
+    {
+        $kompetisi = Kompetisi::with([
+            'penyelenggara',
+            'kelas_kejuaraan' => function ($q) {
+                $q->with(['kategori_event', 'kelompok_usia', 'kelas_berat', 'kelas_poomsae', 'peserta_kompetisi']);
+            }
+        ])->where('slug', $slug)->first();
+
+        if (!$kompetisi)
+            return response()->json(['message' => 'Not found'], 404);
+        return response()->json(['success' => true, 'data' => $kompetisi]);
+    }
+
     // Auth (Admin): Create
     public function create(Request $request)
     {
@@ -78,16 +97,78 @@ class KompetisiController extends Controller
             'lokasi' => 'nullable|string',
             'primary_color' => 'nullable|string|size:7',
             'secondary_color' => 'nullable|string|size:7',
-            'logo_url' => 'nullable|string|max:500'
+            'logo_url' => 'nullable|string|max:500',
+            'admin_email' => 'required|email|unique:tb_akun,email',
+            'admin_password' => 'required|string|min:6',
         ]);
 
         if ($validator->fails())
             return response()->json(['message' => $validator->errors()->first()], 400);
 
         try {
-            $kompetisi = Kompetisi::create($request->all());
+            DB::beginTransaction();
+            $data = $request->all();
+
+            // Generate slug
+            $slug = Str::slug($data['nama_event']);
+            // Ensure uniqueness
+            $count = Kompetisi::where('slug', 'like', $slug . '%')->count();
+            $data['slug'] = $count > 0 ? $slug . '-' . ($count + 1) : $slug;
+
+            // Normalize boolean strings from FormData
+            if (isset($data['show_antrian'])) {
+                $data['show_antrian'] = ($data['show_antrian'] === 'true' || $data['show_antrian'] === '1' || $data['show_antrian'] === true) ? 1 : 0;
+            }
+            if (isset($data['show_navbar'])) {
+                $data['show_navbar'] = ($data['show_navbar'] === 'true' || $data['show_navbar'] === '1' || $data['show_navbar'] === true) ? 1 : 0;
+            }
+
+            // Create preliminary record or handle files first? 
+            // Better create first to get ID for filename if choosing that pattern, 
+            // but update pattern at line 107 uses $id. 
+            // For create, we can use a temporary name or timestamp.
+            
+            $kompetisi = Kompetisi::create($data);
+            $id = $kompetisi->id_kompetisi;
+
+            $updatedData = [];
+            // Handle Logo Upload
+            if ($request->hasFile('logo')) {
+                $file = $request->file('logo');
+                $filename = 'logo_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/kompetisi'), $filename);
+                $updatedData['logo_url'] = '/uploads/kompetisi/' . $filename;
+            }
+
+            // Handle Hero (Poster) Upload
+            if ($request->hasFile('hero')) {
+                $file = $request->file('hero');
+                $filename = 'hero_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/kompetisi'), $filename);
+                $updatedData['poster_image'] = '/uploads/kompetisi/' . $filename;
+            }
+
+            if (!empty($updatedData)) {
+                $kompetisi->update($updatedData);
+            }
+
+            // Create Admin Account for this competition
+            $user = User::create([
+                'email' => $data['admin_email'],
+                'password_hash' => Hash::make($data['admin_password']),
+                'role' => 'ADMINKOMPETISI',
+            ]);
+
+            AdminKompetisi::create([
+                'id_kompetisi' => $id,
+                'id_akun' => $user->id_akun,
+                'nama' => 'Admin ' . $kompetisi->nama_event
+            ]);
+
+            DB::commit();
             return response()->json(['success' => true, 'data' => $kompetisi], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
