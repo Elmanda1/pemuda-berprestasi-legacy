@@ -76,14 +76,30 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
         };
     }, [isBurgerOpen]);
 
-    // ✅ UPDATED: Navigation items with Medal Tally
-    const navItems: { to: string; label: string; icon?: any }[] = [
-        { to: "/event/home", label: "Beranda" },
-        { to: "/event/timeline", label: "Timeline" },
-        { to: "/event/faq", label: "FAQ" },
-        { to: "/event/live-streaming", label: "Live Streaming" },
-        { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali" }, // ✅ COMMENTED - Akan diaktifkan nanti
-    ];
+    // Parse modules_enabled
+    const modules: any = (() => {
+        try {
+            if (typeof kompetisiDetail?.modules_enabled === 'string') {
+                return JSON.parse(kompetisiDetail.modules_enabled);
+            }
+            return kompetisiDetail?.modules_enabled || {};
+        } catch (e) {
+            return {};
+        }
+    })();
+
+    const isModuleEnabled = (key: string) => {
+        return modules[key] !== false;
+    };
+
+    // ✅ UPDATED: Navigation items with Medal Tally and module filtering
+    const navItems: { to: string; label: string; icon?: any; module: string }[] = [
+        { to: "/event/home", label: "Beranda", module: 'home' },
+        { to: "/event/timeline", label: "Timeline", module: 'timeline' },
+        { to: "/event/faq", label: "FAQ", module: 'faq' },
+        { to: "/event/live-streaming", label: "Live Streaming", module: 'live_streaming' },
+        { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali", module: 'medal_tally' },
+    ].filter(item => isModuleEnabled(item.module));
 
     const getDashboardLink = () => {
         if (user?.role === "PELATIH")
@@ -102,13 +118,16 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
 
     // Styling yang konsisten dengan warna merah
     const getNavbarStyles = () => {
+        const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
         return {
-            bg: isScrolled ? "bg-red/95 backdrop-blur-md shadow-lg" : "bg-red",
+            bg: isScrolled ? `bg-[${primaryColor}]/95 backdrop-blur-md shadow-lg` : `bg-[${primaryColor}]`,
+            bgStyle: { backgroundColor: isScrolled ? primaryColor + 'f2' : primaryColor },
             text: "text-white",
             logo: "text-yellow drop-shadow-lg",
             buttonBorder: "border-white/80",
             buttonText: "text-white",
-            buttonBg: "bg-white text-red hover:bg-white/90 hover:scale-105",
+            buttonBg: `bg-white text-[${primaryColor}] hover:bg-white/90 hover:scale-105`,
+            buttonBgStyle: { color: primaryColor },
             hoverText: "hover:text-yellow/80 hover:scale-105",
             dropdownBg: "bg-white/95 backdrop-blur-md",
         };
@@ -120,7 +139,8 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
         <>
             {/* Navbar */}
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${styles.bg}`}
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out`}
+                style={styles.bgStyle}
             >
                 <div className="w-full px-[5%] sm:px-[8%] lg:px-[10%] py-4 md:py-6">
                     <div className="flex justify-between items-center h-16 md:h-20">
@@ -144,7 +164,7 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden lg:flex items-center space-x-8">
+                        <div className="hidden xl:flex items-center space-x-1 xl:space-x-4 flex-wrap justify-center">
                             {navItems.filter(item => {
                                 // If show_navbar is false, only show "Beranda"
                                 if (kompetisiDetail?.show_navbar === 0 || kompetisiDetail?.show_navbar === false) {
@@ -155,8 +175,8 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                                 <Link
                                     key={to}
                                     to={to}
-                                    className={`text-xl relative px-4 py-2 ${styles.text
-                                        } font-plex font-medium transition-all duration-300 ease-out ${location.pathname === to
+                                    className={`text-sm xl:text-xl relative px-2 xl:px-4 py-2 ${styles.text
+                                        } font-plex font-medium transition-all duration-300 ease-out whitespace-nowrap ${location.pathname === to
                                             ? "text-yellow font-semibold"
                                             : styles.hoverText
                                         } group`}
@@ -180,18 +200,20 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                         </div>
 
                         {/* Desktop Auth Section */}
-                        <div className="hidden lg:flex items-center">
+                        <div className="hidden xl:flex items-center">
                             {!user ? (
-                                <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2 xl:space-x-4">
                                     <Link
                                         to="/register"
-                                        className={`px-6 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonText} font-plex rounded-lg transition-all duration-300 ease-out hover:bg-white hover:text-red hover:scale-105 hover:shadow-lg`}
+                                        className={`px-4 xl:px-6 py-2 xl:py-2.5 text-xs xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonText} font-plex rounded-lg transition-all duration-300 ease-out hover:bg-white hover:opacity-90 hover:scale-105 hover:shadow-lg`}
+                                        style={{ hover: { color: kompetisiDetail?.primary_color || '#DC2626' } } as any}
                                     >
                                         Register
                                     </Link>
                                     <Link
                                         to="/login"
-                                        className={`px-8 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonBg} font-plex rounded-lg transition-all duration-300 ease-out hover:shadow-lg`}
+                                        className={`px-4 xl:px-8 py-2 xl:py-2.5 text-xs xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonBg} font-plex rounded-lg transition-all duration-300 ease-out hover:shadow-lg`}
+                                        style={styles.buttonBgStyle}
                                     >
                                         Login
                                     </Link>
@@ -200,20 +222,21 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                                 <div className="relative" ref={dropdownRef}>
                                     <button
                                         onClick={() => setShowDropdown(!showDropdown)}
-                                        className={`flex items-center space-x-2 px-4 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonText} font-plex rounded-lg transition-all duration-300 ease-out hover:bg-white hover:text-red hover:scale-105 hover:shadow-lg group`}
+                                        className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all group"
                                     >
-                                        <User
-                                            size={24}
-                                            className="transition-transform duration-300 group-hover:scale-110"
-                                        />
-                                        <span className="max-w-48 truncate">
-                                            {user?.pelatih?.nama_pelatih ?? "User"}
-                                        </span>
-                                        <ChevronDown
-                                            size={18}
-                                            className={`transition-all duration-300 ease-out ${showDropdown ? "rotate-180" : ""
-                                                } group-hover:scale-110`}
-                                        />
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm bg-white" style={{ outline: `2px solid ${kompetisiDetail?.primary_color || '#DC2626'}`, color: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                            <User size={16} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-plex font-semibold text-red truncate text-sm">
+                                                {user?.pelatih?.nama_pelatih ?? "User"}
+                                            </p>
+                                            <ChevronDown
+                                                size={14}
+                                                className={`transition-all duration-300 ease-out ${showDropdown ? "rotate-180" : ""
+                                                    } group-hover:scale-110 xl:w-[18px] xl:h-[18px]`}
+                                            />
+                                        </div>
                                     </button>
 
                                     {/* User Dropdown */}
@@ -225,7 +248,10 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                                                 <Link
                                                     key={to}
                                                     to={to}
-                                                    className="text-xl flex items-center space-x-3 px-4 py-3 text-red font-plex transition-all duration-200 ease-out hover:bg-red hover:text-white group"
+                                                    className="text-xl flex items-center space-x-3 px-4 py-3 font-plex transition-all duration-200 ease-out group"
+                                                    style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}
+                                                    onMouseEnter={(e: any) => { e.currentTarget.style.backgroundColor = (kompetisiDetail?.primary_color || '#DC2626'); e.currentTarget.style.color = '#fff'; }}
+                                                    onMouseLeave={(e: any) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (kompetisiDetail?.primary_color || '#DC2626'); }}
                                                     onClick={() => setShowDropdown(false)}
                                                 >
                                                     <Icon
@@ -240,7 +266,10 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                                                     setShowDropdown(false);
                                                     onLogoutRequest();
                                                 }}
-                                                className="text-xl flex items-center space-x-3 w-full px-4 py-3 text-red font-plex transition-all duration-200 ease-out hover:bg-red hover:text-white group"
+                                                className="text-xl flex items-center space-x-3 w-full px-4 py-3 font-plex transition-all duration-200 ease-out group"
+                                                style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}
+                                                onMouseEnter={(e: any) => { e.currentTarget.style.backgroundColor = (kompetisiDetail?.primary_color || '#DC2626'); e.currentTarget.style.color = '#fff'; }}
+                                                onMouseLeave={(e: any) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = (kompetisiDetail?.primary_color || '#DC2626'); }}
                                             >
                                                 <LogOut
                                                     size={16}
@@ -257,7 +286,7 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
                         {/* Mobile Menu Button */}
                         <button
                             onClick={() => setIsBurgerOpen(!isBurgerOpen)}
-                            className={`lg:hidden p-3 ${styles.text} hover:bg-white hover:text-red rounded-xl transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg group`}
+                            className={`xl:hidden p-3 ${styles.text} hover:bg-white hover:text-red rounded-xl transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg group`}
                         >
                             <div className="relative w-6 h-6">
                                 <Menu
@@ -282,7 +311,7 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
 
             {/* Mobile Menu Overlay */}
             < div
-                className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
+                className={`fixed inset-0 z-40 xl:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
                     }`
                 }
             >
@@ -366,18 +395,16 @@ const NavbarTemplateDefault = ({ onLogoutRequest }: { onLogoutRequest: () => voi
 
                                     {/* User Menu Items */}
                                     <div className="space-y-1">
-                                        {userMenuItems.map(({ to, label, icon: Icon }) => (
+                                        {navItems.map(({ to, label, icon: Icon }) => (
                                             <Link
                                                 key={to}
                                                 to={to}
-                                                className="flex items-center space-x-3 px-4 py-3 text-red font-plex rounded-lg hover:bg-red hover:text-white transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md group"
+                                                className={`flex items-center gap-4 px-4 py-4 text-base font-bold rounded-xl transition-all ${location.pathname === to ? "text-white shadow-lg" : "text-gray-600 hover:bg-gray-50"}`}
+                                                style={location.pathname === to ? { backgroundColor: kompetisiDetail?.primary_color || '#DC2626' } : {}}
                                                 onClick={() => setIsBurgerOpen(false)}
                                             >
-                                                <Icon
-                                                    size={16}
-                                                    className="transition-transform duration-300 group-hover:scale-110"
-                                                />
-                                                <span className="text-base">{label}</span>
+                                                {Icon && <Icon size={20} />}
+                                                {label}
                                             </Link>
                                         ))}
 

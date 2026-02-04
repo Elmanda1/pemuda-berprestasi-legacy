@@ -29,6 +29,14 @@ class User extends Authenticatable
     ];
 
     /**
+     * Always return role in uppercase for consistency with frontend.
+     */
+    public function getRoleAttribute($value)
+    {
+        return strtoupper($value);
+    }
+
+    /**
      * The attributes that should be hidden for arrays.
      *
      * @var array

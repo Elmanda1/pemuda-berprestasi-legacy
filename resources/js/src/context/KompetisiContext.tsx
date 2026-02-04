@@ -56,6 +56,7 @@ export interface Kompetisi {
   faq_data?: any[];
   timeline_data?: any[];
   template_type?: string;
+  modules_enabled?: string | any; // JSON string or object
 }
 
 export interface KelasKejuaraan {

@@ -7,6 +7,10 @@ import {
     LogOut,
     Home,
     Medal,
+    Calendar,
+    HelpCircle,
+    PlayCircle,
+    Trophy,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -52,25 +56,29 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Close menus on route change
-    useEffect(() => {
-        setIsBurgerOpen(false);
-        setShowDropdown(false);
-    }, [location]);
+    // Parse modules_enabled
+    const modules: any = (() => {
+        try {
+            if (typeof kompetisiDetail?.modules_enabled === 'string') {
+                return JSON.parse(kompetisiDetail.modules_enabled);
+            }
+            return kompetisiDetail?.modules_enabled || {};
+        } catch (e) {
+            return {};
+        }
+    })();
 
-    // Body scroll lock
-    useEffect(() => {
-        document.body.style.overflow = isBurgerOpen ? "hidden" : "unset";
-        return () => { document.body.style.overflow = "unset"; };
-    }, [isBurgerOpen]);
+    const isModuleEnabled = (key: string) => {
+        return modules[key] !== false;
+    };
 
     const navItems = [
-        { to: "/event/home", label: "Beranda", icon: Home },
-        { to: "/event/timeline", label: "Timeline", icon: null },
-        { to: "/event/faq", label: "FAQ", icon: null },
-        { to: "/event/live-streaming", label: "Live Streaming", icon: null },
-        { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali", icon: Medal },
-    ];
+        { to: "/event/home", label: "Beranda", icon: Home, module: 'home' },
+        { to: "/event/timeline", label: "Timeline", icon: Calendar, module: 'timeline' },
+        { to: "/event/faq", label: "FAQ", icon: HelpCircle, module: 'faq' },
+        { to: "/event/live-streaming", label: "Live Streaming", icon: PlayCircle, module: 'live_streaming' },
+        { to: `/event/medal-tally/${idKompetisi}`, label: "Perolehan Medali", icon: Trophy, module: 'medal_tally' },
+    ].filter(item => isModuleEnabled(item.module));
 
     const getDashboardLink = () => {
         if (user?.role === "PELATIH") return { to: "/dashboard/dojang", label: "Dashboard", icon: Home };
@@ -86,15 +94,18 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
 
     // Modern Dark Theme Styles
     const getNavbarStyles = () => {
+        const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
         return {
             bg: isScrolled ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-gray-800" : "bg-transparent",
             text: "text-gray-300",
             activeText: "text-white font-semibold",
             logo: "text-white",
-            buttonBorder: "border-red-500",
+            buttonBorder: "border-white/20",
             buttonText: "text-white",
-            buttonBg: "bg-red-600 hover:bg-red-700 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]",
+            buttonBg: `bg-[${primaryColor}] hover:opacity-90 text-white`,
+            buttonStyle: { backgroundColor: primaryColor, boxShadow: `0 0 15px ${primaryColor}66` },
             hoverText: "hover:text-white transition-colors",
+            activeLinkStyle: { color: primaryColor },
             dropdownBg: "bg-[#111] border border-gray-800 text-white",
         };
     };
@@ -117,13 +128,13 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                     <img src={kompetisiDetail.logo_url} alt="Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
                                 )}
                             </div>
-                            <span className="hidden sm:block group-hover:text-red-500 transition-colors">
+                            <span className="hidden sm:block transition-colors" style={{ color: location.pathname === '/' ? '#fff' : (kompetisiDetail?.primary_color || '#DC2626') }}>
                                 {kompetisiDetail?.nama_event || "CJV Management"}
                             </span>
                         </Link>
 
                         {/* Desktop Nav */}
-                        <div className="hidden lg:flex items-center space-x-1">
+                        <div className="hidden xl:flex items-center space-x-1 flex-wrap justify-center">
                             {navItems.filter(item => {
                                 if (kompetisiDetail?.show_navbar === 0 || kompetisiDetail?.show_navbar === false) {
                                     return item.label === "Beranda";
@@ -131,16 +142,17 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                 return true;
                             }).map(({ to, label, icon: Icon }) => {
                                 const isActive = location.pathname === to;
+                                const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
                                 return (
                                     <Link
                                         key={to}
                                         to={to}
-                                        className={`relative px-5 py-2 rounded-full font-plex text-sm tracking-wide transition-all duration-300 ${isActive ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                                        className={`relative px-3 xl:px-5 py-2 rounded-full font-plex text-xs xl:text-sm tracking-wide transition-all duration-300 ${isActive ? "text-white bg-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"
                                             }`}
                                         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                                     >
-                                        <span className="flex items-center gap-2 relative z-10">
-                                            {Icon && <Icon size={16} className={isActive ? "text-red-500" : ""} />}
+                                        <span className="flex items-center gap-2 relative z-10 whitespace-nowrap">
+                                            {Icon && <Icon size={16} style={{ color: isActive ? primaryColor : 'rgba(156, 163, 175, 0.8)' }} />}
                                             {label}
                                         </span>
                                         {isActive && (
@@ -152,15 +164,16 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                         </div>
 
                         {/* Desktop Auth */}
-                        <div className="hidden lg:flex items-center gap-4">
+                        <div className="hidden xl:flex items-center gap-2 xl:gap-4">
                             {!user ? (
                                 <>
-                                    <Link to="/login" className="px-5 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                                    <Link to="/login" className="px-3 xl:px-5 py-2 text-xs xl:text-sm font-medium text-gray-300 hover:text-white transition-colors">
                                         Login
                                     </Link>
                                     <Link
                                         to="/register"
-                                        className={`px-6 py-2.5 text-sm font-bold tracking-wide rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 ${styles.buttonBg}`}
+                                        className={`px-4 xl:px-6 py-2 xl:py-2.5 text-xs xl:text-sm font-bold tracking-wide rounded-lg transition-all duration-300 transform hover:-translate-y-0.5`}
+                                        style={styles.buttonStyle}
                                     >
                                         REGISTER
                                     </Link>
@@ -171,8 +184,8 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                         onClick={() => setShowDropdown(!showDropdown)}
                                         className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-all group"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-transparent group-hover:ring-red-500/50 transition-all">
-                                            <User size={16} className="text-white" />
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ring-2 ring-transparent transition-all bg-white" style={{ outline: `2px solid ${kompetisiDetail?.primary_color || '#DC2626'}`, color: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                            <User size={16} />
                                         </div>
                                         <span className="text-sm font-medium text-gray-300 group-hover:text-white max-w-[100px] truncate">
                                             {user?.pelatih?.nama_pelatih ?? "User"}
@@ -191,7 +204,7 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                                         onClick={() => setShowDropdown(false)}
                                                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors group"
                                                     >
-                                                        <Icon size={16} className="text-gray-500 group-hover:text-red-500 transition-colors" />
+                                                        <Icon size={16} className="text-gray-500 transition-colors" style={location.pathname === to ? { color: kompetisiDetail?.primary_color || '#DC2626' } : {}} />
                                                         {label}
                                                     </Link>
                                                 ))}
@@ -213,7 +226,7 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                         {/* Mobile Toggle */}
                         <button
                             onClick={() => setIsBurgerOpen(!isBurgerOpen)}
-                            className="lg:hidden p-2 text-gray-300 hover:text-white transition-colors"
+                            className="xl:hidden p-2 text-gray-300 hover:text-white transition-colors"
                         >
                             {isBurgerOpen ? <X size={28} /> : <Menu size={28} />}
                         </button>
@@ -222,7 +235,7 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
             </nav>
 
             {/* Mobile Menu */}
-            <div className={`fixed inset-0 z-40 lg:hidden transition-all duration-300 ${isBurgerOpen ? "visible" : "invisible"}`}>
+            <div className={`fixed inset-0 z-40 xl:hidden transition-all duration-300 ${isBurgerOpen ? "visible" : "invisible"}`}>
                 <div className={`absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 ${isBurgerOpen ? "opacity-100" : "opacity-0"}`} onClick={() => setIsBurgerOpen(false)} />
 
                 <div className={`absolute top-0 right-0 w-3/4 max-w-sm h-full bg-[#111] border-l border-gray-800 shadow-2xl transform transition-transform duration-300 ease-out ${isBurgerOpen ? "translate-x-0" : "translate-x-full"}`}>
@@ -243,10 +256,11 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                     key={to}
                                     to={to}
                                     onClick={() => setIsBurgerOpen(false)}
-                                    className={`flex items-center gap-4 px-4 py-4 text-lg font-medium rounded-xl transition-all ${location.pathname === to ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    className={`flex items-center gap-4 px-4 py-4 text-lg font-medium rounded-xl transition-all ${location.pathname === to ? "text-white shadow-lg" : "text-gray-400 hover:text-white hover:bg-white/5"
                                         }`}
+                                    style={location.pathname === to ? { backgroundColor: kompetisiDetail?.primary_color || '#DC2626', boxShadow: `0 10px 15px -3px ${kompetisiDetail?.primary_color || '#DC2626'}33` } : {}}
                                 >
-                                    {Icon && <Icon size={20} className={location.pathname === to ? "text-white" : "text-gray-500"} />}
+                                    {Icon && <Icon size={20} style={{ color: location.pathname === to ? '#fff' : (kompetisiDetail?.primary_color || '#DC2626') }} />}
                                     {label}
                                 </Link>
                             ))}
@@ -258,15 +272,15 @@ const NavbarTemplateB = ({ onLogoutRequest }: { onLogoutRequest: () => void }) =
                                     <Link to="/login" className="w-full py-3 text-center rounded-xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all">
                                         Login
                                     </Link>
-                                    <Link to="/register" className="w-full py-3 text-center rounded-xl bg-gradient-to-r from-red-600 to-red-800 text-white font-bold shadow-lg hover:shadow-red-900/30 transition-all">
+                                    <Link to="/register" className="w-full py-3 text-center rounded-xl text-white font-bold shadow-lg transition-all" style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}>
                                         Register Now
                                     </Link>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 px-2">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-red-500 flex items-center justify-center text-white font-bold">
-                                            <User size={20} className="text-white" />
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-white" style={{ color: kompetisiDetail?.primary_color || '#DC2626', boxShadow: `0 4px 12px ${kompetisiDetail?.primary_color || '#DC2626'}4d` }}>
+                                            <User size={24} />
                                         </div>
                                         <div>
                                             <p className="text-white font-medium">{user.pelatih?.nama_pelatih || "User"}</p>

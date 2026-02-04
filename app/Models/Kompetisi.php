@@ -44,13 +44,15 @@ class Kompetisi extends Model
         'registration_steps',
         'faq_data',
         'timeline_data',
-        'template_type'
+        'template_type',
+        'modules_enabled'
     ];
 
     protected $casts = [
         'registration_steps' => 'array',
         'faq_data' => 'array',
         'timeline_data' => 'array',
+        'modules_enabled' => 'array',
         'show_antrian' => 'boolean',
         'show_navbar' => 'boolean'
     ];
