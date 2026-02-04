@@ -24,7 +24,8 @@ import {
   Calendar,
   Clock,
   ArrowLeftRight,
-  X
+  X,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
 import { apiClient } from '../../config/api';
@@ -38,6 +39,7 @@ const SettingsPage: React.FC = () => {
     push: false,
     sms: true
   });
+  const [activeThemeTab, setActiveThemeTab] = useState('tampilan');
 
   const { kompetisiList, updateKompetisiTheme, fetchKompetisiList, loadingKompetisi } = useKompetisi();
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -65,7 +67,8 @@ const SettingsPage: React.FC = () => {
     registration_description: '',
     registration_steps: [] as any[],
     faq_data: [] as any[],
-    timeline_data: [] as any[]
+    timeline_data: [] as any[],
+    template_type: 'default'
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
@@ -88,7 +91,7 @@ const SettingsPage: React.FC = () => {
     { id: 'notifications', label: 'Notifikasi', icon: Bell },
     { id: 'system', label: 'Sistem', icon: Database },
     { id: 'email', label: 'Email', icon: Mail },
-    { id: 'kompetisi', label: 'Tema Kompetisi', icon: Trophy }
+    { id: 'kompetisi', label: 'Pengaturan Website', icon: Trophy }
   ];
 
   const renderProfileTab = () => (
@@ -701,7 +704,8 @@ const SettingsPage: React.FC = () => {
             { event: 'Technical Meeting', time: '21 November 2025 15.30 - selesai', side: 'left', month: 'November' },
             { event: 'Pertandingan', time: '22 -26 November 2025', side: 'right', month: 'November' },
           ];
-        })()
+        })(),
+        template_type: komp.template_type || 'default'
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -739,8 +743,8 @@ const SettingsPage: React.FC = () => {
     const handleSaveTheme = async (id: number) => {
       // Validation: At least one phone number must be provided
       if (!editData.contact_phone_1 && !editData.contact_phone_2) {
-          toast.error('Minimal harus ada 1 nomor telepon kontak!');
-          return;
+        toast.error('Minimal harus ada 1 nomor telepon kontak!');
+        return;
       }
 
       const toastId = toast.loading('Menyimpan perubahan...');
@@ -749,8 +753,10 @@ const SettingsPage: React.FC = () => {
         formData.append('primary_color', editData.primary_color);
         formData.append('secondary_color', editData.secondary_color);
         formData.append('show_antrian', editData.show_antrian ? '1' : '0');
+        formData.append('show_antrian', editData.show_antrian ? '1' : '0');
         formData.append('show_navbar', editData.show_navbar ? '1' : '0');
-        
+        formData.append('template_type', editData.template_type);
+
         // Text Content
         formData.append('hero_title', editData.hero_title);
         formData.append('hero_description', editData.hero_description);
@@ -777,9 +783,11 @@ const SettingsPage: React.FC = () => {
 
         await updateKompetisiTheme(id, formData);
         localStorage.setItem('currentKompetisiId', id.toString());
+        toast.dismiss(toastId);
         toast.success("Tema kompetisi berhasil diperbarui");
         setEditingId(null);
       } catch (err) {
+        toast.dismiss(toastId);
         toast.error("Gagal memperbarui tema");
       }
     };
@@ -817,8 +825,8 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="p-6 rounded-xl bg-white border border-gray-100 shadow-sm">
-          <h3 className="font-bebas text-2xl mb-4 tracking-wide text-red">Kustomisasi Tema Kompetisi</h3>
-          <p className="text-sm text-gray-500 mb-6 font-inter">Sesuaikan warna identitas, logo, hero image, dan tutorial untuk setiap kompetisi.</p>
+          <h3 className="font-bebas text-2xl mb-4 tracking-wide text-red">Pengaturan Website</h3>
+          <p className="text-sm text-gray-500 mb-6 font-inter">Kelola tampilan, konten, dan informasi website untuk setiap kompetisi.</p>
 
           {loadingKompetisi ? (
             <div className="flex justify-center p-12">
@@ -835,12 +843,7 @@ const SettingsPage: React.FC = () => {
                   <div className="p-5">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div
-                          className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold shrink-0 shadow-inner"
-                          style={{ backgroundColor: (editingId === komp.id_kompetisi ? editData.primary_color : komp.primary_color) || '#990D35' }}
-                        >
-                          {komp.nama_event.charAt(0)}
-                        </div>
+                        {/* Logo placeholder removed */}
                         <div>
                           <h4 className="font-inter font-bold text-gray-900 text-lg leading-tight">{komp.nama_event}</h4>
                           <p className="text-sm text-gray-500">{komp.lokasi || 'Lokasi tidak diatur'}</p>
@@ -859,502 +862,582 @@ const SettingsPage: React.FC = () => {
                     </div>
 
                     {editingId === komp.id_kompetisi && (
-                      <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {/* Section 1: Colors */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <div className="space-y-3">
-                            <label className="block text-sm font-bold text-gray-700">Warna Kebanggaan (Primer)</label>
-                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                              <input
-                                type="color"
-                                value={editData.primary_color}
-                                onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
-                              />
-                              <input
-                                type="text"
-                                value={editData.primary_color}
-                                onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
-                                placeholder="#990D35"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <label className="block text-sm font-bold text-gray-700">Warna Aksen (Sekunder)</label>
-                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                              <input
-                                type="color"
-                                value={editData.secondary_color}
-                                onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
-                              />
-                              <input
-                                type="text"
-                                value={editData.secondary_color}
-                                onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
-                                placeholder="#F5B700"
-                              />
-                            </div>
+                      <div>
+                        <div className="mt-8 bg-gray-50/50 rounded-2xl border border-gray-100 p-2">
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { id: 'tampilan', label: 'Tampilan & Aset', icon: Palette },
+                              { id: 'konten', label: 'Konten Teks', icon: FileText },
+                              { id: 'kontak', label: 'Kontak & Lokasi', icon: ArrowLeftRight },
+                              { id: 'informasi', label: 'Informasi & Jadwal', icon: Calendar },
+                              { id: 'fitur', label: 'Fitur Lainnya', icon: SettingsIcon }
+                            ].map((tab) => (
+                              <button
+                                key={tab.id}
+                                onClick={() => setActiveThemeTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${activeThemeTab === tab.id
+                                  ? 'bg-white text-red shadow-sm ring-1 ring-gray-200'
+                                  : 'text-gray-500 hover:bg-white/60 hover:text-gray-700'
+                                  }`}
+                              >
+                                <tab.icon size={16} />
+                                {tab.label}
+                              </button>
+                            ))}
                           </div>
                         </div>
 
-                        {/* Section 2: Asset Uploads */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                          <div className="space-y-3">
-                            <label className="block text-sm font-bold text-gray-700">Ganti Logo Event</label>
-                            <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
-                              {logoFile ? (
-                                <img src={URL.createObjectURL(logoFile)} className="h-full w-full object-contain p-2" alt="New Logo" />
-                              ) : editData.logo_url ? (
-                                <img src={editData.logo_url} className="h-full w-full object-contain p-2" alt="Current Logo" />
-                              ) : (
-                                <div className="text-center">
-                                  <Upload className="mx-auto text-gray-400 mb-2" />
-                                  <span className="text-xs text-gray-500">Pilih Logo (PNG/JPG)</span>
-                                </div>
-                              )}
-                              <input
-                                type="file"
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                                accept="image/*"
-                              />
-                            </div>
-                          </div>
+                        <div className="mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                          {/* Section: Tampilan & Aset */}
+                          {activeThemeTab === 'tampilan' && (
+                            <div className="space-y-8">
+                              {/* Section 0: Template Selection */}
+                              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                  <Layout size={18} className="text-red" />
+                                  Pilih Tata Letak & Tema (Web Template)
+                                </h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div
+                                    onClick={() => setEditData({ ...editData, template_type: 'default' })}
+                                    className={`cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${editData.template_type === 'default' ? 'border-red bg-white ring-2 ring-red/20' : 'border-gray-200 bg-white hover:border-red/50'}`}
+                                  >
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${editData.template_type === 'default' ? 'border-red' : 'border-gray-300'}`}>
+                                        {editData.template_type === 'default' && <div className="w-2 h-2 rounded-full bg-red" />}
+                                      </div>
+                                      <h6 className="font-bold text-gray-800">Classic Light (Default)</h6>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-3">Tampilan standar dengan dominasi warna putih yang bersih dan formal.</p>
+                                    <div className="h-24 bg-gray-100 rounded-lg border border-gray-100 overflow-hidden relative">
+                                      <div className="absolute top-0 left-0 w-full h-8 bg-white border-b border-gray-100 flex items-center px-2 space-x-1">
+                                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                                        <div className="w-8 h-2 rounded bg-gray-200"></div>
+                                      </div>
+                                      <div className="absolute top-10 left-2 w-1/2 h-8 bg-white rounded shadow-sm"></div>
+                                    </div>
+                                  </div>
 
-                          <div className="space-y-3">
-                            <label className="block text-sm font-bold text-gray-700">Ganti Hero/Banner Poster</label>
-                            <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
-                              {heroFile ? (
-                                <img src={URL.createObjectURL(heroFile)} className="h-full w-full object-cover" alt="New Hero" />
-                              ) : komp.poster_image ? (
-                                <img src={komp.poster_image} className="h-full w-full object-cover" alt="Current Hero" />
-                              ) : (
-                                <div className="text-center">
-                                  <Upload className="mx-auto text-gray-400 mb-2" />
-                                  <span className="text-xs text-gray-500">Pilih Banner Utama</span>
-                                </div>
-                              )}
-                              <input
-                                type="file"
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
-                                accept="image/*"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Section 2.5: Text Content Customization */}
-                        <div className="pt-6 border-t border-gray-100">
-                          <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <FileText size={18} className="text-red" />
-                            Kustomisasi Konten Teks
-                          </h5>
-                          
-                          <div className="space-y-6">
-                            {/* Hero Section */}
-                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Hero / Banner Utama</h6>
-                              <div className="grid grid-cols-1 gap-4">
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Judul Utama (Event Name)</label>
-                                  <div className="flex gap-4">
-                                    <input
-                                      type="text"
-                                      value={editData.hero_title}
-                                      onChange={(e) => setEditData({ ...editData, hero_title: e.target.value })}
-                                      className="flex-1 px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: Sriwijaya International (Kosongkan untuk default)"
-                                    />
-                                    <div className="w-32">
-                                      <label className="block text-[10px] font-bold text-gray-400 uppercase">Tahun</label>
-                                      <input
-                                        type="text"
-                                        value={editData.event_year}
-                                        onChange={(e) => setEditData({ ...editData, event_year: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                        placeholder="2025"
-                                      />
+                                  <div
+                                    onClick={() => setEditData({ ...editData, template_type: 'modern' })}
+                                    className={`cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${editData.template_type === 'modern' ? 'border-red bg-gray-900 ring-2 ring-red/20' : 'border-gray-200 bg-gray-800 hover:border-red/50'}`}
+                                  >
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${editData.template_type === 'modern' ? 'border-red' : 'border-gray-500'}`}>
+                                        {editData.template_type === 'modern' && <div className="w-2 h-2 rounded-full bg-red" />}
+                                      </div>
+                                      <h6 className="font-bold text-white">Modern Dark (Premium)</h6>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mb-3">Tema gelap elegan dengan aksen neon dan animasi modern.</p>
+                                    <div className="h-24 bg-gray-900 rounded-lg border border-gray-700 overflow-hidden relative">
+                                      <div className="absolute top-0 left-0 w-full h-8 bg-gray-800 border-b border-gray-700 flex items-center px-2 space-x-1">
+                                        <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                                        <div className="w-8 h-2 rounded bg-gray-600"></div>
+                                      </div>
+                                      <div className="absolute top-10 left-2 w-1/2 h-8 bg-gray-800 rounded shadow-sm border border-gray-700"></div>
                                     </div>
                                   </div>
                                 </div>
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Singkat (Subtitle)</label>
-                                  <textarea
-                                    value={editData.hero_description}
-                                    onChange={(e) => setEditData({ ...editData, hero_description: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
-                                    placeholder="Deskripsi singkat event di bawah judul..."
-                                  />
-                                </div>
                               </div>
-                            </div>
 
-                            {/* About Section */}
-                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Sambutan / About</h6>
-                              <div className="grid grid-cols-1 gap-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Ketua / Direktur</label>
-                                    <input
-                                      type="text"
-                                      value={editData.about_director_name}
-                                      onChange={(e) => setEditData({ ...editData, about_director_name: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: Hj. Meilinda, S.Sos.,M.M"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Jabatan</label>
-                                    <input
-                                      type="text"
-                                      value={editData.about_director_title}
-                                      onChange={(e) => setEditData({ ...editData, about_director_title: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: Ketua Panitia Pelaksana"
-                                    />
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Slogan Sambutan (Quote)</label>
-                                  <input
-                                    type="text"
-                                    value={editData.about_director_slogan}
-                                    onChange={(e) => setEditData({ ...editData, about_director_slogan: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                    placeholder="Contoh: SALAM TAEKWONDO INDONESIA..."
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Isi Sambutan / Deskripsi Lengkap</label>
-                                  <textarea
-                                    value={editData.about_description}
-                                    onChange={(e) => setEditData({ ...editData, about_description: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-32"
-                                    placeholder="Teks sambutan lengkap..."
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Contact Section */}
-                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Kontak & Lokasi</h6>
-                              <div className="grid grid-cols-1 gap-4">
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Lokasi / Venue</label>
-                                  <input
-                                    type="text"
-                                    value={editData.contact_venue_name}
-                                    onChange={(e) => setEditData({ ...editData, contact_venue_name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                    placeholder="Contoh: GOR Jakabaring, Palembang"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Kontak</label>
-                                  <textarea
-                                    value={editData.contact_description}
-                                    onChange={(e) => setEditData({ ...editData, contact_description: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
-                                    placeholder="Informasi tambahan di bagian kontak..."
-                                  />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 1 (Wajib)</label>
-                                    <input
-                                      type="text"
-                                      value={editData.contact_phone_1}
-                                      onChange={(e) => setEditData({ ...editData, contact_phone_1: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: 08123456789"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 2 (Opsional)</label>
-                                    <input
-                                      type="text"
-                                      value={editData.contact_phone_2}
-                                      onChange={(e) => setEditData({ ...editData, contact_phone_2: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: 08123456789"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 1</label>
-                                    <input
-                                      type="text"
-                                      value={editData.contact_person_name_1}
-                                      onChange={(e) => setEditData({ ...editData, contact_person_name_1: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: Rora"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 2</label>
-                                    <input
-                                      type="text"
-                                      value={editData.contact_person_name_2}
-                                      onChange={(e) => setEditData({ ...editData, contact_person_name_2: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="Contoh: Rizka"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Username Instagram</label>
-                                    <div className="flex items-center">
-                                      <span className="bg-gray-100 border border-r-0 border-gray-200 px-3 py-2 rounded-l-xl text-gray-500 text-sm">@</span>
-                                      <input
-                                        type="text"
-                                        value={editData.contact_instagram}
-                                        onChange={(e) => setEditData({ ...editData, contact_instagram: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-r-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                        placeholder="sumsel_taekwondo"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Link Embed Google Maps</label>
-                                    <input
-                                      type="text"
-                                      value={editData.contact_gmaps_url}
-                                      onChange={(e) => setEditData({ ...editData, contact_gmaps_url: e.target.value })}
-                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
-                                      placeholder="https://www.google.com/maps/embed?..."
-                                    />
-                                    <p className="text-[10px] text-gray-400 mt-1">*Masukkan URL dari menu Share &gt; Embed a map</p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Registration Steps Section */}
-                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                              <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Panduan Pendaftaran</h6>
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Panduan</label>
-                                  <textarea
-                                    value={editData.registration_description}
-                                    onChange={(e) => setEditData({ ...editData, registration_description: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
-                                    placeholder="Kalimat pengantar di bagian panduan pendaftaran..."
-                                  />
-                                </div>
+                              {/* Section 1: Colors */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-bold text-gray-700 uppercase">Langkah-langkah (Steps)</label>
-                                    <button
-                                      onClick={() => {
-                                        const nextNum = editData.registration_steps.length + 1;
-                                        setEditData({
-                                          ...editData,
-                                          registration_steps: [
-                                            ...editData.registration_steps,
-                                            { number: nextNum, title: 'Langkah Baru', desc: 'Deskripsi langkah...' }
-                                          ]
-                                        });
-                                      }}
-                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
-                                    >
-                                      <Plus size={20} />
-                                      Tambah Step
-                                    </button>
+                                  <label className="block text-sm font-bold text-gray-700">Warna Kebanggaan (Primer)</label>
+                                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <input
+                                      type="color"
+                                      value={editData.primary_color}
+                                      onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
+                                      className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={editData.primary_color}
+                                      onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
+                                      className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
+                                      placeholder="#990D35"
+                                    />
                                   </div>
-                                  <div className="grid grid-cols-1 gap-3">
-                                    {editData.registration_steps.map((step, idx) => (
-                                      <div key={idx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 relative group">
-                                        <div className="flex items-center gap-3">
-                                          <div className="w-6 h-6 bg-red text-white text-sm font-bold rounded-full flex items-center justify-center shrink-0">
-                                            {idx + 1}
-                                          </div>
-                                          <input
-                                            type="text"
-                                            value={step.title}
-                                            onChange={(e) => {
-                                              const newSteps = [...editData.registration_steps];
-                                              newSteps[idx].title = e.target.value;
-                                              setEditData({ ...editData, registration_steps: newSteps });
-                                            }}
-                                            className="flex-1 font-bold text-sm bg-transparent border-b border-transparent focus:border-red outline-none"
-                                            placeholder="Judul Step"
-                                          />
-                                          <button
-                                            onClick={() => {
-                                              const newSteps = editData.registration_steps.filter((_, i) => i !== idx);
-                                              // reorder numbers
-                                              const reordered = newSteps.map((s, i) => ({ ...s, number: i + 1 }));
-                                              setEditData({ ...editData, registration_steps: reordered });
-                                            }}
-                                            className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
-                                          >
-                                            <Trash2 size={20} />
-                                          </button>
-                                        </div>
-                                        <textarea
-                                          value={step.desc}
-                                          onChange={(e) => {
-                                            const newSteps = [...editData.registration_steps];
-                                            newSteps[idx].desc = e.target.value;
-                                            setEditData({ ...editData, registration_steps: newSteps });
-                                          }}
-                                          className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 resize-none h-12 p-0"
-                                          placeholder="Deskripsi langkah..."
+                                </div>
+
+                                <div className="space-y-3">
+                                  <label className="block text-sm font-bold text-gray-700">Warna Aksen (Sekunder)</label>
+                                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <input
+                                      type="color"
+                                      value={editData.secondary_color}
+                                      onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
+                                      className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={editData.secondary_color}
+                                      onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
+                                      className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
+                                      placeholder="#F5B700"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Section 2: Asset Uploads */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                                <div className="space-y-3">
+                                  <label className="block text-sm font-bold text-gray-700">Ganti Logo Event</label>
+                                  <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                                    {logoFile ? (
+                                      <img src={URL.createObjectURL(logoFile)} className="h-full w-full object-contain p-2" alt="New Logo" />
+                                    ) : editData.logo_url ? (
+                                      <img src={editData.logo_url} className="h-full w-full object-contain p-2" alt="Current Logo" />
+                                    ) : (
+                                      <div className="text-center">
+                                        <Upload className="mx-auto text-gray-400 mb-2" />
+                                        <span className="text-xs text-gray-500">Pilih Logo (PNG/JPG)</span>
+                                      </div>
+                                    )}
+                                    <input
+                                      type="file"
+                                      className="absolute inset-0 opacity-0 cursor-pointer"
+                                      onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                                      accept="image/*"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <label className="block text-sm font-bold text-gray-700">Ganti Hero/Banner Poster</label>
+                                  <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                                    {heroFile ? (
+                                      <img src={URL.createObjectURL(heroFile)} className="h-full w-full object-cover" alt="New Hero" />
+                                    ) : komp.poster_image ? (
+                                      <img src={komp.poster_image} className="h-full w-full object-cover" alt="Current Hero" />
+                                    ) : (
+                                      <div className="text-center">
+                                        <Upload className="mx-auto text-gray-400 mb-2" />
+                                        <span className="text-xs text-gray-500">Pilih Banner Utama</span>
+                                      </div>
+                                    )}
+                                    <input
+                                      type="file"
+                                      className="absolute inset-0 opacity-0 cursor-pointer"
+                                      onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
+                                      accept="image/*"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {activeThemeTab === 'konten' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                              {/* Hero Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Hero / Banner Utama</h6>
+                                <div className="grid grid-cols-1 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Judul Utama (Event Name)</label>
+                                    <div className="flex gap-4">
+                                      <input
+                                        type="text"
+                                        value={editData.hero_title}
+                                        onChange={(e) => setEditData({ ...editData, hero_title: e.target.value })}
+                                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: Sriwijaya International (Kosongkan untuk default)"
+                                      />
+                                      <div className="w-32">
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase">Tahun</label>
+                                        <input
+                                          type="text"
+                                          value={editData.event_year}
+                                          onChange={(e) => setEditData({ ...editData, event_year: e.target.value })}
+                                          className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                          placeholder="2025"
                                         />
                                       </div>
-                                    ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Singkat (Subtitle)</label>
+                                    <textarea
+                                      value={editData.hero_description}
+                                      onChange={(e) => setEditData({ ...editData, hero_description: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                      placeholder="Deskripsi singkat event di bawah judul..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* About Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Sambutan / About</h6>
+                                <div className="grid grid-cols-1 gap-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Ketua / Direktur</label>
+                                      <input
+                                        type="text"
+                                        value={editData.about_director_name}
+                                        onChange={(e) => setEditData({ ...editData, about_director_name: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: Hj. Meilinda, S.Sos.,M.M"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Jabatan</label>
+                                      <input
+                                        type="text"
+                                        value={editData.about_director_title}
+                                        onChange={(e) => setEditData({ ...editData, about_director_title: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: Ketua Panitia Pelaksana"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Slogan Sambutan (Quote)</label>
+                                    <input
+                                      type="text"
+                                      value={editData.about_director_slogan}
+                                      onChange={(e) => setEditData({ ...editData, about_director_slogan: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: SALAM TAEKWONDO INDONESIA..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Isi Sambutan / Deskripsi Lengkap</label>
+                                    <textarea
+                                      value={editData.about_description}
+                                      onChange={(e) => setEditData({ ...editData, about_description: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-32"
+                                      placeholder="Teks sambutan lengkap..."
+                                    />
                                   </div>
                                 </div>
                               </div>
                             </div>
+                          )}
 
-                             {/* FAQ Management Section */}
-                             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                               <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider flex items-center justify-between">
-                                 FAQ (Kategori & Pertanyaan)
-                                 <button
-                                   onClick={() => {
-                                     setEditData({
-                                       ...editData,
-                                       faq_data: [
-                                         ...editData.faq_data || [],
-                                         { title: 'Kategori Baru', description: 'Deskripsi kategori...', questions: [{ question: 'Pertanyaan Baru', answer: 'Jawaban...' }] }
-                                       ]
-                                     });
-                                   }}
-                                      className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
-                                 >
-                                   <Plus size={20} />
-                                   Tambah Kategori
-                                 </button>
-                               </h6>
-                               <div className="space-y-6">
-                                 {(editData.faq_data || []).map((section: any, sIdx: number) => (
-                                   <div key={sIdx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4 relative group">
-                                     <div className="flex items-start justify-between gap-4">
-                                       <div className="flex-1 space-y-2">
-                                         <input
-                                           type="text"
-                                           value={section.title}
-                                           onChange={(e) => {
-                                             const newFaq = [...editData.faq_data];
-                                             newFaq[sIdx].title = e.target.value;
-                                             setEditData({ ...editData, faq_data: newFaq });
-                                           }}
-                                           className="w-full font-bold text-base bg-transparent border-b border-gray-100 focus:border-red outline-none pb-1"
-                                           placeholder="Judul Kategori FAQ"
-                                         />
-                                         <input
-                                           type="text"
-                                           value={section.description}
-                                           onChange={(e) => {
-                                             const newFaq = [...editData.faq_data];
-                                             newFaq[sIdx].description = e.target.value;
-                                             setEditData({ ...editData, faq_data: newFaq });
-                                           }}
-                                           className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 p-0"
-                                           placeholder="Deskripsi singkat kategori..."
-                                         />
-                                       </div>
-                                       <button
-                                         onClick={() => {
-                                           const newFaq = editData.faq_data.filter((_: any, i: number) => i !== sIdx);
-                                           setEditData({ ...editData, faq_data: newFaq });
-                                         }}
-                                         className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
-                                         title="Hapus Kategori"
-                                       >
-                                         <Trash2 size={20} />
-                                       </button>
-                                     </div>
+                          {activeThemeTab === 'kontak' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                              {/* Contact Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Kontak & Lokasi</h6>
+                                <div className="grid grid-cols-1 gap-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Lokasi / Venue</label>
+                                    <input
+                                      type="text"
+                                      value={editData.contact_venue_name}
+                                      onChange={(e) => setEditData({ ...editData, contact_venue_name: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                      placeholder="Contoh: GOR Jakabaring, Palembang"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Kontak</label>
+                                    <textarea
+                                      value={editData.contact_description}
+                                      onChange={(e) => setEditData({ ...editData, contact_description: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                      placeholder="Informasi tambahan di bagian kontak..."
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 1 (Wajib)</label>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_phone_1}
+                                        onChange={(e) => setEditData({ ...editData, contact_phone_1: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: 08123456789"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon 2 (Opsional)</label>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_phone_2}
+                                        onChange={(e) => setEditData({ ...editData, contact_phone_2: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: 08123456789"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 1</label>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_person_name_1}
+                                        onChange={(e) => setEditData({ ...editData, contact_person_name_1: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: Rora"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Nama Kontak 2</label>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_person_name_2}
+                                        onChange={(e) => setEditData({ ...editData, contact_person_name_2: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="Contoh: Rizka"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Username Instagram</label>
+                                      <div className="flex items-center">
+                                        <span className="bg-gray-100 border border-r-0 border-gray-200 px-3 py-2 rounded-l-xl text-gray-500 text-sm">@</span>
+                                        <input
+                                          type="text"
+                                          value={editData.contact_instagram}
+                                          onChange={(e) => setEditData({ ...editData, contact_instagram: e.target.value })}
+                                          className="w-full px-3 py-2 rounded-r-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                          placeholder="sumsel_taekwondo"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-gray-500 mb-1">Link Embed Google Maps</label>
+                                      <input
+                                        type="text"
+                                        value={editData.contact_gmaps_url}
+                                        onChange={(e) => setEditData({ ...editData, contact_gmaps_url: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm"
+                                        placeholder="https://www.google.com/maps/embed?..."
+                                      />
+                                      <p className="text-[10px] text-gray-400 mt-1">*Masukkan URL dari menu Share &gt; Embed a map</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
-                                     <div className="pl-4 border-l-2 border-red/10 space-y-4">
-                                       <div className="flex items-center justify-between">
-                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daftar Pertanyaan</span>
-                                         <button
-                                           onClick={() => {
-                                             const newFaq = [...editData.faq_data];
-                                             newFaq[sIdx].questions = [
-                                               ...newFaq[sIdx].questions || [],
-                                               { question: 'Pertanyaan Baru', answer: 'Jawaban...' }
-                                             ];
-                                             setEditData({ ...editData, faq_data: newFaq });
-                                           }}
-                                           className="flex items-center gap-1 text-sm text-red font-bold cursor-pointer hover:underline pr-4 transition-all"
-                                         >
-                                           <Plus size={20} />
-                                           Tambah Pertanyaan
-                                         </button>
-                                       </div>
-                                       
-                                       <div className="space-y-3">
-                                         {(section.questions || []).map((q: any, qIdx: number) => (
-                                           <div key={qIdx} className="bg-gray-50/50 p-3 rounded-lg border border-red space-y-2 relative group">
-                                             <div className="flex items-center justify-between gap-2">
-                                               <div className="flex items-center gap-2 flex-1">
-                                                 <HelpCircle size={16} className="text-red/60" />
-                                                 <input
-                                                   type="text"
-                                                   value={q.question}
-                                                   onChange={(e) => {
-                                                     const newFaq = [...editData.faq_data];
-                                                     newFaq[sIdx].questions[qIdx].question = e.target.value;
-                                                     setEditData({ ...editData, faq_data: newFaq });
-                                                   }}
-                                                   className="w-full text-sm font-semibold bg-transparent border-none focus:ring-0 p-0"
-                                                   placeholder="Pertanyaan..."
-                                                 />
-                                               </div>
-                                             <button
-                                                onClick={() => {
-                                                  const newFaq = [...editData.faq_data];
-                                                  newFaq[sIdx].questions = newFaq[sIdx].questions.filter((_: any, i: number) => i !== qIdx);
-                                                  setEditData({ ...editData, faq_data: newFaq });
-                                                }}
-                                                className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
-                                              >
-                                                <Trash2 size={20} />
-                                              </button>
-                                             </div>
-                                             <div className="flex items-start gap-2">
-                                               <MessageCircle size={16} className="text-gray-400" />
-                                               <textarea
-                                                 value={q.answer}
-                                                 onChange={(e) => {
-                                                   const newFaq = [...editData.faq_data];
-                                                   newFaq[sIdx].questions[qIdx].answer = e.target.value;
-                                                   setEditData({ ...editData, faq_data: newFaq });
-                                                 }}
-                                                 className="w-full text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 h-16 resize-none"
-                                                 placeholder="Jawaban..."
-                                               />
-                                             </div>
-                                           </div>
-                                         ))}
-                                       </div>
-                                     </div>
-                                   </div>
-                                 ))}
-                                 {(!editData.faq_data || editData.faq_data.length === 0) && (
-                                   <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">
-                                     <HelpCircle className="mx-auto text-gray-300 mb-2" size={24} />
-                                     <p className="text-xs text-gray-400">Belum ada data FAQ. Tambahkan kategori pertama Anda.</p>
-                                   </div>
-                                 )}
-                               </div>
-                             </div>
-                           </div>
-                         </div>
+                          {activeThemeTab === 'informasi' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                              {/* Registration Steps Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider">Panduan Pendaftaran</h6>
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Deskripsi Panduan</label>
+                                    <textarea
+                                      value={editData.registration_description}
+                                      onChange={(e) => setEditData({ ...editData, registration_description: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-red outline-none text-sm h-20 resize-none"
+                                      placeholder="Kalimat pengantar di bagian panduan pendaftaran..."
+                                    />
+                                  </div>
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <label className="block text-xs font-bold text-gray-700 uppercase">Langkah-langkah (Steps)</label>
+                                      <button
+                                        onClick={() => {
+                                          const nextNum = editData.registration_steps.length + 1;
+                                          setEditData({
+                                            ...editData,
+                                            registration_steps: [
+                                              ...editData.registration_steps,
+                                              { number: nextNum, title: 'Langkah Baru', desc: 'Deskripsi langkah...' }
+                                            ]
+                                          });
+                                        }}
+                                        className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
+                                      >
+                                        <Plus size={20} />
+                                        Tambah Step
+                                      </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                      {editData.registration_steps.map((step, idx) => (
+                                        <div key={idx} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2 relative group">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 bg-red text-white text-sm font-bold rounded-full flex items-center justify-center shrink-0">
+                                              {idx + 1}
+                                            </div>
+                                            <input
+                                              type="text"
+                                              value={step.title}
+                                              onChange={(e) => {
+                                                const newSteps = [...editData.registration_steps];
+                                                newSteps[idx].title = e.target.value;
+                                                setEditData({ ...editData, registration_steps: newSteps });
+                                              }}
+                                              className="flex-1 font-bold text-sm bg-transparent border-b border-transparent focus:border-red outline-none"
+                                              placeholder="Judul Step"
+                                            />
+                                            <button
+                                              onClick={() => {
+                                                const newSteps = editData.registration_steps.filter((_, i) => i !== idx);
+                                                // reorder numbers
+                                                const reordered = newSteps.map((s, i) => ({ ...s, number: i + 1 }));
+                                                setEditData({ ...editData, registration_steps: reordered });
+                                              }}
+                                              className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                              <Trash2 size={20} />
+                                            </button>
+                                          </div>
+                                          <textarea
+                                            value={step.desc}
+                                            onChange={(e) => {
+                                              const newSteps = [...editData.registration_steps];
+                                              newSteps[idx].desc = e.target.value;
+                                              setEditData({ ...editData, registration_steps: newSteps });
+                                            }}
+                                            className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 resize-none h-12 p-0"
+                                            placeholder="Deskripsi langkah..."
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* FAQ Management Section */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider flex items-center justify-between">
+                                  FAQ (Kategori & Pertanyaan)
+                                  <button
+                                    onClick={() => {
+                                      setEditData({
+                                        ...editData,
+                                        faq_data: [
+                                          ...editData.faq_data || [],
+                                          { title: 'Kategori Baru', description: 'Deskripsi kategori...', questions: [{ question: 'Pertanyaan Baru', answer: 'Jawaban...' }] }
+                                        ]
+                                      });
+                                    }}
+                                    className="flex items-center gap-1 text-sm bg-red text-white font-bold px-4 py-2 rounded-lg hover:opacity-90 hover:scale-103 cursor-pointer transition-all"
+                                  >
+                                    <Plus size={20} />
+                                    Tambah Kategori
+                                  </button>
+                                </h6>
+                                <div className="space-y-6">
+                                  {(editData.faq_data || []).map((section: any, sIdx: number) => (
+                                    <div key={sIdx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4 relative group">
+                                      <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 space-y-2">
+                                          <input
+                                            type="text"
+                                            value={section.title}
+                                            onChange={(e) => {
+                                              const newFaq = [...editData.faq_data];
+                                              newFaq[sIdx].title = e.target.value;
+                                              setEditData({ ...editData, faq_data: newFaq });
+                                            }}
+                                            className="w-full font-bold text-base bg-transparent border-b border-gray-100 focus:border-red outline-none pb-1"
+                                            placeholder="Judul Kategori FAQ"
+                                          />
+                                          <input
+                                            type="text"
+                                            value={section.description}
+                                            onChange={(e) => {
+                                              const newFaq = [...editData.faq_data];
+                                              newFaq[sIdx].description = e.target.value;
+                                              setEditData({ ...editData, faq_data: newFaq });
+                                            }}
+                                            className="w-full text-sm text-gray-500 bg-transparent border-none focus:ring-0 p-0"
+                                            placeholder="Deskripsi singkat kategori..."
+                                          />
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            const newFaq = editData.faq_data.filter((_: any, i: number) => i !== sIdx);
+                                            setEditData({ ...editData, faq_data: newFaq });
+                                          }}
+                                          className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                          title="Hapus Kategori"
+                                        >
+                                          <Trash2 size={20} />
+                                        </button>
+                                      </div>
+
+                                      <div className="pl-4 border-l-2 border-red/10 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daftar Pertanyaan</span>
+                                          <button
+                                            onClick={() => {
+                                              const newFaq = [...editData.faq_data];
+                                              newFaq[sIdx].questions = [
+                                                ...newFaq[sIdx].questions || [],
+                                                { question: 'Pertanyaan Baru', answer: 'Jawaban...' }
+                                              ];
+                                              setEditData({ ...editData, faq_data: newFaq });
+                                            }}
+                                            className="flex items-center gap-1 text-sm text-red font-bold cursor-pointer hover:underline pr-4 transition-all"
+                                          >
+                                            <Plus size={20} />
+                                            Tambah Pertanyaan
+                                          </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                          {(section.questions || []).map((q: any, qIdx: number) => (
+                                            <div key={qIdx} className="bg-gray-50/50 p-3 rounded-lg border border-red space-y-2 relative group">
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 flex-1">
+                                                  <HelpCircle size={16} className="text-red/60" />
+                                                  <input
+                                                    type="text"
+                                                    value={q.question}
+                                                    onChange={(e) => {
+                                                      const newFaq = [...editData.faq_data];
+                                                      newFaq[sIdx].questions[qIdx].question = e.target.value;
+                                                      setEditData({ ...editData, faq_data: newFaq });
+                                                    }}
+                                                    className="w-full text-sm font-semibold bg-transparent border-none focus:ring-0 p-0"
+                                                    placeholder="Pertanyaan..."
+                                                  />
+                                                </div>
+                                                <button
+                                                  onClick={() => {
+                                                    const newFaq = [...editData.faq_data];
+                                                    newFaq[sIdx].questions = newFaq[sIdx].questions.filter((_: any, i: number) => i !== qIdx);
+                                                    setEditData({ ...editData, faq_data: newFaq });
+                                                  }}
+                                                  className="text-red hover:scale-110 cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                  <Trash2 size={20} />
+                                                </button>
+                                              </div>
+                                              <div className="flex items-start gap-2">
+                                                <MessageCircle size={16} className="text-gray-400" />
+                                                <textarea
+                                                  value={q.answer}
+                                                  onChange={(e) => {
+                                                    const newFaq = [...editData.faq_data];
+                                                    newFaq[sIdx].questions[qIdx].answer = e.target.value;
+                                                    setEditData({ ...editData, faq_data: newFaq });
+                                                  }}
+                                                  className="w-full text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 h-16 resize-none"
+                                                  placeholder="Jawaban..."
+                                                />
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {(!editData.faq_data || editData.faq_data.length === 0) && (
+                                    <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">
+                                      <HelpCircle className="mx-auto text-gray-300 mb-2" size={24} />
+                                      <p className="text-xs text-gray-400">Belum ada data FAQ. Tambahkan kategori pertama Anda.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
 
                               {/* Timeline Management Section */}
                               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-6">
@@ -1468,163 +1551,170 @@ const SettingsPage: React.FC = () => {
                                   )}
                                 </div>
                               </div>
-                        {/* Section 3: Visibility Configuration */}
-                        <div className="pt-6 border-t border-gray-100">
-                          <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <Layout size={18} className="text-red" />
-                            Konfigurasi Visibility Interface
-                          </h5>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                              <div>
-                                <p className="font-semibold text-sm">Tampilkan Antrean</p>
-                                <p className="text-xs text-gray-500">Tampilkan list antrean lapangan di landing page</p>
-                              </div>
-                              <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={editData.show_antrian}
-                                  onChange={(e) => setEditData({ ...editData, show_antrian: e.target.checked })}
-                                  className="sr-only peer"
-                                />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
-                              </label>
                             </div>
+                          )}
 
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                              <div>
-                                <p className="font-semibold text-sm">Hide Seluruh Navbar (Kecuali Beranda)</p>
-                                <p className="text-xs text-gray-500">Sembunyikan link menu lain di navbar event</p>
+                          {activeThemeTab === 'fitur' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                              {/* Section 3: Visibility Configuration */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                  <Layout size={18} className="text-red" />
+                                  Konfigurasi Visibility Interface
+                                </h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
+                                    <div>
+                                      <p className="font-semibold text-sm">Tampilkan Antrean</p>
+                                      <p className="text-xs text-gray-500">Tampilkan list antrean lapangan di landing page</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={editData.show_antrian}
+                                        onChange={(e) => setEditData({ ...editData, show_antrian: e.target.checked })}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
+                                    </label>
+                                  </div>
+
+                                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
+                                    <div>
+                                      <p className="font-semibold text-sm">Hide Seluruh Navbar (Kecuali Beranda)</p>
+                                      <p className="text-xs text-gray-500">Sembunyikan link menu lain di navbar event</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={!editData.show_navbar}
+                                        onChange={(e) => setEditData({ ...editData, show_navbar: !e.target.checked })}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
+                                    </label>
+                                  </div>
+                                </div>
                               </div>
-                              <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={!editData.show_navbar}
-                                  onChange={(e) => setEditData({ ...editData, show_navbar: !e.target.checked })}
-                                  className="sr-only peer"
-                                />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
-                              </label>
-                            </div>
-                          </div>
-                        </div>
 
-                        {/* Section 4: Tutorial Management */}
-                        <div className="pt-6 border-t border-gray-100">
-                          <div className="flex items-center justify-between mb-4">
-                            <h5 className="font-bold text-gray-900 flex items-center gap-2">
-                              <Video size={18} className="text-red" />
-                              Manajemen Video Tutorial
-                            </h5>
-                            <button
-                              onClick={() => setIsAddingTutorial(!isAddingTutorial)}
-                              className="px-3 py-1.5 bg-red/10 text-red text-xs font-bold rounded-lg hover:bg-red/20 flex items-center gap-1 transition-all"
-                            >
-                              {isAddingTutorial ? <X size={14} /> : <Plus size={14} />}
-                              {isAddingTutorial ? 'Batal' : 'Tambah Tutorial'}
-                            </button>
-                          </div>
+                              {/* Section 4: Tutorial Management */}
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h5 className="font-bold text-gray-900 flex items-center gap-2">
+                                    <Video size={18} className="text-red" />
+                                    Manajemen Video Tutorial
+                                  </h5>
+                                  <button
+                                    onClick={() => setIsAddingTutorial(!isAddingTutorial)}
+                                    className="px-3 py-1.5 bg-red/10 text-red text-xs font-bold rounded-lg hover:bg-red/20 flex items-center gap-1 transition-all"
+                                  >
+                                    {isAddingTutorial ? <X size={14} /> : <Plus size={14} />}
+                                    {isAddingTutorial ? 'Batal' : 'Tambah Tutorial'}
+                                  </button>
+                                </div>
 
-                          {isAddingTutorial && (
-                            <div className="bg-red/5 p-4 rounded-2xl border border-red/10 mb-4 space-y-4 animate-in slide-in-from-right-4 duration-300">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <input
-                                  type="text"
-                                  placeholder="Judul Tutorial"
-                                  value={newTutorial.title}
-                                  onChange={e => setNewTutorial({ ...newTutorial, title: e.target.value })}
-                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="URL Video YouTube / ID"
-                                  value={newTutorial.video_id}
-                                  onChange={e => setNewTutorial({ ...newTutorial, video_id: e.target.value })}
-                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
-                                />
-                                <select
-                                  value={newTutorial.icon_type}
-                                  onChange={e => setNewTutorial({ ...newTutorial, icon_type: e.target.value })}
-                                  className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm bg-white"
-                                >
-                                  <option value="FileText">Icon: File</option>
-                                  <option value="User">Icon: User</option>
-                                  <option value="Award">Icon: Trophy</option>
-                                  <option value="Video">Icon: Video</option>
-                                  <option value="HelpCircle">Icon: Help</option>
-                                  <option value="BookOpen">Icon: Book</option>
-                                </select>
-                              </div>
-                              <textarea
-                                placeholder="Deskripsi singkat tutorial..."
-                                value={newTutorial.description}
-                                onChange={e => setNewTutorial({ ...newTutorial, description: e.target.value })}
-                                className="w-full px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm h-16 resize-none"
-                              />
-                              <div className="flex justify-end">
-                                <button
-                                  onClick={handleAddTutorial}
-                                  className="px-6 py-2 bg-red text-white text-sm font-bold rounded-xl hover:opacity-90 shadow-md shadow-red/20"
-                                >
-                                  Simpan Tutorial Baru
-                                </button>
+                                {isAddingTutorial && (
+                                  <div className="bg-red/5 p-4 rounded-2xl border border-red/10 mb-4 space-y-4 animate-in slide-in-from-right-4 duration-300">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                      <input
+                                        type="text"
+                                        placeholder="Judul Tutorial"
+                                        value={newTutorial.title}
+                                        onChange={e => setNewTutorial({ ...newTutorial, title: e.target.value })}
+                                        className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="URL Video YouTube / ID"
+                                        value={newTutorial.video_id}
+                                        onChange={e => setNewTutorial({ ...newTutorial, video_id: e.target.value })}
+                                        className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm"
+                                      />
+                                      <select
+                                        value={newTutorial.icon_type}
+                                        onChange={e => setNewTutorial({ ...newTutorial, icon_type: e.target.value })}
+                                        className="px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm bg-white"
+                                      >
+                                        <option value="FileText">Icon: File</option>
+                                        <option value="User">Icon: User</option>
+                                        <option value="Award">Icon: Trophy</option>
+                                        <option value="Video">Icon: Video</option>
+                                        <option value="HelpCircle">Icon: Help</option>
+                                        <option value="BookOpen">Icon: Book</option>
+                                      </select>
+                                    </div>
+                                    <textarea
+                                      placeholder="Deskripsi singkat tutorial..."
+                                      value={newTutorial.description}
+                                      onChange={e => setNewTutorial({ ...newTutorial, description: e.target.value })}
+                                      className="w-full px-3 py-2 rounded-xl border border-red/20 focus:border-red focus:ring-1 focus:ring-red outline-none text-sm h-16 resize-none"
+                                    />
+                                    <div className="flex justify-end">
+                                      <button
+                                        onClick={handleAddTutorial}
+                                        className="px-6 py-2 bg-red text-white text-sm font-bold rounded-xl hover:opacity-90 shadow-md shadow-red/20"
+                                      >
+                                        Simpan Tutorial Baru
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {tutorials.map((tut) => (
+                                    <div key={tut.id_tutorial} className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col justify-between group/tut relative">
+                                      <div>
+                                        <div className="aspect-video bg-gray-100 rounded-lg mb-2 overflow-hidden relative">
+                                          <img src={`https://img.youtube.com/vi/${tut.video_id}/mqdefault.jpg`} className="w-full h-full object-cover" alt="" />
+                                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/tut:opacity-100 transition-opacity">
+                                            <Video className="text-white" />
+                                          </div>
+                                        </div>
+                                        <h6 className="font-bold text-sm truncate">{tut.title}</h6>
+                                        <p className="text-[10px] text-gray-500 line-clamp-2">{tut.description}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteTutorial(tut.id_tutorial)}
+                                        className="mt-3 text-red/60 hover:text-red transition-colors"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {tutorials.length === 0 && !isAddingTutorial && (
+                                    <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                      <p className="text-xs text-gray-400">Belum ada tutorial khusus untuk kompetisi ini.</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           )}
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {tutorials.map((tut) => (
-                              <div key={tut.id_tutorial} className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col justify-between group/tut relative">
-                                <div>
-                                  <div className="aspect-video bg-gray-100 rounded-lg mb-2 overflow-hidden relative">
-                                    <img src={`https://img.youtube.com/vi/${tut.video_id}/mqdefault.jpg`} className="w-full h-full object-cover" alt="" />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/tut:opacity-100 transition-opacity">
-                                      <Video className="text-white" />
-                                    </div>
-                                  </div>
-                                  <h6 className="font-bold text-sm truncate">{tut.title}</h6>
-                                  <p className="text-[10px] text-gray-500 line-clamp-2">{tut.description}</p>
-                                </div>
-                                <button
-                                  onClick={() => handleDeleteTutorial(tut.id_tutorial)}
-                                  className="mt-3 text-red/60 hover:text-red transition-colors"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            ))}
-                            {tutorials.length === 0 && !isAddingTutorial && (
-                              <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                <p className="text-xs text-gray-400">Belum ada tutorial khusus untuk kompetisi ini.</p>
-                              </div>
-                            )}
+                          {/* Actions Footer */}
+                          <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-6 py-3 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => handleResetTheme(komp.id_kompetisi)}
+                              className="px-6 py-3 text-red/60 hover:text-red border border-red/10 hover:border-red/30 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                            >
+                              <RefreshCw size={16} />
+                              Reset ke Default
+                            </button>
+                            <button
+                              onClick={() => handleSaveTheme(komp.id_kompetisi)}
+                              className="px-10 py-3 bg-red text-white rounded-xl text-sm font-bold shadow-xl shadow-red/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2"
+                            >
+                              <Save size={18} />
+                              Simpan Seluruh Perubahan
+                            </button>
                           </div>
-                        </div>
-
-                        {/* Actions Footer */}
-                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="px-6 py-3 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
-                          >
-                            Batal
-                          </button>
-                          <button
-                            onClick={() => handleResetTheme(komp.id_kompetisi)}
-                            className="px-6 py-3 text-red/60 hover:text-red border border-red/10 hover:border-red/30 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
-                          >
-                            <RefreshCw size={16} />
-                            Reset ke Default
-                          </button>
-                          <button
-                            onClick={() => handleSaveTheme(komp.id_kompetisi)}
-                            className="px-10 py-3 bg-red text-white rounded-xl text-sm font-bold shadow-xl shadow-red/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2"
-                          >
-                            <Save size={18} />
-                            Simpan Seluruh Perubahan
-                          </button>
-                        </div>
-                      </div>
+                        </div></div>
                     )}
                   </div>
                 </div>
@@ -1635,7 +1725,6 @@ const SettingsPage: React.FC = () => {
       </div>
     );
   };
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile': return renderProfileTab();

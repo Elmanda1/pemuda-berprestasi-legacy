@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Loader, Radio, User } from "lucide-react";
+import { useKompetisi } from "../context/KompetisiContext";
 
 interface KelasLapangan {
   id_kelas_kejuaraan: number;
@@ -40,25 +41,56 @@ interface MatchData {
 
 const getPhotoUrl = (filename: string): string | null => {
   if (!filename) return null;
-  return `${
-    process.env.REACT_APP_API_BASE_URL || "http://cjvmanagementevent.com"
-  }/uploads/atlet/pas_foto/${filename}`;
+  return `${process.env.REACT_APP_API_BASE_URL || "http://cjvmanagementevent.com"
+    }/uploads/atlet/pas_foto/${filename}`;
 };
 
 const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
   idKompetisi,
 }) => {
+  const { kompetisiDetail } = useKompetisi();
   const [hariList, setHariList] = useState<HariData[]>([]);
   const [matchData, setMatchData] = useState<MatchData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedHari, setSelectedHari] = useState<string | null>(null);
 
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? "bg-[#0a0a0a]" : "bg-[#F5FBEF]",
+    textTitle: isModern ? "from-white via-gray-200 to-gray-400" : "from-red via-red/90 to-red/80",
+    textBody: isModern ? "text-gray-400" : "text-[#050505]",
+    cardBg: isModern ? "bg-[#111] border-gray-800" : "bg-white/90 border-red/10",
+    accentColor: isModern ? "text-red-500" : "text-[#990D35]",
+    borderColor: isModern ? "border-gray-800" : "border-[#990D35]",
+    buttonActive: isModern ? "bg-red-600 text-white border-red-600" : "bg-[#990D35] text-[#F5FBEF] border-[#990D35]",
+    buttonInactive: isModern ? "bg-black text-red-500 border-red-600" : "bg-white text-[#990D35] border-[#990D35]",
+    matchCardBg: isModern ? "bg-[#111] border-gray-700" : "bg-[#F9FAFB] border-[#E5E7EB]",
+    matchText: isModern ? "text-white" : "text-black",
+    secondaryText: isModern ? "text-gray-500" : "text-black/60",
+    vsText: isModern ? "text-gray-400" : "text-black",
+    dayButtonBorder: isModern ? "border-red-600/30" : "border-[#990D35]/20",
+    dayButtonHover: isModern ? "hover:border-red-600" : "hover:border-[#990D35]",
+    emptyStateText: isModern ? "text-gray-500" : "text-[#050505]",
+  };
+
   // Mapping for status colors to avoid JIT/Purge CSS issues with dynamic classes
+  // Enhanced for dark mode visibility
   const statusColors = {
-    Bertanding: { text: "text-green-700", bg: "bg-green-100" },
-    Persiapan: { text: "text-orange-700", bg: "bg-orange-100" },
-    Pemanasan: { text: "text-yellow-700", bg: "bg-yellow-100" },
+    Bertanding: {
+      text: isModern ? "text-green-400" : "text-green-700",
+      bg: isModern ? "bg-green-900/20 border border-green-800/50" : "bg-green-100"
+    },
+    Persiapan: {
+      text: isModern ? "text-orange-400" : "text-orange-700",
+      bg: isModern ? "bg-orange-900/20 border border-orange-800/50" : "bg-orange-100"
+    },
+    Pemanasan: {
+      text: isModern ? "text-yellow-400" : "text-yellow-700",
+      bg: isModern ? "bg-yellow-900/20 border border-yellow-800/50" : "bg-yellow-100"
+    },
   };
 
   const generateNamaKelas = (kelas: any) => {
@@ -147,10 +179,10 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
                   index === 0
                     ? "bertanding"
                     : index === 1
-                    ? "persiapan"
-                    : index === 2
-                    ? "pemanasan"
-                    : "menunggu",
+                      ? "persiapan"
+                      : index === 2
+                        ? "pemanasan"
+                        : "menunggu",
                 nomor_antrian: index + 1,
               })
             ),
@@ -224,8 +256,8 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
       title === "Bertanding"
         ? lap.antrian?.bertanding
         : title === "Persiapan"
-        ? lap.antrian?.persiapan
-        : lap.antrian?.pemanasan;
+          ? lap.antrian?.persiapan
+          : lap.antrian?.pemanasan;
 
     const renderAtlet = (
       nama: string,
@@ -240,19 +272,19 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
             <img
               src={photoUrl}
               alt={nama}
-              className="w-16 h-16 rounded-full object-cover mb-2"
+              className={`w-16 h-16 rounded-full object-cover mb-2 ${theme.borderColor} border-2`}
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-              <User className="w-8 h-8 text-gray-500" />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 ${isModern ? "bg-gray-800" : "bg-gray-200"}`}>
+              <User className={`w-8 h-8 ${isModern ? "text-gray-500" : "text-gray-500"}`} />
             </div>
           )}
 
-          <p className="text-lg font-semibold text-center uppercase">
+          <p className={`text-lg font-semibold text-center uppercase ${theme.matchText}`}>
             {nama || "Nama peserta tidak tersedia"}
           </p>
           {dojang && (
-            <p className="text-sm text-gray-600 text-center mt-1">
+            <p className={`text-sm text-center mt-1 ${theme.secondaryText}`}>
               {dojang}
             </p>
           )}
@@ -262,7 +294,7 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
 
     return (
       <div className={`relative w-full ${textColor} ${bgColor} p-4 rounded-lg`}>
-        <div className="absolute top-2 left-2 rounded-xl w-16 h-16 bg-[#FFF] flex items-center justify-center text-5xl font-bold">
+        <div className={`absolute top-2 left-2 rounded-xl w-16 h-16 flex items-center justify-center text-5xl font-bold ${isModern ? "bg-black/40 text-white" : "bg-[#FFF]"}`}>
           {matchNumber}
         </div>
 
@@ -271,7 +303,7 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
             {renderAtlet(match.nama_atlet_a, match.nama_dojang_a, match.foto_atlet_a)}
 
             <div className="flex items-center justify-center">
-              <span className="text-xl font-bold">VS</span>
+              <span className={`text-xl font-bold ${theme.vsText}`}>VS</span>
             </div>
 
             {renderAtlet(match.nama_atlet_b, match.nama_dojang_b, match.foto_atlet_b)}
@@ -288,16 +320,14 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#F5FBEF" }}
+        className={`min-h-screen flex items-center justify-center ${theme.bg}`}
       >
         <div className="text-center">
           <Loader
-            className="animate-spin mx-auto mb-4"
+            className={`animate-spin mx-auto mb-4 ${theme.accentColor}`}
             size={48}
-            style={{ color: "#990D35" }}
           />
-          <p className="text-lg font-medium" style={{ color: "#990D35" }}>
+          <p className={`text-lg font-medium ${theme.accentColor}`}>
             Memuat data live...
           </p>
         </div>
@@ -307,10 +337,9 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
         <div
-          className="text-center p-8 rounded-xl border"
-          style={{ borderColor: "#dc2626" }}
+          className={`text-center p-8 rounded-xl border ${theme.cardBg} border-red-600`}
         >
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -319,26 +348,26 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
   }
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden py-12 md:py- pt-24 sm:pt-28 md:pt-32 lg:pt-36">
+    <section className={`relative w-full min-h-screen overflow-hidden py-12 md:py- pt-24 sm:pt-28 md:pt-32 lg:pt-36 ${theme.bg}`}>
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center space-y-4 sm:space-y-6 md:space-y-8">
           <div className="hidden lg:inline-block group">
-            <span className="text-red font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 border-red pl-3 sm:pl-4 md:pl-6 relative">
+            <span className={`font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 pl-3 sm:pl-4 md:pl-6 relative ${theme.accentColor} ${theme.borderColor}`}>
               antrean pertandingan
-              <div className="absolute -left-1 top-0 bottom-0 w-1 bg-red/20 group-hover:bg-red/40 transition-colors duration-300"></div>
+              <div className={`absolute -left-1 top-0 bottom-0 w-1 transition-colors duration-300 ${isModern ? "bg-red-500/20 group-hover:bg-red-500/40" : "bg-red/20 group-hover:bg-red/40"}`}></div>
             </span>
           </div>
 
           <div className="relative">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bebas leading-[0.85] tracking-wide">
-              <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
+              <span className={`bg-gradient-to-r ${theme.textTitle} bg-clip-text text-transparent`}>
                 live Antrean
               </span>
             </h1>
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 md:w-20 h-0.5 sm:h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
+            <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 md:w-20 h-0.5 sm:h-1 rounded-full bg-gradient-to-r ${theme.textTitle}`}></div>
           </div>
 
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-plex text-black/80 max-w-4xl mx-auto leading-relaxed font-light px-2 sm:px-4">
+          <p className={`text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-plex max-w-4xl mx-auto leading-relaxed font-light px-2 sm:px-4 ${theme.secondaryText}`}>
             Pantau aktivitas setiap lapangan dari pemanasan hingga pertandingan
             berlangsung
           </p>
@@ -350,21 +379,10 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
               <button
                 key={hari.tanggal}
                 onClick={() => setSelectedHari(hari.tanggal)}
-                className={`px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all ${
-                  selectedHari === hari.tanggal
-                    ? "shadow-lg"
-                    : "opacity-60 hover:opacity-100"
-                }`}
-                style={{
-                  backgroundColor:
-                    selectedHari === hari.tanggal ? "#990D35" : "#fff",
-                  color: selectedHari === hari.tanggal ? "#F5FBEF" : "#990D35",
-                  border: `2px solid ${
-                    selectedHari === hari.tanggal
-                      ? "#990D35"
-                      : "rgba(153, 13, 53, 0.2)"
-                  }`,
-                }}
+                className={`px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all border-2 ${selectedHari === hari.tanggal
+                  ? `${theme.buttonActive} shadow-lg`
+                  : `${theme.buttonInactive} opacity-60 hover:opacity-100`
+                  }`}
               >
                 Hari ke-{idx + 1}
                 <div className="text-xs opacity-80 mt-1">
@@ -400,16 +418,11 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
               return (
                 <div
                   key={lap.id_lapangan}
-                  className="relative p-6 rounded-2xl shadow-xl border transition-all duration-500 hover:shadow-2xl w-full"
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    borderColor: "rgba(153, 13, 53, 0.1)",
-                  }}
+                  className={`relative p-6 rounded-2xl shadow-xl border transition-all duration-500 hover:shadow-2xl w-full ${theme.cardBg}`}
                 >
                   <div className="flex items-center justify-between mb-6">
                     <h3
-                      className="text-3xl font-bebas"
-                      style={{ color: "#990D35" }}
+                      className={`text-3xl font-bebas ${theme.accentColor}`}
                     >
                       Lapangan {lap.nama_lapangan}
                     </h3>
@@ -439,8 +452,7 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
                     </div>
                   )}
                   <p
-                    className="text-sm mt-6 text-center"
-                    style={{ color: "#050505", opacity: 0.6 }}
+                    className={`text-sm mt-6 text-center ${theme.secondaryText} opacity-60`}
                   >
                     {new Date(lap.tanggal).toLocaleDateString("id-ID", {
                       weekday: "long",
@@ -456,8 +468,7 @@ const LivePertandinganView: React.FC<{ idKompetisi?: number }> = ({
         ) : (
           <div className="text-center py-12">
             <p
-              className="text-lg font-medium"
-              style={{ color: "#050505", opacity: 0.6 }}
+              className={`text-lg font-medium ${theme.secondaryText} opacity-60`}
             >
               Belum ada data lapangan untuk hari ini
             </p>

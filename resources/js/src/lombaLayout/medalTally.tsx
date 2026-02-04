@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Loader, Trophy, Medal, Calendar, MapPin, Award, Download } from 'lucide-react';
 import DojangMedalTable from '../components/DojangMedalTable';
 import { useAuth } from '../context/authContext';
+import { useKompetisi } from '../context/KompetisiContext';
 import * as XLSX from 'xlsx';
 
 interface Kompetisi {
@@ -55,6 +56,7 @@ interface DojoMedalCount {
 
 const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => {
   const { token } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const [kompetisi, setKompetisi] = useState<Kompetisi | null>(null);
   const [kelasList, setKelasList] = useState<KelasKejuaraan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,29 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('ALL');
   const [showJuaraUmum, setShowJuaraUmum] = useState(false);
+
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? "bg-[#0a0a0a]" : "bg-[#F5FBEF]",
+    textTitle: isModern ? "from-white via-gray-200 to-gray-400" : "from-red via-red/90 to-red/80",
+    textBody: isModern ? "text-gray-400" : "text-[#050505]",
+    cardBg: isModern ? "bg-[#111] border-gray-800" : "bg-white border-[#990D35]",
+    accentColor: isModern ? "text-red-500" : "text-[#990D35]",
+    borderColor: isModern ? "border-gray-800" : "border-[#990D35]",
+    buttonActive: isModern ? "bg-red-600 text-white border-red-600" : "bg-[#990D35] text-[#F5FBEF] border-[#990D35]",
+    buttonInactive: isModern ? "bg-black text-red-500 border-red-600" : "bg-white text-[#990D35] border-[#990D35]",
+    tableHeader: isModern ? "text-red-500" : "text-[#990D35]",
+    tableRowEven: isModern ? "bg-[#111]" : "bg-white",
+    tableRowHover: isModern ? "hover:bg-white/5" : "hover:bg-gray-50",
+    modalBg: isModern ? "bg-[#111] border-red-600" : "bg-white border-[#990D35]",
+    modalHeader: isModern ? "bg-red-900/30 border-red-600" : "bg-[#990D35] border-[#990D35]",
+    badgeGold: isModern ? "bg-yellow-900/20 border-yellow-700 text-yellow-500" : "bg-yellow-50 border-yellow-200 text-yellow-600",
+    badgeSilver: isModern ? "bg-gray-800 border-gray-600 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600",
+    badgeBronze: isModern ? "bg-orange-900/20 border-orange-700 text-orange-500" : "bg-orange-50/50 border-[#CD7F32] text-[#CD7F32]",
+    textMuted: isModern ? "text-gray-500" : "text-gray-600"
+  };
 
   // ⭐ State untuk modal detail dojang
   const [selectedDojang, setSelectedDojang] = useState<string | null>(null);
@@ -585,10 +610,10 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5FBEF' }}>
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
         <div className="text-center">
-          <Loader className="animate-spin mx-auto mb-4" size={48} style={{ color: '#990D35' }} />
-          <p className="text-lg font-medium" style={{ color: '#990D35' }}>
+          <Loader className={`animate-spin mx-auto mb-4 ${theme.accentColor}`} size={48} />
+          <p className={`text-lg font-medium ${theme.accentColor}`}>
             Memuat data perolehan medali...
           </p>
         </div>
@@ -598,11 +623,11 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5FBEF' }}>
-        <div className="text-center p-8 rounded-xl border" style={{ borderColor: '#dc2626', backgroundColor: 'white' }}>
-          <Trophy size={64} style={{ color: '#dc2626', opacity: 0.5 }} className="mx-auto mb-4" />
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
+        <div className={`text-center p-8 rounded-xl border ${theme.cardBg}`}>
+          <Trophy size={64} className="mx-auto mb-4 text-red-600 opacity-50" />
           <p className="text-red-600 font-medium text-lg mb-2">Gagal Memuat Data</p>
-          <p className="text-sm text-gray-600">{error}</p>
+          <p className={`text-sm ${theme.textMuted}`}>{error}</p>
         </div>
       </div>
     );
@@ -610,13 +635,13 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
 
   if (!kompetisi || kelasList.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5FBEF' }}>
-        <div className="text-center p-12 rounded-xl" style={{ backgroundColor: 'white' }}>
-          <Medal size={64} style={{ color: '#990D35', opacity: 0.3 }} className="mx-auto mb-4" />
-          <p className="text-lg font-medium mb-2" style={{ color: '#050505' }}>
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
+        <div className={`text-center p-12 rounded-xl border ${theme.cardBg}`}>
+          <Medal size={64} className={`mx-auto mb-4 ${theme.accentColor} opacity-30`} />
+          <p className={`text-lg font-medium mb-2 ${theme.textBody}`}>
             Belum Ada Data Perolehan Medali
           </p>
-          <p className="text-sm" style={{ color: '#050505', opacity: 0.6 }}>
+          <p className={`text-sm ${theme.textBody} opacity-60`}>
             Hasil pertandingan belum tersedia atau belum ada kelas yang selesai
           </p>
         </div>
@@ -652,30 +677,30 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
   const juaraUmumData = calculateJuaraUmum();
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden py-8 md:py-12 pt-32 sm:pt-36 md:pt-40" style={{ backgroundColor: '#F5FBEF' }}>
+    <section className={`relative w-full min-h-screen overflow-hidden py-8 md:py-12 pt-32 sm:pt-36 md:pt-40 ${theme.bg}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         {/* Header Section */}
         <div className="text-center space-y-4 sm:space-y-6 mb-8 sm:mb-12">
           <div className="hidden lg:inline-block group">
-            <span className="font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 pl-3 sm:pl-4 md:pl-6 relative" style={{ color: '#990D35', borderColor: '#990D35' }}>
+            <span className={`font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 pl-3 sm:pl-4 md:pl-6 relative ${theme.accentColor} ${theme.borderColor}`}>
               Perolehan Medali
-              <div className="absolute -left-1 top-0 bottom-0 w-1 transition-colors duration-300" style={{ backgroundColor: 'rgba(153, 13, 53, 0.2)' }}></div>
+              <div className={`absolute -left-1 top-0 bottom-0 w-1 transition-colors duration-300 ${isModern ? "bg-red-500/20" : "bg-[#990D35]/20"}`}></div>
             </span>
           </div>
 
           <div className="relative">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas leading-[0.85] tracking-wide">
-              <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent" style={{ color: '#990D35' }}>
+              <span className={`bg-gradient-to-r ${theme.textTitle} bg-clip-text text-transparent`}>
                 MEDAL TALLY
               </span>
             </h1>
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 md:w-20 h-0.5 sm:h-1 rounded-full" style={{ background: 'linear-gradient(to right, #990D35, rgba(153, 13, 53, 0.6))' }}></div>
+            <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 md:w-20 h-0.5 sm:h-1 rounded-full bg-gradient-to-r ${theme.textTitle}`}></div>
           </div>
 
           {/* Event Info Card */}
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border-2 p-4 sm:p-6" style={{ borderColor: '#990D35' }}>
+          <div className={`max-w-4xl mx-auto rounded-2xl shadow-lg border-2 p-4 sm:p-6 ${theme.cardBg}`}>
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-xl sm:text-2xl font-bebas" style={{ color: '#990D35' }}>
+              <h2 className={`text-xl sm:text-2xl font-bebas ${theme.accentColor}`}>
                 {kompetisi.nama_event}
               </h2>
 
@@ -683,8 +708,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
               {juaraUmumData.length > 0 && (
                 <button
                   onClick={exportToExcel}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:shadow-lg"
-                  style={{ backgroundColor: '#28a745', color: 'white' }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:shadow-lg bg-green-600 text-white hover:bg-green-700"
                   title="Export ke Excel"
                 >
                   <Download size={18} />
@@ -693,7 +717,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm" style={{ color: '#050505', opacity: 0.7 }}>
+            <div className={`flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm ${theme.textBody} opacity-70`}>
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="sm:w-4 sm:h-4" />
                 <span className="text-xs sm:text-sm">
@@ -726,7 +750,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
 
         {/* Level Filter */}
         <div className="mb-6 sm:mb-8 max-w-4xl mx-auto">
-          <label className="block text-sm font-semibold mb-3" style={{ color: '#990D35' }}>
+          <label className={`block text-sm font-semibold mb-3 ${theme.accentColor}`}>
             Filter Level:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
@@ -741,15 +765,10 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
               <button
                 key={level.value}
                 onClick={() => handleLevelChange(level.value)}
-                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${levelFilter === level.value
-                  ? 'shadow-lg'
-                  : 'opacity-60 hover:opacity-100'
+                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all border-2 ${levelFilter === level.value
+                  ? `${theme.buttonActive} shadow-lg`
+                  : `${theme.buttonInactive} opacity-60 hover:opacity-100`
                   }`}
-                style={{
-                  backgroundColor: levelFilter === level.value ? '#990D35' : 'white',
-                  color: levelFilter === level.value ? '#F5FBEF' : '#990D35',
-                  border: `2px solid ${levelFilter === level.value ? '#990D35' : '#990D35'}`,
-                }}
               >
                 {level.label}
               </button>
@@ -761,12 +780,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
         <div className="mb-6 sm:mb-8 max-w-4xl mx-auto">
           <button
             onClick={() => setShowJuaraUmum(!showJuaraUmum)}
-            className="w-full px-6 py-4 rounded-xl font-bold text-base sm:text-lg transition-all shadow-lg flex items-center justify-center gap-3"
-            style={{
-              backgroundColor: showJuaraUmum ? '#990D35' : 'white',
-              color: showJuaraUmum ? '#F5FBEF' : '#990D35',
-              border: '3px solid #990D35',
-            }}
+            className={`w-full px-6 py-4 rounded-xl font-bold text-base sm:text-lg transition-all shadow-lg flex items-center justify-center gap-3 border-2 ${showJuaraUmum ? theme.buttonActive : theme.buttonInactive}`}
           >
             <Trophy size={24} />
             {showJuaraUmum ? 'Lihat Perolehan Medali Individual' : `Lihat Juara Umum (${getLevelFilterLabel()})`}
@@ -781,12 +795,12 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
               : 'opacity-100 transform scale-100'
               }`}
           >
-            <div className="bg-white rounded-2xl shadow-2xl border-2 p-6 sm:p-8" style={{ borderColor: '#990D35' }}>
+            <div className={`rounded-2xl shadow-2xl border-2 p-6 sm:p-8 ${theme.cardBg}`}>
               <div className="text-center mb-6">
-                <h3 className="text-2xl sm:text-3xl font-bebas mb-2" style={{ color: '#990D35' }}>
+                <h3 className={`text-2xl sm:text-3xl font-bebas mb-2 ${theme.accentColor}`}>
                   🏆 JUARA UMUM 🏆
                 </h3>
-                <p className="text-sm sm:text-base" style={{ color: '#050505', opacity: 0.7 }}>
+                <p className={`text-sm sm:text-base ${theme.textBody} opacity-70`}>
                   {getLevelFilterLabel()} - Total Medali per Dojang
                 </p>
               </div>
@@ -794,19 +808,19 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b-2" style={{ borderColor: '#990D35' }}>
-                      <th className="px-4 py-3 text-left text-sm font-bold" style={{ color: '#990D35' }}>Peringkat</th>
-                      <th className="px-4 py-3 text-left text-sm font-bold" style={{ color: '#990D35' }}>Dojang</th>
-                      <th className="px-4 py-3 text-center text-sm font-bold" style={{ color: '#990D35' }}>🥇</th>
-                      <th className="px-4 py-3 text-center text-sm font-bold" style={{ color: '#990D35' }}>🥈</th>
-                      <th className="px-4 py-3 text-center text-sm font-bold" style={{ color: '#990D35' }}>🥉</th>
-                      <th className="px-4 py-3 text-center text-sm font-bold" style={{ color: '#990D35' }}>Total</th>
+                    <tr className={`border-b-2 ${theme.borderColor}`}>
+                      <th className={`px-4 py-3 text-left text-sm font-bold ${theme.tableHeader}`}>Peringkat</th>
+                      <th className={`px-4 py-3 text-left text-sm font-bold ${theme.tableHeader}`}>Dojang</th>
+                      <th className={`px-4 py-3 text-center text-sm font-bold ${theme.tableHeader}`}>🥇</th>
+                      <th className={`px-4 py-3 text-center text-sm font-bold ${theme.tableHeader}`}>🥈</th>
+                      <th className={`px-4 py-3 text-center text-sm font-bold ${theme.tableHeader}`}>🥉</th>
+                      <th className={`px-4 py-3 text-center text-sm font-bold ${theme.tableHeader}`}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {juaraUmumData.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-sm" style={{ color: '#050505', opacity: 0.6 }}>
+                        <td colSpan={6} className={`px-4 py-8 text-center text-sm ${theme.textBody} opacity-60`}>
                           Belum ada data perolehan medali untuk level ini
                         </td>
                       </tr>
@@ -814,22 +828,21 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                       juaraUmumData.map((dojo, index) => (
                         <tr
                           key={dojo.dojo}
-                          className="border-b transition-colors hover:bg-gray-50"
+                          className={`border-b transition-colors ${theme.tableRowHover} ${theme.borderColor}`}
                           style={{
-                            backgroundColor: index === 0 ? 'rgba(255, 215, 0, 0.1)' :
-                              index === 1 ? 'rgba(192, 192, 192, 0.1)' :
-                                index === 2 ? 'rgba(205, 127, 50, 0.1)' : 'white'
+                            backgroundColor: index === 0 ? (isModern ? 'rgba(234, 179, 8, 0.1)' : 'rgba(255, 215, 0, 0.1)') :
+                              index === 1 ? (isModern ? 'rgba(156, 163, 175, 0.1)' : 'rgba(192, 192, 192, 0.1)') :
+                                index === 2 ? (isModern ? 'rgba(249, 115, 22, 0.1)' : 'rgba(205, 127, 50, 0.1)') : undefined
                           }}
                         >
-                          <td className="px-4 py-4 font-bold text-lg">
+                          <td className={`px-4 py-4 font-bold text-lg ${theme.textBody}`}>
                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`}
                           </td>
                           {/* ⭐ NEW: Dojang name clickable */}
                           <td className="px-4 py-4">
                             <button
                               onClick={() => handleDojoClick(dojo.dojo)}
-                              className="font-semibold hover:underline text-left transition-all hover:text-opacity-80"
-                              style={{ color: '#990D35' }}
+                              className={`font-semibold hover:underline text-left transition-all hover:text-opacity-80 ${theme.accentColor}`}
                             >
                               {dojo.dojo}
                             </button>
@@ -843,7 +856,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                           <td className="px-4 py-4 text-center font-bold" style={{ color: '#CD7F32' }}>
                             {dojo.bronze}
                           </td>
-                          <td className="px-4 py-4 text-center font-bold text-lg" style={{ color: '#990D35' }}>
+                          <td className={`px-4 py-4 text-center font-bold text-lg ${theme.accentColor}`}>
                             {dojo.total}
                           </td>
                         </tr>
@@ -855,7 +868,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
 
               {juaraUmumData.length > 0 && (
                 <div className="mt-6 space-y-2">
-                  <div className="text-center text-xs sm:text-sm" style={{ color: '#050505', opacity: 0.6 }}>
+                  <div className={`text-center text-xs sm:text-sm ${theme.textBody} opacity-60`}>
                     * Peringkat berdasarkan: Emas tertinggi → Perak → Perunggu → Total
                     <br />
                     <strong>Klik nama dojang untuk melihat detail perolehan medali</strong>
@@ -865,8 +878,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                   <div className="text-center pt-4">
                     <button
                       onClick={exportToExcel}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm transition-all hover:shadow-lg"
-                      style={{ backgroundColor: '#28a745', color: 'white' }}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm transition-all hover:shadow-lg bg-green-600 text-white hover:bg-green-700"
                     >
                       <Download size={20} />
                       Export Laporan ke Excel (Overall + Detail)
@@ -883,30 +895,25 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
           <>
             {/* View Selector - Dropdown Style */}
             <div className="mb-6 sm:mb-8 max-w-4xl mx-auto">
-              <label className="block text-sm font-semibold mb-3" style={{ color: '#990D35' }}>
+              <label className={`block text-sm font-semibold mb-3 ${theme.accentColor}`}>
                 Pilih Kategori Lomba:
               </label>
               <div className="relative">
                 <select
                   value={selectedView}
                   onChange={(e) => handleViewChange(e.target.value === 'overall' ? 'overall' : Number(e.target.value))}
-                  className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-medium text-sm sm:text-base appearance-none cursor-pointer shadow-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{
-                    backgroundColor: '#990D35',
-                    color: '#F5FBEF',
-                    border: '2px solid #990D35',
-                  }}
+                  className={`w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-medium text-sm sm:text-base appearance-none cursor-pointer shadow-lg focus:outline-none focus:ring-2 transition-all ${isModern ? "bg-[#111] text-white border-gray-800 focus:ring-red-500" : "bg-[#990D35] text-[#F5FBEF] border-[#990D35]"}`}
                 >
-                  <option value="overall">Overall - {getLevelFilterLabel()} (Total Medali Individual)</option>
+                  <option value="overall" className={isModern ? "bg-[#111]" : ""}>Overall - {getLevelFilterLabel()} (Total Medali Individual)</option>
                   {getFilteredKelasList().map((kelas) => (
-                    <option key={kelas.id_kelas_kejuaraan} value={kelas.id_kelas_kejuaraan}>
+                    <option key={kelas.id_kelas_kejuaraan} value={kelas.id_kelas_kejuaraan} className={isModern ? "bg-[#111]" : ""}>
                       {generateNamaKelas(kelas)} - Emas: {kelas.leaderboard.gold.length}, Perak: {kelas.leaderboard.silver.length}, Perunggu: {kelas.leaderboard.bronze.length}
                     </option>
                   ))}
                 </select>
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 7.5L10 12.5L15 7.5" stroke="#F5FBEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 7.5L10 12.5L15 7.5" stroke={isModern ? "white" : "#F5FBEF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
@@ -923,6 +930,7 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                 <DojangMedalTable
                   leaderboard={currentLeaderboard}
                   eventName={currentEventName}
+                  isModern={isModern}
                 />
               </div>
             )}
@@ -936,25 +944,23 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
             onClick={() => setShowDojoDetailModal(false)}
           >
             <div
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden"
+              className={`rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden border-2 ${theme.modalBg}`}
               onClick={(e) => e.stopPropagation()}
-              style={{ borderWidth: '3px', borderColor: '#990D35' }}
             >
               {/* Modal Header */}
-              <div className="p-6 border-b-2" style={{ backgroundColor: '#990D35', borderColor: '#990D35' }}>
+              <div className={`p-6 border-b-2 ${theme.modalHeader}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bebas" style={{ color: '#F5FBEF' }}>
+                    <h3 className="text-2xl font-bebas text-white">
                       Detail Perolehan Medali
                     </h3>
-                    <p className="text-sm mt-1" style={{ color: '#F5FBEF', opacity: 0.9 }}>
+                    <p className="text-sm mt-1 text-white opacity-90">
                       {selectedDojang} - {getLevelFilterLabel()}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowDojoDetailModal(false)}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-all"
-                    style={{ color: '#F5FBEF' }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-all text-white"
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M18 6L6 18M6 6l12 12" />
@@ -973,25 +979,25 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                     <>
                       {/* Summary */}
                       <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="text-center p-4 rounded-xl bg-yellow-50 border-2 border-yellow-400">
+                        <div className={`text-center p-4 rounded-xl border-2 ${theme.badgeGold}`}>
                           <div className="text-3xl mb-2">🥇</div>
-                          <div className="text-2xl font-bold text-yellow-600">{medalDetail.gold.length}</div>
-                          <div className="text-xs text-gray-600">EMAS</div>
+                          <div className="text-2xl font-bold">{medalDetail.gold.length}</div>
+                          <div className="text-xs">EMAS</div>
                         </div>
-                        <div className="text-center p-4 rounded-xl bg-gray-50 border-2 border-gray-400">
+                        <div className={`text-center p-4 rounded-xl border-2 ${theme.badgeSilver}`}>
                           <div className="text-3xl mb-2">🥈</div>
-                          <div className="text-2xl font-bold text-gray-600">{medalDetail.silver.length}</div>
-                          <div className="text-xs text-gray-600">PERAK</div>
+                          <div className="text-2xl font-bold">{medalDetail.silver.length}</div>
+                          <div className="text-xs">PERAK</div>
                         </div>
-                        <div className="text-center p-4 rounded-xl border-2" style={{ backgroundColor: 'rgba(205, 127, 50, 0.1)', borderColor: '#CD7F32' }}>
+                        <div className={`text-center p-4 rounded-xl border-2 ${theme.badgeBronze}`}>
                           <div className="text-3xl mb-2">🥉</div>
-                          <div className="text-2xl font-bold" style={{ color: '#CD7F32' }}>{medalDetail.bronze.length}</div>
-                          <div className="text-xs text-gray-600">PERUNGGU</div>
+                          <div className="text-2xl font-bold">{medalDetail.bronze.length}</div>
+                          <div className="text-xs">PERUNGGU</div>
                         </div>
                       </div>
 
                       {totalMedals === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className={`text-center py-8 ${theme.textMuted}`}>
                           Tidak ada data medali untuk dojang ini
                         </div>
                       ) : (
@@ -1004,11 +1010,11 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                               </h4>
                               <div className="space-y-2">
                                 {medalDetail.gold.map((medal, idx) => (
-                                  <div key={idx} className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-                                    <div className="font-semibold" style={{ color: '#050505' }}>
+                                  <div key={idx} className={`p-3 rounded-lg border ${theme.badgeGold}`}>
+                                    <div className="font-semibold">
                                       {medal.athleteName}
                                     </div>
-                                    <div className="text-sm text-gray-600 mt-1">
+                                    <div className="text-sm opacity-80 mt-1">
                                       {medal.kelasName}
                                     </div>
                                   </div>
@@ -1020,16 +1026,16 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                           {/* Silver Medals */}
                           {medalDetail.silver.length > 0 && (
                             <div>
-                              <h4 className="text-lg font-bold mb-3 flex items-center gap-2 text-gray-600">
+                              <h4 className="text-lg font-bold mb-3 flex items-center gap-2 text-gray-500">
                                 🥈 MEDALI PERAK ({medalDetail.silver.length})
                               </h4>
                               <div className="space-y-2">
                                 {medalDetail.silver.map((medal, idx) => (
-                                  <div key={idx} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-                                    <div className="font-semibold" style={{ color: '#050505' }}>
+                                  <div key={idx} className={`p-3 rounded-lg border ${theme.badgeSilver}`}>
+                                    <div className="font-semibold">
                                       {medal.athleteName}
                                     </div>
-                                    <div className="text-sm text-gray-600 mt-1">
+                                    <div className="text-sm opacity-80 mt-1">
                                       {medal.kelasName}
                                     </div>
                                   </div>
@@ -1041,16 +1047,16 @@ const MedalTallyPage: React.FC<{ idKompetisi?: number }> = ({ idKompetisi }) => 
                           {/* Bronze Medals */}
                           {medalDetail.bronze.length > 0 && (
                             <div>
-                              <h4 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: '#CD7F32' }}>
+                              <h4 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-600">
                                 🥉 MEDALI PERUNGGU ({medalDetail.bronze.length})
                               </h4>
                               <div className="space-y-2">
                                 {medalDetail.bronze.map((medal, idx) => (
-                                  <div key={idx} className="p-3 rounded-lg border" style={{ backgroundColor: 'rgba(205, 127, 50, 0.1)', borderColor: '#CD7F32' }}>
-                                    <div className="font-semibold" style={{ color: '#050505' }}>
+                                  <div key={idx} className={`p-3 rounded-lg border ${theme.badgeBronze}`}>
+                                    <div className="font-semibold">
                                       {medal.athleteName}
                                     </div>
-                                    <div className="text-sm text-gray-600 mt-1">
+                                    <div className="text-sm opacity-80 mt-1">
                                       {medal.kelasName}
                                     </div>
                                   </div>

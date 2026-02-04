@@ -68,12 +68,30 @@ interface KelasKejuaraan {
   bracket_status: "not_created" | "created" | "in_progress" | "completed";
 }
 
+import { useKompetisi } from "../../context/KompetisiContext";
+
 const BracketList: React.FC = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const [kelasKejuaraan, setKelasKejuaraan] = useState<KelasKejuaraan[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Dynamic Theme
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? "bg-black" : "bg-gradient-to-br from-white via-red/5 to-yellow/10",
+    textMain: isModern ? "text-white" : "text-black/80",
+    textSec: isModern ? "text-gray-400" : "text-black/60",
+    cardBg: isModern ? "bg-[#111] border border-gray-800" : "bg-white/60 backdrop-blur-sm border border-white/50",
+    cardHover: isModern ? "hover:border-red-600/50 hover:bg-[#161616]" : "hover:shadow-xl",
+    filterBg: isModern ? "bg-[#161616] border border-gray-800" : "bg-white/80 border border-white/50",
+    inputBg: isModern ? "bg-[#0a0a0a] border-gray-800 text-white" : "bg-white border-red/20",
+    headerBg: isModern ? "bg-red-900/10 border-b border-red-900/20" : "bg-gradient-to-r from-red/5 to-red/10 border-b border-white/30"
+  };
 
   // ✅ TAMBAH FILTER STATE
   const [filters, setFilters] = useState({
@@ -374,13 +392,13 @@ const BracketList: React.FC = () => {
   const completedCount = availableBrackets.filter(k => k.bracket_status === 'completed').length;
 
   return (
-    <div className="min-h-screen max-w-screen bg-gradient-to-br from-white via-red/5 to-yellow/10">
+    <div className={`min-h-screen max-w-screen ${theme.bg}`}>
       {/* Desktop Navbar */}
       <NavbarDashboard />
 
       {/* Main Content */}
       <div className="lg:ml-72 min-h-screen">
-        <div className="bg-white/40 backdrop-blur-md border-white/30 w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8">
+        <div className={`w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8`}>
 
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
@@ -398,10 +416,10 @@ const BracketList: React.FC = () => {
             {/* Title and Stats */}
             <div className="space-y-4 lg:space-y-6 flex-1 w-full">
               <div>
-                <h1 className="font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl text-black/80 tracking-wider">
+                <h1 className={`font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl tracking-wider ${theme.textMain}`}>
                   BRACKET TOURNAMENT
                 </h1>
-                <p className="font-plex text-black/60 text-base lg:text-lg mt-2">
+                <p className={`font-plex text-base lg:text-lg mt-2 ${theme.textSec}`}>
                   Lihat bracket tournament untuk setiap kelas kejuaraan
                 </p>
               </div>
@@ -435,14 +453,14 @@ const BracketList: React.FC = () => {
             <div className="flex-1 flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
                 <Loader className="animate-spin text-red" size={32} />
-                <p className="font-plex text-black/60">Memuat bracket...</p>
+                <p className={`font-plex ${theme.textSec}`}>Memuat bracket...</p>
               </div>
             </div>
           )}
 
           {/* Content - Kelas Cards */}
           {!loading && (
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl border border-white/50">
+            <div className={`rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl ${theme.cardBg}`}>
               {/* Header with Filter Button */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex gap-3 lg:gap-4 items-center">
@@ -450,10 +468,10 @@ const BracketList: React.FC = () => {
                     <GitBranch className="text-red" size={18} />
                   </div>
                   <div>
-                    <h2 className="font-bebas text-xl lg:text-2xl text-black/80 tracking-wide">
+                    <h2 className={`font-bebas text-xl lg:text-2xl tracking-wide ${theme.textMain}`}>
                       DAFTAR BRACKET
                     </h2>
-                    <p className="font-plex text-sm text-black/60">
+                    <p className={`font-plex text-sm ${theme.textSec}`}>
                       Menampilkan {filteredBrackets.length} dari {availableBrackets.length} bracket
                     </p>
                   </div>
@@ -463,8 +481,8 @@ const BracketList: React.FC = () => {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-plex font-medium transition-all shadow-md hover:shadow-lg ${hasActiveFilters()
-                      ? 'bg-red text-white'
-                      : 'bg-white text-red border border-red/20'
+                    ? 'bg-red text-white'
+                    : 'bg-white text-red border border-red/20'
                     }`}
                 >
                   <Filter size={18} />
@@ -479,17 +497,17 @@ const BracketList: React.FC = () => {
 
               {/* ✅ FILTER PANEL */}
               {showFilters && (
-                <div className="bg-white/80 rounded-xl p-4 lg:p-6 mb-6 shadow-lg border border-white/50">
+                <div className={`rounded-xl p-4 lg:p-6 mb-6 shadow-lg ${theme.filterBg}`}>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Filter Cabang */}
                     <div>
-                      <label className="font-plex font-medium text-sm text-black/70 mb-2 block">
+                      <label className={`font-plex font-medium text-sm mb-2 block ${theme.textSec}`}>
                         Cabang
                       </label>
                       <select
                         value={filters.cabang}
                         onChange={(e) => setFilters({ ...filters, cabang: e.target.value as any })}
-                        className="w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 bg-white"
+                        className={`w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 ${theme.inputBg}`}
                       >
                         <option value="ALL">Semua Cabang</option>
                         <option value="KYORUGI">Kyorugi</option>
@@ -499,13 +517,13 @@ const BracketList: React.FC = () => {
 
                     {/* Filter Kategori */}
                     <div>
-                      <label className="font-plex font-medium text-sm text-black/70 mb-2 block">
+                      <label className={`font-plex font-medium text-sm mb-2 block ${theme.textSec}`}>
                         Kategori
                       </label>
                       <select
                         value={filters.kategori}
                         onChange={(e) => setFilters({ ...filters, kategori: e.target.value as any })}
-                        className="w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 bg-white"
+                        className={`w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 ${theme.inputBg}`}
                       >
                         <option value="ALL">Semua Kategori</option>
                         <option value="Prestasi">Prestasi</option>
@@ -515,13 +533,13 @@ const BracketList: React.FC = () => {
 
                     {/* Filter Kelompok */}
                     <div>
-                      <label className="font-plex font-medium text-sm text-black/70 mb-2 block">
+                      <label className={`font-plex font-medium text-sm mb-2 block ${theme.textSec}`}>
                         Kelompok Umur
                       </label>
                       <select
                         value={filters.kelompok}
                         onChange={(e) => setFilters({ ...filters, kelompok: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 bg-white"
+                        className={`w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 ${theme.inputBg}`}
                       >
                         <option value="ALL">Semua Kelompok</option>
                         {getUniqueKelompok().map(kelompok => (
@@ -534,13 +552,13 @@ const BracketList: React.FC = () => {
 
                     {/* Filter Status */}
                     <div>
-                      <label className="font-plex font-medium text-sm text-black/70 mb-2 block">
+                      <label className={`font-plex font-medium text-sm mb-2 block ${theme.textSec}`}>
                         Status
                       </label>
                       <select
                         value={filters.status}
                         onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
-                        className="w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 bg-white"
+                        className={`w-full px-4 py-2.5 rounded-lg border border-red/20 font-plex focus:outline-none focus:ring-2 focus:ring-red/30 ${theme.inputBg}`}
                       >
                         <option value="ALL">Semua Status</option>
                         <option value="created">Sudah Dibuat</option>
@@ -569,11 +587,11 @@ const BracketList: React.FC = () => {
                 {filteredBrackets.map((kelas) => (
                   <div
                     key={kelas.id_kelas_kejuaraan}
-                    className="bg-white/80 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 border border-white/50"
+                    className={`${theme.cardBg} rounded-xl overflow-hidden cursor-pointer transform hover:-translate-y-1 transition-all duration-300 ${theme.cardHover}`}
                     onClick={() => navigate(`/dashboard/bracket-viewer/${kelas.id_kelas_kejuaraan}`)}
                   >
                     {/* Header */}
-                    <div className="p-4 border-b border-white/30 bg-gradient-to-r from-red/5 to-red/10">
+                    <div className={`p-4 ${theme.headerBg}`}>
                       <div className="flex items-center justify-between mb-3">
                         <span className="px-3 py-1.5 rounded-full text-xs font-bold font-plex shadow-sm bg-red text-white">
                           {kelas.cabang}
@@ -581,11 +599,11 @@ const BracketList: React.FC = () => {
                         {getStatusBadge(kelas.bracket_status)}
                       </div>
 
-                      <h3 className="font-plex font-bold text-base leading-tight mb-2 text-black/80">
+                      <h3 className={`font-plex font-bold text-base leading-tight mb-2 ${theme.textMain}`}>
                         {kelas.kategori_event.nama_kategori.toUpperCase()} - {kelas.kelompok.nama_kelompok}
                       </h3>
 
-                      <p className="font-plex text-sm text-black/60">
+                      <p className={`font-plex text-sm ${theme.textSec}`}>
                         {kelas.jenis_kelamin === "LAKI_LAKI" ? "Putra" : "Putri"}
                         {kelas.kelas_berat && ` - ${kelas.kelas_berat.nama_kelas}`}
                         {kelas.poomsae && ` - ${kelas.poomsae.nama_kelas}`}
@@ -607,10 +625,10 @@ const BracketList: React.FC = () => {
               {filteredBrackets.length === 0 && availableBrackets.length > 0 && (
                 <div className="text-center py-12">
                   <Filter size={64} className="text-red/40 mx-auto mb-4" />
-                  <h3 className="font-bebas text-2xl text-black/80 mb-2">
+                  <h3 className={`font-bebas text-2xl mb-2 ${theme.textMain}`}>
                     TIDAK ADA HASIL
                   </h3>
-                  <p className="font-plex text-base text-black/60 mb-4">
+                  <p className={`font-plex text-base mb-4 ${theme.textSec}`}>
                     Tidak ada bracket yang sesuai dengan filter yang dipilih
                   </p>
                   <button
@@ -626,10 +644,10 @@ const BracketList: React.FC = () => {
               {availableBrackets.length === 0 && (
                 <div className="text-center py-12">
                   <Trophy size={64} className="text-red/40 mx-auto mb-4" />
-                  <h3 className="font-bebas text-2xl text-black/80 mb-2">
+                  <h3 className={`font-bebas text-2xl mb-2 ${theme.textMain}`}>
                     BELUM ADA BRACKET
                   </h3>
-                  <p className="font-plex text-base text-black/60">
+                  <p className={`font-plex text-base ${theme.textSec}`}>
                     Bracket belum dibuat oleh admin kompetisi
                   </p>
                 </div>

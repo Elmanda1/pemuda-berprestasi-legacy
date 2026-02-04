@@ -5,12 +5,14 @@ import NavbarDashboard from "../../components/navbar/navbarDashboard"
 import { useAuth } from "../../context/authContext";
 import { apiClient } from "../../config/api";
 import { useLocation } from "react-router-dom";
+import { useKompetisi } from "../../context/KompetisiContext";
 
 interface StatsCardProps {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
   title: string;
   value: string;
-  color: string;
+  theme: any;
+  colorHex: string;
 }
 
 interface Atlit {
@@ -30,16 +32,20 @@ const getPhotoUrl = (filename: string): string | null => {
   return `${process.env.REACT_APP_API_BASE_URL || 'http://cjvmanagementevent.com'}/uploads/atlet/pas_foto/${filename}`;
 };
 
-const StatsCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, color }) => (
-  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 lg:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50">
+const StatsCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, theme, colorHex }) => (
+  <div className="backdrop-blur-sm rounded-2xl p-4 lg:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border"
+    style={{
+      backgroundColor: theme.cardBg,
+      borderColor: theme.border
+    }}>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3 lg:gap-4">
-        <div className={`p-2 lg:p-3 rounded-xl ${color}`}>
-          <Icon size={20} className="text-white lg:w-6 lg:h-6" />
+        <div className="p-2 lg:p-3 rounded-xl" style={{ backgroundColor: colorHex + '20' }}>
+          <Icon size={20} className="w-6 h-6" style={{ color: colorHex }} />
         </div>
         <div>
-          <h3 className="font-plex font-medium text-black/60 text-xs lg:text-sm">{title}</h3>
-          <p className="font-bebas text-xl lg:text-2xl text-black/80">{value}</p>
+          <h3 className="font-plex font-medium text-xs lg:text-sm" style={{ color: theme.textSecondary }}>{title}</h3>
+          <p className="font-bebas text-xl lg:text-2xl" style={{ color: theme.textPrimary }}>{value}</p>
         </div>
       </div>
     </div>
@@ -49,19 +55,33 @@ const StatsCard: React.FC<StatsCardProps> = ({ icon: Icon, title, value, color }
 const DataAtlit = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const { kompetisiDetail } = useKompetisi();
   const [atlits, setAtlits] = useState<Atlit[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [genderFilter, setGenderFilter] = useState<"all" | "LAKI_LAKI" | "PEREMPUAN">("all");
   const [loading, setLoading] = useState(false);
-  
-  // Pagination states - increased items per page
+
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(25); // Increased from 10 to 25 for better UX
-  
+  const [itemsPerPage] = useState(25);
+
   const location = useLocation();
 
-  // Fetch data function with proper response handling
+  const templateType = kompetisiDetail?.template_type || 'default';
+  const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const theme = {
+    bg: isModern ? '#0a0a0a' : '#FFF5F7',
+    cardBg: isModern ? '#111111' : '#FFFFFF',
+    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
+    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
+    primary: isModern ? '#DC2626' : '#DC2626',
+    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(255, 255, 255, 0.5)',
+    inputBg: isModern ? '#1F2937' : '#FFFFFF',
+    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+  };
+
   const fetchAtlits = async () => {
     try {
       setLoading(true);
@@ -71,30 +91,18 @@ const DataAtlit = () => {
         return;
       }
 
-      console.log("Fetching athletes for dojang:", id_dojang);
-const response = await apiClient.get(`/atlet/dojang/${id_dojang}`);
+      const response = await apiClient.get<any>(`/atlet/dojang/${id_dojang}`);
 
-console.log("API Response:", response);
+      let atletData = [];
+      if (response.data && response.data.success && response.data.data) {
+        atletData = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (Array.isArray(response.data)) {
+        atletData = response.data;
+      } else {
+        atletData = [];
+      }
 
-// Handle multiple possible response structures
-let atletData = [];
-
-if (response.success && response.data) {
-  // Structure: { success: true, data: [...] }
-  atletData = Array.isArray(response.data) ? response.data : [];
-} else if (Array.isArray(response.data)) {
-  // Structure: { data: [...] }
-  atletData = response.data;
-} else if (Array.isArray(response)) {
-  // Structure: [...] (direct array)
-  atletData = response;
-} else {
-  // Fallback: empty array
-  atletData = [];
-}
-
-setAtlits(atletData);
-console.log(`Successfully loaded ${atletData.length} athletes`);
+      setAtlits(atletData);
     } catch (err) {
       console.error("Error fetching athletes:", err);
       setAtlits([]);
@@ -103,7 +111,6 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
     }
   };
 
-  // Initial fetch and refresh handling
   useEffect(() => {
     if (location.state?.refresh) {
       fetchAtlits();
@@ -125,32 +132,27 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Client-side filtering
   const filteredAtlits = atlits.filter(atlit => {
     const matchesSearch = atlit.nama_atlet.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         atlit.provinsi?.toLowerCase().includes(searchTerm.toLowerCase());
+      atlit.provinsi?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGender = genderFilter === "all" || atlit.jenis_kelamin === genderFilter;
     return matchesSearch && matchesGender;
   });
 
-  // Client-side pagination
   const totalPages = Math.ceil(filteredAtlits.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedAtlits = filteredAtlits.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, genderFilter]);
 
-  // Stats calculation from all original data
   const totalAtlits = atlits.length;
   const lakiLakiCount = atlits.filter(a => a.jenis_kelamin === "LAKI_LAKI").length;
   const perempuanCount = atlits.filter(a => a.jenis_kelamin === "PEREMPUAN").length;
   const avgAge = atlits.length > 0 ? Math.round(atlits.reduce((sum, a) => sum + a.age, 0) / atlits.length) : 0;
 
-  // Pagination handlers
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -170,11 +172,10 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
     }
   };
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -196,132 +197,140 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
   return (
-    <div className="min-h-screen max-w-screen bg-gradient-to-br from-white via-red/5 to-yellow/10">
-      {/* Desktop Navbar */}
+    <div className="min-h-screen max-w-screen" style={{ background: theme.gradient }}>
       <NavbarDashboard />
 
-      {/* Main Content */}
       <div className="lg:ml-72 min-h-screen">
-        <div className="bg-white/40 backdrop-blur-md border-white/30 w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8">
-          
+        <div className="w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8"
+          style={{ backgroundColor: isModern ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.4)', backdropFilter: 'blur(12px)' }}>
+
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
-            {/* Mobile Menu Button */}
             <div className="lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-3 rounded-xl hover:bg-white/50 transition-all duration-300 border border-red/20"
-                aria-label="Open menu"
+                className="p-3 rounded-xl transition-all duration-300 border"
+                style={{ borderColor: theme.border, color: theme.primary }}
               >
-                <Menu size={24} className="text-red" />
+                <Menu size={24} />
               </button>
             </div>
 
-            {/* Title and Stats */}
             <div className="space-y-4 lg:space-y-6 flex-1 w-full">
               <div>
-                <h1 className="font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl text-black/80 tracking-wider">
+                <h1 className="font-bebas text-3xl sm:text-4xl lg:text-6xl xl:text-7xl tracking-wider"
+                  style={{ color: theme.textPrimary }}>
                   DATA ATLIT
                 </h1>
-                <p className="font-plex text-black/60 text-base lg:text-lg mt-2">
+                <p className="font-plex text-base lg:text-lg mt-2" style={{ color: theme.textSecondary }}>
                   Kelola data dan informasi atlet terdaftar
                 </p>
               </div>
-              
-              {/* Quick Stats */}
+
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                <StatsCard 
+                <StatsCard
                   icon={Users}
                   title="Total Atlet"
                   value={totalAtlits.toString()}
-                  color="bg-gradient-to-br from-red to-red/80"
+                  theme={theme}
+                  colorHex="#EF4444"
                 />
-                <StatsCard 
+                <StatsCard
                   icon={Award}
                   title="Laki-laki"
                   value={lakiLakiCount.toString()}
-                  color="bg-gradient-to-br from-blue-500 to-blue-600"
+                  theme={theme}
+                  colorHex="#3B82F6"
                 />
-                <StatsCard 
+                <StatsCard
                   icon={Award}
                   title="Perempuan"
                   value={perempuanCount.toString()}
-                  color="bg-gradient-to-br from-pink-500 to-pink-600"
+                  theme={theme}
+                  colorHex="#EC4899"
                 />
-                <StatsCard 
+                <StatsCard
                   icon={TrendingUp}
                   title="Rata-rata Umur"
                   value={`${avgAge} Tahun`}
-                  color="bg-gradient-to-br from-yellow to-yellow/80"
+                  theme={theme}
+                  colorHex="#F59E0B"
                 />
               </div>
             </div>
           </div>
 
           {/* Search and Filter Section */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-xl border border-white/50">
+          <div className="backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-xl border"
+            style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
-              {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 text-red/60" size={18} />
+                  <Search className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2"
+                    size={18} style={{ color: theme.textSecondary }} />
                   <input
                     type="text"
                     placeholder="Cari nama atlet atau provinsi..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 lg:pl-12 pr-4 py-2.5 lg:py-3 rounded-xl border-2 border-red/20 focus:border-red outline-none bg-white/80 backdrop-blur-sm font-plex text-sm lg:text-base"
+                    className="w-full pl-10 lg:pl-12 pr-4 py-2.5 lg:py-3 rounded-xl border-2 outline-none font-plex text-sm lg:text-base focus:border-red-500"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.border,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
               </div>
-              
-              {/* Gender Filter */}
+
               <div className="flex gap-2 overflow-x-auto pb-1">
                 <button
                   onClick={() => setGenderFilter("all")}
-                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap ${
-                    genderFilter === "all"
-                      ? "bg-red text-white"
-                      : "bg-white/50 text-red border border-red/20 hover:bg-red/5"
-                  }`}
+                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap`}
+                  style={{
+                    backgroundColor: genderFilter === "all" ? theme.primary : 'transparent',
+                    color: genderFilter === "all" ? '#fff' : theme.textSecondary,
+                    border: `1px solid ${genderFilter === "all" ? theme.primary : theme.border}`
+                  }}
                 >
                   Semua
                 </button>
                 <button
                   onClick={() => setGenderFilter("LAKI_LAKI")}
-                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap ${
-                    genderFilter === "LAKI_LAKI"
-                      ? "bg-blue-500 text-white"
-                      : "bg-white/50 text-blue-500 border border-blue-500/20 hover:bg-blue-500/5"
-                  }`}
+                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap`}
+                  style={{
+                    backgroundColor: genderFilter === "LAKI_LAKI" ? '#3B82F6' : 'transparent',
+                    color: genderFilter === "LAKI_LAKI" ? '#fff' : '#3B82F6',
+                    border: genderFilter === "LAKI_LAKI" ? '1px solid #3B82F6' : '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
                 >
                   Laki-laki
                 </button>
                 <button
                   onClick={() => setGenderFilter("PEREMPUAN")}
-                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap ${
-                    genderFilter === "PEREMPUAN"
-                      ? "bg-pink-500 text-white"
-                      : "bg-white/50 text-pink-500 border border-pink-500/20 hover:bg-pink-500/5"
-                  }`}
+                  className={`cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl font-plex text-xs lg:text-sm transition-all duration-300 whitespace-nowrap`}
+                  style={{
+                    backgroundColor: genderFilter === "PEREMPUAN" ? '#EC4899' : 'transparent',
+                    color: genderFilter === "PEREMPUAN" ? '#fff' : '#EC4899',
+                    border: genderFilter === "PEREMPUAN" ? '1px solid #EC4899' : '1px solid rgba(236, 72, 153, 0.2)'
+                  }}
                 >
                   Perempuan
                 </button>
               </div>
             </div>
 
-            {/* Filter Summary */}
             {(searchTerm || genderFilter !== "all") && (
-              <div className="mt-4 pt-4 border-t border-white/30">
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.border }}>
                 <div className="flex flex-wrap gap-2 items-center text-sm">
-                  <span className="font-plex text-black/60">Filter aktif:</span>
+                  <span className="font-plex" style={{ color: theme.textSecondary }}>Filter aktif:</span>
                   {searchTerm && (
-                    <span className="px-2 py-1 bg-red/10 text-red rounded-lg font-plex">
+                    <span className="px-2 py-1 bg-red-500/10 text-red-500 rounded-lg font-plex">
                       "{searchTerm}"
                     </span>
                   )}
@@ -335,7 +344,8 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
                       setSearchTerm("");
                       setGenderFilter("all");
                     }}
-                    className="ml-2 text-xs text-red hover:text-red/80 underline"
+                    className="ml-2 text-xs hover:underline"
+                    style={{ color: theme.primary }}
                   >
                     Clear filter
                   </button>
@@ -345,27 +355,27 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
           </div>
 
           {/* Table Section */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl border border-white/50">
+          <div className="backdrop-blur-sm rounded-2xl lg:rounded-3xl p-4 lg:p-6 xl:p-8 shadow-xl border"
+            style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 lg:gap-4 mb-4 lg:mb-6">
               <div className="flex gap-3 lg:gap-4 items-center">
-                <div className="p-2 bg-red/10 rounded-xl">
-                  <Users className="text-red" size={18} />
+                <div className="p-2 rounded-xl" style={{ backgroundColor: theme.primary + '20' }}>
+                  <Users size={18} style={{ color: theme.primary }} />
                 </div>
                 <div>
-                  <h2 className="font-bebas text-xl lg:text-2xl text-black/80 tracking-wide">
+                  <h2 className="font-bebas text-xl lg:text-2xl tracking-wide" style={{ color: theme.textPrimary }}>
                     DAFTAR ATLET
                   </h2>
-                  <p className="font-plex text-sm text-black/60">
+                  <p className="font-plex text-sm" style={{ color: theme.textSecondary }}>
                     Menampilkan {paginatedAtlits.length} dari {filteredAtlits.length} atlet
-                    {filteredAtlits.length !== totalAtlits && ` (Total: ${totalAtlits})`}
                   </p>
                 </div>
               </div>
-              {/* Action Buttons */}
               <div className="flex gap-2 lg:gap-3">
-                <button 
+                <button
                   onClick={() => navigate('/dashboard/TambahAtlit')}
-                  className="font-plex font-medium px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 flex justify-center items-center cursor-pointer text-white bg-gradient-to-r from-red to-red/80 hover:from-red/90 hover:to-red/70 border-0 shadow-lg gap-2 text-sm lg:text-base"
+                  className="font-plex font-medium px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 flex justify-center items-center cursor-pointer text-white shadow-lg gap-2 text-sm lg:text-base border-0"
+                  style={{ backgroundColor: theme.primary }}
                 >
                   <UserPlus size={18} />
                   <span className="hidden sm:inline">Tambah Atlit</span>
@@ -374,20 +384,19 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
               </div>
             </div>
 
-            {/* Loading State */}
             {loading && (
               <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-                <p className="font-plex text-black/60 mt-2">Memuat data...</p>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: theme.primary }}></div>
+                <p className="font-plex mt-2" style={{ color: theme.textSecondary }}>Memuat data...</p>
               </div>
             )}
 
             {/* Desktop Table */}
-            <div className="hidden lg:block overflow-hidden rounded-2xl border border-white/50">
+            <div className="hidden lg:block overflow-hidden rounded-2xl border" style={{ borderColor: theme.border }}>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-red to-red/80 text-white">
+                    <tr className="text-white" style={{ background: theme.primary }}>
                       <th className="px-6 py-4 text-left font-bebas text-2xl tracking-wide">NAMA</th>
                       <th className="px-6 py-4 text-center font-bebas text-2xl tracking-wide">PROVINSI</th>
                       <th className="px-6 py-4 text-center font-bebas text-2xl tracking-wide">GENDER</th>
@@ -395,64 +404,62 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
                       <th className="px-6 py-4 text-center font-bebas text-2xl tracking-wide">AKSI</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/30">
+                  <tbody className="divide-y" style={{ borderColor: theme.border }}>
                     {paginatedAtlits.map((atlit, index) => (
                       <tr
                         key={atlit.id_atlet}
-                        className={`transition-all duration-200 hover:bg-red/10 cursor-pointer ${
-                          index % 2 === 0 ? "bg-white/20" : "bg-white/10"
-                        }`}
+                        className={`transition-all duration-200 cursor-pointer hover:bg-opacity-50`}
+                        style={{ backgroundColor: index % 2 === 0 ? theme.bg + '40' : 'transparent' }}
                         onClick={() => navigate(`/dashboard/atlit/${atlit.id_atlet}`)}
                       >
-<td className="px-6 py-4">
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-red to-red/80 flex items-center justify-center text-white font-bebas shadow-lg">
-      {atlit.pas_foto ? (
-        <img 
-          src={getPhotoUrl(atlit.pas_foto)} 
-          alt={`Foto ${atlit.nama_atlet}`}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback ke initial jika gambar gagal load
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            const sibling = target.nextElementSibling as HTMLElement;
-            if (sibling) sibling.style.display = 'flex';
-          }}
-        />
-      ) : null}
-      <span 
-        className={`w-full h-full flex items-center justify-center ${atlit.pas_foto ? 'hidden' : ''}`}
-        style={{ display: atlit.pas_foto ? 'none' : 'flex' }}
-      >
-        {atlit.nama_atlet.charAt(0).toUpperCase()}
-      </span>
-    </div>
-    <div>
-      <p className="font-plex font-semibold text-black/80">{atlit.nama_atlet}</p>
-    </div>
-  </div>
-</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bebas shadow-lg"
+                              style={{ backgroundColor: theme.primary }}>
+                              {atlit.pas_foto ? (
+                                <img
+                                  src={getPhotoUrl(atlit.pas_foto)}
+                                  alt={`Foto ${atlit.nama_atlet}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const sibling = target.nextElementSibling as HTMLElement;
+                                    if (sibling) sibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <span
+                                className={`w-full h-full flex items-center justify-center ${atlit.pas_foto ? 'hidden' : ''}`}
+                                style={{ display: atlit.pas_foto ? 'none' : 'flex' }}
+                              >
+                                {atlit.nama_atlet.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-plex font-semibold" style={{ color: theme.textPrimary }}>{atlit.nama_atlet}</p>
+                            </div>
+                          </div>
+                        </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="font-plex text-black/70">{atlit.provinsi || "-"}</span>
+                          <span className="font-plex" style={{ color: theme.textSecondary }}>{atlit.provinsi || "-"}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-plex font-medium ${
-                              atlit.jenis_kelamin === "LAKI_LAKI"
-                                ? "bg-blue-100 text-blue-600"
-                                : "bg-pink-100 text-pink-600"
-                            }`}
+                            className={`px-3 py-1 rounded-full text-xs font-plex font-medium ${atlit.jenis_kelamin === "LAKI_LAKI"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-pink-100 text-pink-600"
+                              }`}
                           >
                             {atlit.jenis_kelamin === "LAKI_LAKI" ? "Laki-laki" : "Perempuan"}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="font-plex font-medium text-black/70">{atlit.age} Tahun</span>
+                          <span className="font-plex font-medium" style={{ color: theme.textSecondary }}>{atlit.age} Tahun</span>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex justify-center gap-2">
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/dashboard/atlit/${atlit.id_atlet}`);
@@ -472,54 +479,54 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
 
             {/* Mobile Cards */}
             <div className="lg:hidden space-y-3">
-              {paginatedAtlits.map((atlit, index) => (
+              {paginatedAtlits.map((atlit) => (
                 <div
                   key={atlit.id_atlet}
-                  className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50 transition-all duration-200 hover:shadow-lg cursor-pointer"
+                  className="rounded-xl p-4 shadow-md border transition-all duration-200 hover:shadow-lg cursor-pointer"
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
                   onClick={() => navigate(`/dashboard/atlit/${atlit.id_atlet}`)}
                 >
                   <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3 flex-1">
-  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-red to-red/80 flex items-center justify-center text-white font-bebas text-lg shadow-lg">
-    {atlit.pas_foto ? (
-      <img 
-        src={getPhotoUrl(atlit.pas_foto)} 
-        alt={`Foto ${atlit.nama_atlet}`}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          // Fallback ke initial jika gambar gagal load
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          const sibling = target.nextElementSibling as HTMLElement;
-          if (sibling) sibling.style.display = 'flex';
-        }}
-      />
-    ) : null}
-    <span 
-      className={`w-full h-full flex items-center justify-center ${atlit.pas_foto ? 'hidden' : ''}`}
-      style={{ display: atlit.pas_foto ? 'none' : 'flex' }}
-    >
-      {atlit.nama_atlet.charAt(0).toUpperCase()}
-    </span>
-  </div>
-  <div className="flex-1 min-w-0">
-    <p className="font-plex font-semibold text-black/80 truncate">{atlit.nama_atlet}</p>
-    <p className="font-plex text-sm text-black/60">{atlit.provinsi || "Tidak diketahui"}</p>
-    <div className="flex items-center gap-2 mt-1">
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs font-plex font-medium ${
-          atlit.jenis_kelamin === "LAKI_LAKI"
-            ? "bg-blue-100 text-blue-600"
-            : "bg-pink-100 text-pink-600"
-        }`}
-      >
-        {atlit.jenis_kelamin === "LAKI_LAKI" ? "L" : "P"}
-      </span>
-      <span className="font-plex text-xs text-black/60">{atlit.age} tahun</span>
-    </div>
-  </div>
-</div>
-                    <button 
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-white font-bebas text-lg shadow-lg"
+                        style={{ backgroundColor: theme.primary }}>
+                        {atlit.pas_foto ? (
+                          <img
+                            src={getPhotoUrl(atlit.pas_foto)}
+                            alt={`Foto ${atlit.nama_atlet}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const sibling = target.nextElementSibling as HTMLElement;
+                              if (sibling) sibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <span
+                          className={`w-full h-full flex items-center justify-center ${atlit.pas_foto ? 'hidden' : ''}`}
+                          style={{ display: atlit.pas_foto ? 'none' : 'flex' }}
+                        >
+                          {atlit.nama_atlet.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-plex font-semibold truncate" style={{ color: theme.textPrimary }}>{atlit.nama_atlet}</p>
+                        <p className="font-plex text-sm" style={{ color: theme.textSecondary }}>{atlit.provinsi || "Tidak diketahui"}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-plex font-medium ${atlit.jenis_kelamin === "LAKI_LAKI"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-pink-100 text-pink-600"
+                              }`}
+                          >
+                            {atlit.jenis_kelamin === "LAKI_LAKI" ? "L" : "P"}
+                          </span>
+                          <span className="font-plex text-xs" style={{ color: theme.textSecondary }}>{atlit.age} tahun</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/dashboard/atlit/${atlit.id_atlet}`);
@@ -536,68 +543,65 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
             {/* Empty state */}
             {!loading && filteredAtlits.length === 0 && (
               <div className="text-center py-8 lg:py-12">
-                <Users className="mx-auto text-gray-400 mb-4" size={40} />
-                <p className="font-plex text-gray-500">
-                  {atlits.length === 0 
+                <Users className="mx-auto mb-4" size={40} style={{ color: theme.textSecondary }} />
+                <p className="font-plex" style={{ color: theme.textSecondary }}>
+                  {atlits.length === 0
                     ? "Belum ada atlet yang terdaftar"
                     : "Tidak ada atlet yang sesuai dengan filter"
-                  }
-                </p>
-                <p className="font-plex text-sm text-gray-400 mt-2">
-                  {atlits.length === 0
-                    ? "Silakan tambah atlet baru untuk memulai"
-                    : "Coba ubah kriteria pencarian atau filter"
                   }
                 </p>
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination Controls */}
             {!loading && filteredAtlits.length > 0 && totalPages > 1 && (
               <div className="mt-6 lg:mt-8">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  {/* Page Info */}
-                  <div className="font-plex text-sm text-black/60">
-                    Halaman {currentPage} dari {totalPages} 
-                    ({startIndex + 1}-{Math.min(endIndex, filteredAtlits.length)} dari {filteredAtlits.length} atlet)
+                  <div className="font-plex text-sm" style={{ color: theme.textSecondary }}>
+                    Halaman {currentPage} dari {totalPages}
                   </div>
-                  
-                  {/* Pagination Controls */}
+
                   <div className="flex items-center gap-2">
-                    {/* Previous Button */}
                     <button
                       onClick={handlePrevious}
                       disabled={currentPage === 1}
-                      className="p-2 lg:p-2.5 rounded-lg border border-red/20 bg-white/50 text-red hover:bg-red/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="p-2 lg:p-2.5 rounded-lg border bg-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      style={{
+                        borderColor: theme.border,
+                        color: theme.textPrimary,
+                        backgroundColor: theme.bg
+                      }}
                     >
                       <ChevronLeft size={18} />
                     </button>
 
-                    {/* Page Numbers */}
                     <div className="flex gap-1 lg:gap-2 max-w-xs overflow-x-auto">
                       {getPageNumbers().map((page, index) => (
                         <button
                           key={index}
                           onClick={() => typeof page === 'number' && handlePageChange(page)}
                           disabled={page === '...'}
-                          className={`px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg font-plex text-sm transition-all duration-200 whitespace-nowrap ${
-                            page === currentPage
-                              ? 'bg-red text-white'
-                              : page === '...'
-                              ? 'text-black/40 cursor-default'
-                              : 'bg-white/50 text-red border border-red/20 hover:bg-red/5'
-                          }`}
+                          className={`px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg font-plex text-sm transition-all duration-200 whitespace-nowrap`}
+                          style={{
+                            backgroundColor: page === currentPage ? theme.primary : 'transparent',
+                            color: page === currentPage ? '#fff' : theme.textPrimary,
+                            border: page === currentPage ? 'none' : `1px solid ${theme.border}`
+                          }}
                         >
                           {page}
                         </button>
                       ))}
                     </div>
 
-                    {/* Next Button */}
                     <button
                       onClick={handleNext}
                       disabled={currentPage === totalPages}
-                      className="p-2 lg:p-2.5 rounded-lg border border-red/20 bg-white/50 text-red hover:bg-red/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="p-2 lg:p-2.5 rounded-lg border bg-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      style={{
+                        borderColor: theme.border,
+                        color: theme.textPrimary,
+                        backgroundColor: theme.bg
+                      }}
                     >
                       <ChevronRight size={18} />
                     </button>
@@ -609,7 +613,6 @@ console.log(`Successfully loaded ${atletData.length} athletes`);
         </div>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <>
           <div

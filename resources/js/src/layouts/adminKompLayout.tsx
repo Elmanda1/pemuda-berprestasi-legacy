@@ -15,6 +15,7 @@ import {
   GitBranch,
   CreditCard,
   Scale,
+  Home,
 } from "lucide-react";
 import { useAuth } from "../context/authContext";
 import path from "path";
@@ -104,10 +105,10 @@ const AdminKompetisiLayout: React.FC = () => {
     },
     {
       icon: Settings,
-      label: "Pengaturan",
+      label: "Pengaturan Website",
       path: "/admin-kompetisi/settings",
       active: location.pathname === "/admin-kompetisi/settings",
-      description: "Kelola tema dan pengaturan kompetisi",
+      description: "Kelola konten dan tampilan website",
     },
   ];
 
@@ -194,6 +195,14 @@ const AdminKompetisiLayout: React.FC = () => {
 
           {/* Settings & Logout */}
           <div className="absolute bottom-6 left-6 right-6 space-y-2">
+            <a
+              href="/event/home"
+              target="_blank"
+              className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm"
+            >
+              <Home size={18} className="text-red" />
+              <span className="font-medium text-sm">Landing Page</span>
+            </a>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-red text-red hover:bg-red/10 hover:shadow-sm"
@@ -389,6 +398,15 @@ const AdminKompetisiLayout: React.FC = () => {
                 <Settings size={18} />
                 <span className="font-medium text-sm">Pengaturan</span>
               </button>
+
+              <a
+                href="/event/home"
+                target="_blank"
+                className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm"
+              >
+                <Home size={18} className="text-red" />
+                <span className="font-medium text-sm">Landing Page</span>
+              </a>
 
               <button
                 onClick={handleLogout}

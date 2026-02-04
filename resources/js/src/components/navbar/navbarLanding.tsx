@@ -10,6 +10,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/authContext";
+import { useKompetisi } from "../../context/KompetisiContext";
 
 const NavbarLanding = ({
   onLogoutRequest,
@@ -19,6 +20,7 @@ const NavbarLanding = ({
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const { user } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -67,6 +69,22 @@ const NavbarLanding = ({
 
   // Dynamic styling - HANYA MERAH DAN PUTIH dengan animasi smooth
   const getNavbarStyles = () => {
+    const templateType = kompetisiDetail?.template_type || 'default';
+
+    // MODERN DARK THEME CHECK
+    if (templateType === 'modern' || templateType === 'template_b') {
+      return {
+        bg: isScrolled ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-gray-800" : "bg-transparent",
+        text: isScrolled ? "text-gray-300" : "text-white", // Ensure text is white when transparent (Hero overlay)
+        logo: "text-white",
+        buttonBorder: isScrolled ? "border-red-500" : "border-white/20",
+        buttonText: "text-white",
+        buttonBg: "bg-red-600 hover:bg-red-700 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]",
+        hoverText: "hover:text-red-500 transition-colors",
+        dropdownBg: "bg-[#111] border border-gray-800 text-white",
+      }
+    }
+
     if (isHomePage && !isScrolled) {
       return {
         bg: "bg-transparent",
@@ -140,13 +158,11 @@ const NavbarLanding = ({
                 <Link
                   key={to}
                   to={to}
-                  className={`text-base xl:text-xl relative px-4 py-2 ${
-                    styles.text
-                  } font-plex font-medium transition-all duration-300 ease-out ${
-                    location.pathname === to
+                  className={`text-base xl:text-xl relative px-4 py-2 ${styles.text
+                    } font-plex font-medium transition-all duration-300 ease-out ${location.pathname === to
                       ? "text-red font-semibold"
                       : styles.hoverText
-                  } group`}
+                    } group`}
                   onClick={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -154,11 +170,10 @@ const NavbarLanding = ({
                   {label}
                   {/* Animated underline */}
                   <span
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-yellow transition-all duration-300 ease-out ${
-                      location.pathname === to
-                        ? "w-full"
-                        : "w-0 group-hover:w-full"
-                    }`}
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-yellow transition-all duration-300 ease-out ${location.pathname === to
+                      ? "w-full"
+                      : "w-0 group-hover:w-full"
+                      }`}
                   />
                 </Link>
               ))}
@@ -196,9 +211,8 @@ const NavbarLanding = ({
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`transition-all duration-300 ease-out ${
-                        showDropdown ? "rotate-180" : ""
-                      } group-hover:scale-110`}
+                      className={`transition-all duration-300 ease-out ${showDropdown ? "rotate-180" : ""
+                        } group-hover:scale-110`}
                     />
                   </button>
 
@@ -248,19 +262,17 @@ const NavbarLanding = ({
               <div className="relative w-6 h-6">
                 <Menu
                   size={24}
-                  className={`absolute inset-0 transition-all duration-300 ease-out ${
-                    isBurgerOpen
-                      ? "opacity-0 rotate-180 scale-75"
-                      : "opacity-100 rotate-0 scale-100"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-out ${isBurgerOpen
+                    ? "opacity-0 rotate-180 scale-75"
+                    : "opacity-100 rotate-0 scale-100"
+                    }`}
                 />
                 <X
                   size={24}
-                  className={`absolute inset-0 transition-all duration-300 ease-out ${
-                    isBurgerOpen
-                      ? "opacity-100 rotate-0 scale-100"
-                      : "opacity-0 rotate-180 scale-75"
-                  }`}
+                  className={`absolute inset-0 transition-all duration-300 ease-out ${isBurgerOpen
+                    ? "opacity-100 rotate-0 scale-100"
+                    : "opacity-0 rotate-180 scale-75"
+                    }`}
                 />
               </div>
             </button>
@@ -270,25 +282,22 @@ const NavbarLanding = ({
 
       {/* Mobile Menu Overlay dengan animasi smooth - LEBIH KOMPAK */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${
-          isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
       >
         {/* Background overlay */}
         <div
-          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ease-out ${
-            isBurgerOpen ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ease-out ${isBurgerOpen ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setIsBurgerOpen(false)}
         />
 
         {/* Mobile menu panel - UKURAN DIPERKECIL */}
         <div
-          className={`absolute top-20 md:top-24 left-4 right-4 sm:left-8 sm:right-8 bg-white rounded-xl shadow-2xl transform transition-all duration-500 ease-out ${
-            isBurgerOpen
-              ? "translate-y-0 opacity-100"
-              : "-translate-y-full opacity-0"
-          }`}
+          className={`absolute top-20 md:top-24 left-4 right-4 sm:left-8 sm:right-8 bg-white rounded-xl shadow-2xl transform transition-all duration-500 ease-out ${isBurgerOpen
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0"
+            }`}
         >
           <div className="px-4 py-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
             {/* Mobile Navigation Links - SPACING DIKURANGI */}
@@ -297,11 +306,10 @@ const NavbarLanding = ({
                 <Link
                   key={to}
                   to={to}
-                  className={`block px-4 py-3 text-base font-plex font-medium rounded-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md ${
-                    location.pathname === to
-                      ? "bg-red text-white shadow-lg"
-                      : "text-red hover:bg-red hover:text-white"
-                  }`}
+                  className={`block px-4 py-3 text-base font-plex font-medium rounded-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md ${location.pathname === to
+                    ? "bg-red text-white shadow-lg"
+                    : "text-red hover:bg-red hover:text-white"
+                    }`}
                   onClick={() => {
                     setIsBurgerOpen(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
