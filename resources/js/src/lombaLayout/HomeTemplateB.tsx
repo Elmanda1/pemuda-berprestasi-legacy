@@ -49,13 +49,6 @@ const HomeTemplateB = () => {
                 <div className="relative z-10 container mx-auto px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         <div className="space-y-8 text-left">
-                            {/* Badge */}
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-yellow/30 bg-yellow/10 backdrop-blur-md">
-                                <Trophy className="w-4 h-4 text-yellow" />
-                                <span className="text-sm font-plex tracking-wider uppercase text-yellow">
-                                    Official Event {kompetisiDetail?.event_year || "2025"}
-                                </span>
-                            </div>
 
                             {/* Title */}
                             <div className="space-y-2">
@@ -63,11 +56,11 @@ const HomeTemplateB = () => {
                                     <span className="text-white block">
                                         {kompetisiDetail?.nama_event || "Sriwijaya"}
                                     </span>
-                                    <span className="text-yellow block">
+                                    <span style={{ color: kompetisiDetail?.primary_color || '#DC2626' }} className="block">
                                         Championship
                                     </span>
                                 </h1>
-                                <p className="text-xl md:text-2xl font-light text-gray-300 font-plex max-w-xl border-l-4 border-yellow pl-6">
+                                <p className="text-xl md:text-2xl font-light text-gray-300 font-plex max-w-xl border-l-4 pl-6" style={{ borderColor: kompetisiDetail?.primary_color || '#DC2626' }}>
                                     {kompetisiDetail?.hero_description || "Wujudkan prestasi gemilang di panggung internasional."}
                                 </p>
                             </div>
@@ -75,7 +68,7 @@ const HomeTemplateB = () => {
                             {/* Stats/Info Grid */}
                             <div className="grid grid-cols-2 gap-6 pt-4">
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-yellow">
+                                    <div className="flex items-center gap-2" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                         <Calendar className="w-5 h-5" />
                                         <span className="font-bebas text-xl">Tanggal</span>
                                     </div>
@@ -84,7 +77,7 @@ const HomeTemplateB = () => {
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-yellow">
+                                    <div className="flex items-center gap-2" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                         <MapPin className="w-5 h-5" />
                                         <span className="font-bebas text-xl">Lokasi</span>
                                     </div>
@@ -98,7 +91,8 @@ const HomeTemplateB = () => {
                             <div className="flex flex-wrap gap-4 pt-4">
                                 <button
                                     onClick={handleJoinClick}
-                                    className="px-8 py-4 bg-yellow text-black font-bold font-plex rounded-none skew-x-[-10deg] hover:bg-white transition-colors duration-300 group"
+                                    className="px-8 py-4 text-black font-bold font-plex rounded-none skew-x-[-10deg] hover:bg-white transition-colors duration-300 group"
+                                    style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
                                 >
                                     <span className="block skew-x-[10deg]">
                                         DAFTAR SEKARANG
@@ -119,7 +113,7 @@ const HomeTemplateB = () => {
 
                         {/* Right Side: Logo/Graphic */}
                         <div className="hidden lg:flex justify-center items-center relative">
-                            <div className="absolute inset-0 bg-yellow/20 rounded-full blur-[100px] animate-pulse"></div>
+                            <div className="absolute inset-0 rounded-full blur-[100px] animate-pulse" style={{ backgroundColor: (kompetisiDetail?.primary_color || '#DC2626') + '33' }}></div>
                             <img
                                 src={kompetisiDetail?.logo_url || sriwijaya}
                                 alt="Logo"
@@ -135,7 +129,7 @@ const HomeTemplateB = () => {
                 <div className="container mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div className="order-2 md:order-1 relative">
-                            <div className="absolute -inset-4 border border-yellow/20 transform rotate-3"></div>
+                            <div className="absolute -inset-4 border transform rotate-3" style={{ borderColor: (kompetisiDetail?.primary_color || '#DC2626') + '33' }}></div>
                             <div className="aspect-[4/5] relative overflow-hidden bg-gray-800 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                                 <img
                                     src={ketua}
@@ -143,7 +137,7 @@ const HomeTemplateB = () => {
                                     className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
-                                    <h3 className="text-2xl font-bebas text-yellow">
+                                    <h3 className="text-2xl font-bebas" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                         {kompetisiDetail?.about_director_name || "Hj. Meilinda"}
                                     </h3>
                                     <p className="text-sm font-plex text-gray-300">
@@ -154,12 +148,12 @@ const HomeTemplateB = () => {
                         </div>
                         <div className="order-1 md:order-2 space-y-6">
                             <h2 className="text-4xl md:text-6xl font-bebas text-white">
-                                Sambutan <span className="text-yellow">Ketua</span>
+                                Sambutan <span style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>Ketua</span>
                             </h2>
                             <p className="text-gray-400 font-plex text-lg leading-relaxed text-justify">
                                 {kompetisiDetail?.about_description || "Salam hormat... (Default description)"}
                             </p>
-                            <div className="h-1 w-20 bg-yellow"></div>
+                            <div className="h-1 w-20" style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}></div>
                         </div>
                     </div>
                 </div>
@@ -170,7 +164,7 @@ const HomeTemplateB = () => {
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-6xl font-bebas text-white mb-4">
-                            Alur <span className="text-yellow">Pendaftaran</span>
+                            Alur <span style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>Pendaftaran</span>
                         </h2>
                     </div>
 
@@ -181,11 +175,11 @@ const HomeTemplateB = () => {
                             { step: "03", title: "Upload Data", desc: "Lengkapi dokumen atlet." },
                             { step: "04", title: "Finalisasi", desc: "Konfirmasi pendaftaran." }
                         ].map((item, idx) => (
-                            <div key={idx} className="group p-6 border border-white/10 hover:border-yellow transition-colors duration-300">
-                                <div className="text-6xl font-bebas text-white/10 group-hover:text-yellow/20 transition-colors mb-4">
+                            <div key={idx} className="group p-6 border border-white/10 transition-colors duration-300" style={{ borderColor: kompetisiDetail?.primary_color ? kompetisiDetail.primary_color : 'rgba(255,255,255,0.1)' }}>
+                                <div className="text-6xl font-bebas text-white/10 group-hover:text-opacity-20 transition-colors mb-4" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                     {item.step}
                                 </div>
-                                <h3 className="text-xl font-bold font-plex text-white mb-2 group-hover:text-yellow transition-colors">
+                                <h3 className="text-xl font-bold font-plex text-white mb-2 group-hover:text-opacity-100 transition-colors" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                     {item.title}
                                 </h3>
                                 <p className="text-sm text-gray-400 font-plex">
@@ -203,7 +197,7 @@ const HomeTemplateB = () => {
                     <h2 className="text-4xl font-bebas text-white mb-12">Hubungi Kami</h2>
                     <div className="flex flex-wrap justify-center gap-10">
                         <div className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 bg-yellow text-black flex items-center justify-center rounded-none skew-x-[-10deg]">
+                            <div className="w-16 h-16 text-black flex items-center justify-center rounded-none skew-x-[-10deg]" style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}>
                                 <Phone className="w-8 h-8 skew-x-[10deg]" />
                             </div>
                             <div>

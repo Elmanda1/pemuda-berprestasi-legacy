@@ -207,11 +207,14 @@ const HomeTemplateDefault = () => {
                                         Ketua Pelaksana
                                     </span>
                                 </h2>
-                                <div className="absolute -bottom-2 left-1/2 lg:left-0 transform -translate-x-1/2 lg:transform-none w-16 md:w-20 h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
+                                <div className="absolute -bottom-2 left-1/2 lg:left-0 transform -translate-x-1/2 lg:transform-none w-16 md:w-20 h-1 rounded-full" style={{ background: `linear-gradient(to right, ${kompetisiDetail?.primary_color || '#DC2626'}, ${kompetisiDetail?.primary_color || '#DC2626'}60)` }}></div>
                             </div>
 
                             {/* Enhanced Description */}
                             <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto lg:mx-0">
+                                <p className="text-lg sm:text-xl lg:text-2xl font-light text-white/90 max-w-2xl leading-relaxed border-l-4 pl-6" style={{ borderColor: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                    {kompetisiDetail?.hero_description || "Wujudkan prestasi gemilang di panggung internasional."}
+                                </p>
                                 <p className="text-xs sm:text-sm md:text-base lg:text-lg font-plex text-black/85 leading-relaxed font-light px-2 lg:px-0">
                                     {kompetisiDetail?.about_description || (
                                         <>
@@ -340,7 +343,7 @@ const HomeTemplateDefault = () => {
                                         {/* Mobile Optimized Step Content */}
                                         <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
                                             {/* Step Number - Smaller on Mobile */}
-                                            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-red to-red/80 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `linear-gradient(to bottom right, ${kompetisiDetail?.primary_color || '#DC2626'}, ${kompetisiDetail?.primary_color || '#DC2626'}80)` }}>
                                                 <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
                                                     {step.number || idx + 1}
                                                 </span>
@@ -348,7 +351,7 @@ const HomeTemplateDefault = () => {
 
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl text-red mb-1 sm:mb-2 leading-tight">
+                                                <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl mb-1 sm:mb-2 leading-tight" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
                                                     {step.title}
                                                 </h3>
                                                 <p className="text-xs sm:text-sm md:text-sm text-black/70 font-plex leading-relaxed">
@@ -358,8 +361,8 @@ const HomeTemplateDefault = () => {
                                         </div>
 
                                         {/* Decorative elements - Smaller on Mobile */}
-                                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-red/20 rounded-full group-hover:bg-red/40 transition-colors duration-300"></div>
-                                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 bg-red/15 rounded-full group-hover:bg-red/30 transition-colors duration-300"></div>
+                                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full group-hover:bg-red/40 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}20` }}></div>
+                                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full group-hover:bg-red/30 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}15` }}></div>
 
                                         {/* Hover Effect Overlay */}
                                         <div className="absolute inset-0 bg-gradient-to-br from-red/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg sm:rounded-xl"></div>
@@ -374,7 +377,8 @@ const HomeTemplateDefault = () => {
                                 onClick={() => {
                                     window.scrollTo(0, 0);
                                 }}
-                                className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-plex font-semibold bg-red text-white hover:bg-red/90 transition-all duration-300 rounded-lg sm:rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red/30"
+                                className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-plex font-semibold text-white hover:bg-red/90 transition-all duration-300 rounded-lg sm:rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red/30"
+                                style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
                             >
                                 <span>Mulai Daftar Sekarang</span>
                                 <svg
@@ -450,7 +454,7 @@ const HomeTemplateDefault = () => {
                                         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 md:gap-6">
                                             {/* Phone Contact */}
                                             <div className="group flex items-center gap-4 md:gap-5 p-5 md:p-6 lg:p-7 rounded-2xl bg-gradient-to-br from-red/5 to-red/10 hover:from-red/10 hover:to-red/15 transition-all duration-300 border border-red/20 hover:border-red/30 shadow-sm hover:shadow-lg hover:shadow-red/10 transform hover:-translate-y-1">
-                                                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-red to-red/80 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg" style={{ background: `linear-gradient(to bottom right, ${kompetisiDetail?.primary_color || '#DC2626'}, ${kompetisiDetail?.primary_color || '#DC2626'}80)` }}>
                                                     <Phone
                                                         className="w-5 h-5 md:w-6 md:h-6 text-white"
                                                         strokeWidth={2}
@@ -465,6 +469,7 @@ const HomeTemplateDefault = () => {
                                                         className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}
                                                     >
                                                         {kompetisiDetail?.contact_phone_1}
                                                     </a>
@@ -484,6 +489,7 @@ const HomeTemplateDefault = () => {
                                                             className="text-base md:text-lg lg:text-xl font-plex text-red font-bold hover:text-red/80 transition-colors duration-200 block"
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}
                                                         >
                                                             {kompetisiDetail?.contact_phone_2}
                                                         </a>

@@ -39,7 +39,7 @@ const SettingsPage: React.FC = () => {
     push: false,
     sms: true
   });
-  const [activeThemeTab, setActiveThemeTab] = useState('tampilan');
+  const [activeThemeTab, setActiveThemeTab] = useState<string>('tampilan');
 
   const { kompetisiList, updateKompetisiTheme, fetchKompetisiList, loadingKompetisi } = useKompetisi();
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -68,13 +68,21 @@ const SettingsPage: React.FC = () => {
     registration_steps: [] as any[],
     faq_data: [] as any[],
     timeline_data: [] as any[],
-    template_type: 'default'
+    template_type: 'default',
+    modules_enabled: {
+      hero: true,
+      about: true,
+      registration: true,
+      contact: true,
+      faq: true,
+      timeline: true,
+      hide_console: false
+    } as any
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
 
   // Tutorial state
-  const [showTutorialEditor, setShowTutorialEditor] = useState(false);
   const [tutorials, setTutorials] = useState<any[]>([]);
   const [isAddingTutorial, setIsAddingTutorial] = useState(false);
   const [newTutorial, setNewTutorial] = useState({ title: '', description: '', video_id: '', icon_type: 'FileText' });
@@ -705,7 +713,17 @@ const SettingsPage: React.FC = () => {
             { event: 'Pertandingan', time: '22 -26 November 2025', side: 'right', month: 'November' },
           ];
         })(),
-        template_type: komp.template_type || 'default'
+        template_type: komp.template_type || 'default',
+        modules_enabled: (() => {
+          try {
+            if (typeof komp.modules_enabled === 'string') {
+              return JSON.parse(komp.modules_enabled);
+            }
+            return komp.modules_enabled || { hero: true, about: true, registration: true, contact: true, faq: true, timeline: true, hide_console: false };
+          } catch (e) {
+            return { hero: true, about: true, registration: true, contact: true, faq: true, timeline: true, hide_console: false };
+          }
+        })()
       });
       setLogoFile(null);
       setHeroFile(null);
@@ -731,6 +749,16 @@ const SettingsPage: React.FC = () => {
         formData.append('poster_image', '');
         formData.append('show_antrian', '1');
         formData.append('show_navbar', '1');
+        formData.append('template_type', 'default');
+        formData.append('modules_enabled', JSON.stringify({
+          hero: true,
+          about: true,
+          registration: true,
+          contact: true,
+          faq: true,
+          timeline: true,
+          hide_console: false
+        }));
 
         await updateKompetisiTheme(id, formData);
         toast.success("Tema diatur ulang ke default");
@@ -752,7 +780,6 @@ const SettingsPage: React.FC = () => {
         const formData = new FormData();
         formData.append('primary_color', editData.primary_color);
         formData.append('secondary_color', editData.secondary_color);
-        formData.append('show_antrian', editData.show_antrian ? '1' : '0');
         formData.append('show_antrian', editData.show_antrian ? '1' : '0');
         formData.append('show_navbar', editData.show_navbar ? '1' : '0');
         formData.append('template_type', editData.template_type);
@@ -777,6 +804,7 @@ const SettingsPage: React.FC = () => {
         formData.append('registration_steps', JSON.stringify(editData.registration_steps));
         formData.append('faq_data', JSON.stringify(editData.faq_data));
         formData.append('timeline_data', JSON.stringify(editData.timeline_data));
+        formData.append('modules_enabled', JSON.stringify(editData.modules_enabled));
 
         if (logoFile) formData.append('logo', logoFile);
         if (heroFile) formData.append('hero', heroFile);
@@ -937,93 +965,116 @@ const SettingsPage: React.FC = () => {
                                       <div className="absolute top-10 left-2 w-1/2 h-8 bg-gray-800 rounded shadow-sm border border-gray-700"></div>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
 
-                              {/* Section 1: Colors */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                  <label className="block text-sm font-bold text-gray-700">Warna Kebanggaan (Primer)</label>
-                                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <input
-                                      type="color"
-                                      value={editData.primary_color}
-                                      onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                      className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editData.primary_color}
-                                      onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
-                                      className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
-                                      placeholder="#990D35"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                  <label className="block text-sm font-bold text-gray-700">Warna Aksen (Sekunder)</label>
-                                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <input
-                                      type="color"
-                                      value={editData.secondary_color}
-                                      onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                      className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editData.secondary_color}
-                                      onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
-                                      className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
-                                      placeholder="#F5B700"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Section 2: Asset Uploads */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                                <div className="space-y-3">
-                                  <label className="block text-sm font-bold text-gray-700">Ganti Logo Event</label>
-                                  <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
-                                    {logoFile ? (
-                                      <img src={URL.createObjectURL(logoFile)} className="h-full w-full object-contain p-2" alt="New Logo" />
-                                    ) : editData.logo_url ? (
-                                      <img src={editData.logo_url} className="h-full w-full object-contain p-2" alt="Current Logo" />
-                                    ) : (
-                                      <div className="text-center">
-                                        <Upload className="mx-auto text-gray-400 mb-2" />
-                                        <span className="text-xs text-gray-500">Pilih Logo (PNG/JPG)</span>
+                                  <div
+                                    onClick={() => setEditData({ ...editData, template_type: 'template_c' })}
+                                    className={`cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${editData.template_type === 'template_c' ? 'border-red bg-white ring-2 ring-red/20' : 'border-gray-200 bg-white hover:border-red/50'}`}
+                                  >
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${editData.template_type === 'template_c' ? 'border-red' : 'border-gray-300'}`}>
+                                        {editData.template_type === 'template_c' && <div className="w-2 h-2 rounded-full bg-red" />}
                                       </div>
-                                    )}
-                                    <input
-                                      type="file"
-                                      className="absolute inset-0 opacity-0 cursor-pointer"
-                                      onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                                      accept="image/*"
-                                    />
+                                      <h6 className="font-bold text-gray-800">Clean White (New)</h6>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-3">Tampilan minimalis dengan layout baru yang lebih segar.</p>
+                                    <div className="h-24 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden relative">
+                                      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-2">
+                                        <div className="w-16 h-8 bg-gray-200 rounded-md"></div>
+                                        <div className="flex gap-1">
+                                          <div className="w-4 h-4 rounded px bg-gray-200"></div>
+                                          <div className="w-4 h-4 rounded px bg-gray-200"></div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                  <label className="block text-sm font-bold text-gray-700">Ganti Hero/Banner Poster</label>
-                                  <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
-                                    {heroFile ? (
-                                      <img src={URL.createObjectURL(heroFile)} className="h-full w-full object-cover" alt="New Hero" />
-                                    ) : komp.poster_image ? (
-                                      <img src={komp.poster_image} className="h-full w-full object-cover" alt="Current Hero" />
-                                    ) : (
-                                      <div className="text-center">
-                                        <Upload className="mx-auto text-gray-400 mb-2" />
-                                        <span className="text-xs text-gray-500">Pilih Banner Utama</span>
-                                      </div>
-                                    )}
-                                    <input
-                                      type="file"
-                                      className="absolute inset-0 opacity-0 cursor-pointer"
-                                      onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
-                                      accept="image/*"
-                                    />
+
+                                {/* Section 1: Colors */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                  <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-gray-700">Warna Kebanggaan (Primer)</label>
+                                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                      <input
+                                        type="color"
+                                        value={editData.primary_color}
+                                        onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
+                                        className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={editData.primary_color}
+                                        onChange={(e) => setEditData({ ...editData, primary_color: e.target.value })}
+                                        className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
+                                        placeholder="#990D35"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-gray-700">Warna Aksen (Sekunder)</label>
+                                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                      <input
+                                        type="color"
+                                        value={editData.secondary_color}
+                                        onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
+                                        className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white shadow-md p-0 bg-transparent overflow-hidden shrink-0"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={editData.secondary_color}
+                                        onChange={(e) => setEditData({ ...editData, secondary_color: e.target.value })}
+                                        className="flex-1 h-12 px-4 rounded-xl border border-gray-200 font-mono text-center focus:border-red outline-none transition-all"
+                                        placeholder="#F5B700"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Section 2: Asset Uploads */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                                  <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-gray-700">Ganti Logo Event</label>
+                                    <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                                      {logoFile ? (
+                                        <img src={URL.createObjectURL(logoFile)} className="h-full w-full object-contain p-2" alt="New Logo" />
+                                      ) : editData.logo_url ? (
+                                        <img src={editData.logo_url} className="h-full w-full object-contain p-2" alt="Current Logo" />
+                                      ) : (
+                                        <div className="text-center">
+                                          <Upload className="mx-auto text-gray-400 mb-2" />
+                                          <span className="text-xs text-gray-500">Pilih Logo (PNG/JPG)</span>
+                                        </div>
+                                      )}
+                                      <input
+                                        type="file"
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                                        accept="image/*"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-3">
+                                    <label className="block text-sm font-bold text-gray-700">Ganti Hero/Banner Poster</label>
+                                    <div className="relative group/upload h-32 border-2 border-dashed border-gray-300 rounded-2xl hover:border-red/50 transition-colors bg-gray-50 flex items-center justify-center overflow-hidden">
+                                      {heroFile ? (
+                                        <img src={URL.createObjectURL(heroFile)} className="h-full w-full object-cover" alt="New Hero" />
+                                      ) : komp.poster_image ? (
+                                        <img src={komp.poster_image} className="h-full w-full object-cover" alt="Current Hero" />
+                                      ) : (
+                                        <div className="text-center">
+                                          <Upload className="mx-auto text-gray-400 mb-2" />
+                                          <span className="text-xs text-gray-500">Pilih Banner Utama</span>
+                                        </div>
+                                      )}
+                                      <input
+                                        type="file"
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={(e) => setHeroFile(e.target.files?.[0] || null)}
+                                        accept="image/*"
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1303,7 +1354,7 @@ const SettingsPage: React.FC = () => {
                               </div>
 
                               {/* FAQ Management Section */}
-                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-6">
                                 <h6 className="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider flex items-center justify-between">
                                   FAQ (Kategori & Pertanyaan)
                                   <button
@@ -1556,12 +1607,47 @@ const SettingsPage: React.FC = () => {
 
                           {activeThemeTab === 'fitur' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                              {/* Section 3: Visibility Configuration */}
                               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                 <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                                   <Layout size={18} className="text-red" />
                                   Konfigurasi Visibility Interface
                                 </h5>
+
+                                {/* Section Controls */}
+                                <div className="space-y-4 mb-6">
+                                  <p className="text-xs font-bold uppercase text-gray-500 tracking-wider">Tampilkan / Sembunyikan Modul</p>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {['hero', 'about', 'registration', 'contact', 'faq', 'timeline'].map((key) => (
+                                      <div key={key} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+                                        <div>
+                                          <p className="font-semibold text-sm capitalize">{key === 'hero' ? 'Banner Utama' : key}</p>
+                                          <p className="text-[10px] text-gray-400">Tampilkan bagian {key} di halaman web</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={editData.modules_enabled?.[key] !== false}
+                                            onChange={(e) => {
+                                              setEditData({
+                                                ...editData,
+                                                modules_enabled: {
+                                                  ...editData.modules_enabled,
+                                                  [key]: e.target.checked
+                                                }
+                                              });
+                                            }}
+                                            className="sr-only peer"
+                                          />
+                                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red"></div>
+                                        </label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="border-t border-gray-200 my-4"></div>
+
+                                {/* General Config */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
                                     <div>
@@ -1589,6 +1675,30 @@ const SettingsPage: React.FC = () => {
                                         type="checkbox"
                                         checked={!editData.show_navbar}
                                         onChange={(e) => setEditData({ ...editData, show_navbar: !e.target.checked })}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
+                                    </label>
+                                  </div>
+
+                                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl hover:bg-gray-50/50 transition-colors">
+                                    <div>
+                                      <p className="font-semibold text-sm">Mix Hide Console Log</p>
+                                      <p className="text-xs text-gray-500">Sembunyikan log debugging di browser console</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={editData.modules_enabled?.hide_console}
+                                        onChange={(e) => {
+                                          setEditData({
+                                            ...editData,
+                                            modules_enabled: {
+                                              ...editData.modules_enabled,
+                                              hide_console: e.target.checked
+                                            }
+                                          });
+                                        }}
                                         className="sr-only peer"
                                       />
                                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red"></div>
@@ -1714,7 +1824,8 @@ const SettingsPage: React.FC = () => {
                               Simpan Seluruh Perubahan
                             </button>
                           </div>
-                        </div></div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1742,16 +1853,10 @@ const SettingsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1
-            className="font-inter font-bold"
-            style={{ fontSize: '32px', color: '#050505' }}
-          >
+          <h1 className="font-inter font-bold" style={{ fontSize: '32px', color: '#050505' }}>
             Pengaturan Sistem
           </h1>
-          <p
-            className="font-inter mt-1"
-            style={{ fontSize: '16px', color: '#050505', opacity: '0.7' }}
-          >
+          <p className="font-inter mt-1" style={{ fontSize: '16px', color: '#050505', opacity: '0.7' }}>
             Kelola konfigurasi dan preferensi sistem
           </p>
         </div>
@@ -1760,10 +1865,7 @@ const SettingsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Tabs */}
         <div className="lg:w-64">
-          <div
-            className="p-4 rounded-xl"
-            style={{ backgroundColor: '#FFFFFF' }}
-          >
+          <div className="p-4 rounded-xl" style={{ backgroundColor: '#FFFFFF' }}>
             <nav className="space-y-2">
               {settingsTabs.map((tab) => (
                 <button
@@ -1774,10 +1876,7 @@ const SettingsPage: React.FC = () => {
                     : 'text-black hover:bg-red/10 hover:text-red'
                     }`}
                 >
-                  <tab.icon
-                    size={18}
-                    className={activeTab === tab.id ? 'text-yellow' : 'text-current'}
-                  />
+                  <tab.icon size={18} className={activeTab === tab.id ? 'text-yellow' : 'text-current'} />
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -1787,17 +1886,12 @@ const SettingsPage: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1">
-          <div
-            className="p-6 rounded-xl"
-            style={{ backgroundColor: '#FFFFFF' }}
-          >
+          <div className="p-6 rounded-xl" style={{ backgroundColor: '#FFFFFF' }}>
             {renderTabContent()}
 
             {/* Save Button */}
             <div className="flex justify-end mt-8 pt-6 border-t border-black/10">
-              <button
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-inter font-medium transition-all duration-300 bg-red text-white hover:opacity-90 hover:shadow-md"
-              >
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-inter font-medium transition-all duration-300 bg-red text-white hover:opacity-90 hover:shadow-md">
                 <Save size={16} />
                 Simpan Perubahan
               </button>

@@ -4,14 +4,14 @@ import { useKompetisi } from "../../context/KompetisiContext";
 const Event = () => {
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isModern = templateType === 'modern' || templateType === 'template_b' || templateType === 'template_c';
 
   const theme = {
     bg: isModern ? '#0a0a0a' : '#FFF5F7',
     cardBg: isModern ? '#111111' : '#FFFFFF',
     textPrimary: isModern ? '#FFFFFF' : '#1F2937',
     textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
+    primary: kompetisiDetail?.primary_color || '#DC2626',
     border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
     gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
   };

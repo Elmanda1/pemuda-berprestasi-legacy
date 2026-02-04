@@ -5,9 +5,10 @@ type FaqCardProps = {
   question: string;
   answer: string;
   isModern?: boolean;
+  primaryColor?: string;
 };
 
-const FaqCard = ({ question, answer, isModern = false }: FaqCardProps) => {
+const FaqCard = ({ question, answer, isModern = false, primaryColor = '#DC2626' }: FaqCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -22,8 +23,10 @@ const FaqCard = ({ question, answer, isModern = false }: FaqCardProps) => {
         className="flex justify-between items-center"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className={`font-bebas text-2xl sm:text-3xl md:text-4xl lg:text-4xl leading-none group-hover:scale-103 transition-discrete duration-300 pr-4
-          ${isModern ? "text-gray-200 group-hover:text-white" : "text-red"}`}
+        <div
+          className={`font-bebas text-2xl sm:text-3xl md:text-4xl lg:text-4xl leading-none group-hover:scale-103 transition-discrete duration-300 pr-4
+             ${isModern ? "text-gray-200 group-hover:text-white" : ""}`}
+          style={!isModern ? { color: primaryColor } : {}}
         >
           {question}
         </div>
@@ -32,9 +35,9 @@ const FaqCard = ({ question, answer, isModern = false }: FaqCardProps) => {
             }`}
         >
           {isOpen ? (
-            <CircleMinus size={28} className={isModern ? "text-red-500" : "text-black"} />
+            <CircleMinus size={28} className={isModern ? "" : "text-black"} style={isModern ? { color: primaryColor } : {}} />
           ) : (
-            <CirclePlus size={28} className={isModern ? "text-gray-500 group-hover:text-red-500" : "text-black"} />
+            <CirclePlus size={28} className={isModern ? "text-gray-500" : "text-black"} />
           )}
         </div>
       </div>

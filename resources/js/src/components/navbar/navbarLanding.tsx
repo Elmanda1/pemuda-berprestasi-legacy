@@ -70,17 +70,19 @@ const NavbarLanding = ({
   // Dynamic styling - HANYA MERAH DAN PUTIH dengan animasi smooth
   const getNavbarStyles = () => {
     const templateType = kompetisiDetail?.template_type || 'default';
+    const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
     // MODERN DARK THEME CHECK
-    if (templateType === 'modern' || templateType === 'template_b') {
+    if (templateType === 'modern' || templateType === 'template_b' || templateType === 'template_c') {
       return {
         bg: isScrolled ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-gray-800" : "bg-transparent",
         text: isScrolled ? "text-gray-300" : "text-white", // Ensure text is white when transparent (Hero overlay)
         logo: "text-white",
-        buttonBorder: isScrolled ? "border-red-500" : "border-white/20",
+        buttonBorder: isScrolled ? "border-white/20" : "border-white/20",
         buttonText: "text-white",
-        buttonBg: "bg-red-600 hover:bg-red-700 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]",
-        hoverText: "hover:text-red-500 transition-colors",
+        buttonBg: `bg-[${primaryColor}] hover:opacity-90 text-white shadow-[0_0_15px_${primaryColor}66]`,
+        buttonStyle: { backgroundColor: primaryColor },
+        hoverText: `hover:text-[${primaryColor}] transition-colors`,
         dropdownBg: "bg-[#111] border border-gray-800 text-white",
       }
     }
@@ -92,19 +94,24 @@ const NavbarLanding = ({
         logo: "text-white drop-shadow-lg",
         buttonBorder: "border-white/80",
         buttonText: "text-white",
-        buttonBg: "bg-white text-red hover:bg-white/90 hover:scale-105",
+        buttonBg: `bg-white text-[${primaryColor}] hover:bg-white/90 hover:scale-105`,
+        buttonStyle: { color: primaryColor },
         hoverText: "hover:text-white/80 ",
         dropdownBg: "bg-white/95 backdrop-blur-md",
       };
     }
     return {
       bg: isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white/90",
-      text: "text-red",
-      logo: "text-red",
-      buttonBorder: "border-red/80",
-      buttonText: "text-red",
-      buttonBg: "bg-red text-white hover:bg-red/90 hover:scale-105",
-      hoverText: "hover:text-red/80 ",
+      text: `text-[${primaryColor}]`,
+      textStyle: { color: primaryColor },
+      logo: `text-[${primaryColor}]`,
+      logoStyle: { color: primaryColor },
+      buttonBorder: `border-[${primaryColor}]/80`,
+      buttonBorderStyle: { borderColor: primaryColor + 'cc' },
+      buttonText: `text-[${primaryColor}]`,
+      buttonBg: `bg-[${primaryColor}] text-white hover:opacity-90 hover:scale-105`,
+      buttonBgStyle: { backgroundColor: primaryColor },
+      hoverText: "hover:opacity-80 ",
       dropdownBg: "bg-white/95 backdrop-blur-md",
     };
   };
@@ -144,25 +151,26 @@ const NavbarLanding = ({
             {/* Logo */}
             <Link
               to="/"
-              className={`text-xl sm:text-2xl lg:text-3xl xl:text-4xl ${styles.logo} font-bebas tracking-wider uppercase transition-all duration-300 ease-out hover:scale-105`}
+              className={`text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bebas tracking-wider uppercase transition-all duration-300 ease-out hover:scale-105`}
+              style={styles.logoStyle}
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              CJV Management
+              {kompetisiDetail?.nama_event || "CJV Management"}
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
+            <div className="hidden xl:flex items-center space-x-1 xl:space-x-8 flex-wrap justify-center">
               {navItems.map(({ to, label }) => (
                 <Link
                   key={to}
                   to={to}
-                  className={`text-base xl:text-xl relative px-4 py-2 ${styles.text
-                    } font-plex font-medium transition-all duration-300 ease-out ${location.pathname === to
-                      ? "text-red font-semibold"
-                      : styles.hoverText
+                  className={`text-sm xl:text-xl relative px-2 xl:px-4 py-2 font-plex font-medium transition-all duration-300 ease-out whitespace-nowrap ${location.pathname === to
+                    ? "font-semibold"
+                    : styles.hoverText
                     } group`}
+                  style={location.pathname === to ? { color: kompetisiDetail?.primary_color || '#dc2626' } : (styles.textStyle || {})}
                   onClick={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -170,28 +178,31 @@ const NavbarLanding = ({
                   {label}
                   {/* Animated underline */}
                   <span
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-yellow transition-all duration-300 ease-out ${location.pathname === to
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 transition-all duration-300 ease-out ${location.pathname === to
                       ? "w-full"
                       : "w-0 group-hover:w-full"
                       }`}
+                    style={{ backgroundColor: kompetisiDetail?.primary_color || '#dc2626' }}
                   />
                 </Link>
               ))}
             </div>
 
             {/* Desktop Auth Section */}
-            <div className="hidden lg:flex items-center">
+            <div className="hidden xl:flex items-center">
               {!user ? (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 xl:space-x-4">
                   <Link
                     to="/register"
-                    className={`px-6 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonText} font-plex rounded-lg transition-all duration-300 ease-out hover:bg-red hover:text-white hover:scale-105 hover:shadow-lg`}
+                    className={`px-4 xl:px-6 py-2 xl:py-2.5 text-xs xl:text-2xl border-2 font-plex rounded-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg`}
+                    style={{ ...styles.buttonBorderStyle, ...styles.buttonBgStyle, color: '#fff' }}
                   >
                     Register
                   </Link>
                   <Link
                     to="/login"
-                    className={`px-8 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonBg} font-plex rounded-lg transition-all duration-300 ease-out hover:shadow-lg`}
+                    className={`px-4 xl:px-8 py-2 xl:py-2.5 text-xs xl:text-2xl border-2 font-plex rounded-lg transition-all duration-300 ease-out hover:shadow-lg`}
+                    style={{ ...styles.buttonBorderStyle, backgroundColor: '#fff', ...styles.buttonBgStyle }}
                   >
                     Login
                   </Link>
@@ -200,19 +211,22 @@ const NavbarLanding = ({
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-md xl:text-2xl border-2 ${styles.buttonBorder} ${styles.buttonText} font-plex rounded-lg transition-all duration-300 ease-out hover:bg-red hover:text-white hover:scale-105 hover:shadow-lg group`}
+                    className={`flex items-center space-x-1 xl:space-x-2 px-2 xl:px-4 py-2 xl:py-2.5 text-xs xl:text-2xl border-2 font-plex rounded-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg group`}
+                    style={styles.buttonBorderStyle}
                   >
                     <User
-                      size={24}
-                      className="transition-transform duration-300 group-hover:scale-110"
+                      size={18}
+                      className="transition-transform duration-300 group-hover:scale-110 xl:w-6 xl:h-6"
+                      style={styles.textStyle}
                     />
-                    <span className="max-w-48 truncate">
+                    <span className="max-w-24 xl:max-w-48 truncate" style={styles.textStyle}>
                       {user?.pelatih?.nama_pelatih ?? "User"}
                     </span>
                     <ChevronDown
-                      size={18}
+                      size={14}
                       className={`transition-all duration-300 ease-out ${showDropdown ? "rotate-180" : ""
-                        } group-hover:scale-110`}
+                        } group-hover:scale-110 xl:w-[18px] xl:h-[18px]`}
+                      style={styles.textStyle}
                     />
                   </button>
 
@@ -257,7 +271,8 @@ const NavbarLanding = ({
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsBurgerOpen(!isBurgerOpen)}
-              className={`lg:hidden p-3 ${styles.text} hover:bg-red hover:text-white rounded-xl transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg group`}
+              className={`xl:hidden p-3 hover:opacity-90 rounded-xl transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg group`}
+              style={styles.textStyle}
             >
               <div className="relative w-6 h-6">
                 <Menu
@@ -282,7 +297,7 @@ const NavbarLanding = ({
 
       {/* Mobile Menu Overlay dengan animasi smooth - LEBIH KOMPAK */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        className={`fixed inset-0 z-40 xl:hidden transition-all duration-500 ease-out ${isBurgerOpen ? "opacity-100 visible" : "opacity-0 invisible"
           }`}
       >
         {/* Background overlay */}
@@ -307,15 +322,16 @@ const NavbarLanding = ({
                   key={to}
                   to={to}
                   className={`block px-4 py-3 text-base font-plex font-medium rounded-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md ${location.pathname === to
-                    ? "bg-red text-white shadow-lg"
-                    : "text-red hover:bg-red hover:text-white"
+                    ? "text-white shadow-lg"
+                    : "hover:bg-gray-100"
                     }`}
+                  style={{
+                    ...(location.pathname === to ? { backgroundColor: kompetisiDetail?.primary_color || '#dc2626' } : { color: kompetisiDetail?.primary_color || '#dc2626' }),
+                    transitionDelay: isBurgerOpen ? `${index * 100}ms` : "0ms",
+                  }}
                   onClick={() => {
                     setIsBurgerOpen(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  style={{
-                    transitionDelay: isBurgerOpen ? `${index * 100}ms` : "0ms",
                   }}
                 >
                   {label}
@@ -329,14 +345,16 @@ const NavbarLanding = ({
                 <div className="space-y-3">
                   <Link
                     to="/register"
-                    className="block w-full py-4 text-lg text-center border-2 border-red text-red font-plex font-semibold rounded-xl hover:bg-red hover:text-white transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg"
+                    className="block w-full py-4 text-lg text-center border-2 font-plex font-semibold rounded-xl hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg"
+                    style={{ borderColor: kompetisiDetail?.primary_color || '#dc2626', color: kompetisiDetail?.primary_color || '#dc2626' }}
                     onClick={() => setIsBurgerOpen(false)}
                   >
                     Register
                   </Link>
                   <Link
                     to="/login"
-                    className="block w-full py-4 text-lg text-center border-2 border-red bg-red text-white font-plex font-semibold rounded-xl hover:bg-red/90 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg"
+                    className="block w-full py-4 text-lg text-center border-2 text-white font-plex font-semibold rounded-xl hover:opacity-90 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg"
+                    style={{ borderColor: kompetisiDetail?.primary_color || '#dc2626', backgroundColor: kompetisiDetail?.primary_color || '#dc2626' }}
                     onClick={() => setIsBurgerOpen(false)}
                   >
                     Login
@@ -346,11 +364,11 @@ const NavbarLanding = ({
                 <div className="space-y-3">
                   {/* User Info - UKURAN DIPERKECIL */}
                   <div className="flex items-center space-x-3 px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                    <div className="w-8 h-8 bg-red rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-md" style={{ backgroundColor: kompetisiDetail?.primary_color || '#dc2626' }}>
                       <User size={16} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-plex font-semibold text-red truncate text-sm">
+                      <p className="font-plex font-semibold truncate text-sm" style={{ color: kompetisiDetail?.primary_color || '#dc2626' }}>
                         {user?.pelatih?.nama_pelatih ?? "User"}
                       </p>
                       <p className="text-xs text-gray-500">Logged in</p>
@@ -363,7 +381,8 @@ const NavbarLanding = ({
                       <Link
                         key={to}
                         to={to}
-                        className="flex items-center space-x-3 px-4 py-3 text-red font-plex rounded-lg hover:bg-red hover:text-white transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md group"
+                        className="flex items-center space-x-3 px-4 py-3 font-plex rounded-lg hover:bg-gray-100 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md group"
+                        style={{ color: kompetisiDetail?.primary_color || '#dc2626' }}
                         onClick={() => setIsBurgerOpen(false)}
                       >
                         <Icon
@@ -380,7 +399,8 @@ const NavbarLanding = ({
                         setIsBurgerOpen(false);
                         onLogoutRequest();
                       }}
-                      className="flex items-center space-x-3 w-full px-4 py-3 text-red font-plex rounded-lg hover:bg-red hover:text-white transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md border-t border-gray-200 mt-4 pt-3 group"
+                      className="flex items-center space-x-3 w-full px-4 py-3 font-plex rounded-lg hover:bg-gray-100 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md border-t border-gray-200 mt-4 pt-3 group"
+                      style={{ color: kompetisiDetail?.primary_color || '#dc2626' }}
                     >
                       <LogOut
                         size={16}

@@ -22,14 +22,14 @@ const TutorialPage = () => {
 
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isModern = templateType === 'modern' || templateType === 'template_b' || templateType === 'template_c';
 
   const theme = {
     bg: isModern ? '#0a0a0a' : '#FFFFFF',
     cardBg: isModern ? '#111111' : '#FFFFFF',
     textPrimary: isModern ? '#FFFFFF' : '#111827',
     textSecondary: isModern ? '#A1A1AA' : '#4B5563',
-    primary: isModern ? '#DC2626' : '#DC2626',
+    primary: kompetisiDetail?.primary_color || '#DC2626',
     border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(229, 231, 235, 1)', // gray-200 equivalent
     iconBg: isModern ? 'rgba(255,255,255,0.05)' : '#F3F4F6', // gray-100
   };
