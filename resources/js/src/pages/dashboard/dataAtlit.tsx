@@ -69,17 +69,19 @@ const DataAtlit = () => {
   const location = useLocation();
 
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
+  const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
   const theme = {
-    bg: isModern ? '#0a0a0a' : '#FFF5F7',
-    cardBg: isModern ? '#111111' : '#FFFFFF',
-    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
-    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
-    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(255, 255, 255, 0.5)',
-    inputBg: isModern ? '#1F2937' : '#FFFFFF',
-    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+    bg: isDark ? '#0a0a0a' : (isWhite ? '#FFFFFF' : '#FFF5F7'),
+    cardBg: isDark ? '#111111' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+    textSecondary: isDark ? '#A1A1AA' : '#6B7280',
+    primary: primaryColor,
+    border: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)'),
+    inputBg: isDark ? '#1F2937' : '#FFFFFF',
+    gradient: isDark ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : (isWhite ? 'linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)')
   };
 
   const fetchAtlits = async () => {
@@ -207,7 +209,7 @@ const DataAtlit = () => {
 
       <div className="lg:ml-72 min-h-screen">
         <div className="w-full min-h-screen flex flex-col gap-6 lg:gap-8 pt-6 lg:pt-8 pb-12 px-4 lg:px-8"
-          style={{ backgroundColor: isModern ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.4)', backdropFilter: 'blur(12px)' }}>
+          style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : (isWhite ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.4)'), backdropFilter: 'blur(12px)' }}>
 
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">

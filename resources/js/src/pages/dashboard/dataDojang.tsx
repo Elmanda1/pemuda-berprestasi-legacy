@@ -58,14 +58,15 @@ interface FormDataType {
 export const TextInput: React.FC<TextInputProps> = ({ placeholder, className, icon, value, disabled, type, onChange }) => {
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
+  const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
-  const inputBg = isModern ? 'bg-white/5' : 'bg-white/80';
-  const borderColor = isModern ? 'border-white/10 group-focus-within:border-red' : 'border-red/20 group-focus-within:border-red'; // Keep red focus for brand? Or white?
-  // User requested "theme hitam" (black theme). Usually brand color (Red) is still used for accents.
-  const iconColor = isModern ? 'text-red/80 group-focus-within:text-red' : 'text-red/60 group-focus-within:text-red';
-  const textColor = isModern ? 'text-white' : 'text-black/80';
-  const placeholderColor = isModern ? 'placeholder-white/30' : 'placeholder-red/30';
+  const inputBg = isDark ? 'bg-white/5' : (isWhite ? 'bg-gray-50' : 'bg-white/80');
+  const borderColor = isDark ? 'border-white/10 group-focus-within:border-red' : (isWhite ? 'border-gray-200 group-focus-within:border-gray-400' : 'border-red/20 group-focus-within:border-red');
+  const iconColor = isDark ? 'text-red/80 group-focus-within:text-red' : (isWhite ? 'text-gray-400 group-focus-within:text-gray-600' : 'text-red/60 group-focus-within:text-red');
+  const textColor = isDark ? 'text-white' : 'text-black/80';
+  const placeholderColor = isDark ? 'placeholder-white/30' : 'placeholder-gray-400';
 
   return (
     <div className={`relative group ${className}`}>
@@ -202,7 +203,7 @@ const FilePreview = ({
   /* Hook logic needs to be inside component, but this is inside FilePreview */
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isModern = templateType === 'modern' || templateType === 'template_b' || templateType === 'template_c';
 
   const previewBg = isModern ? 'bg-white/5' : 'bg-white/70';
   const borderColor = isModern ? 'border-white/10' : 'border-red/20';
@@ -296,17 +297,19 @@ const Dojang = () => {
   const navigate = useNavigate();
 
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
+  const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
   const theme = {
-    bg: isModern ? '#0a0a0a' : '#FFF5F7',
-    cardBg: isModern ? '#111111' : '#FFFFFF',
-    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
-    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
-    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
-    shadow: isModern ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
-    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+    bg: isDark ? '#0a0a0a' : (isWhite ? '#FFFFFF' : '#FFF5F7'),
+    cardBg: isDark ? '#111111' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+    textSecondary: isDark ? '#A1A1AA' : '#6B7280',
+    primary: primaryColor,
+    border: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)'),
+    shadow: isDark ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
+    gradient: isDark ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : (isWhite ? 'linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)')
   };
 
   const [userDojang, setUserDojang] = useState<DojangData | null>(null);

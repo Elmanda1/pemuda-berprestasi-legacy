@@ -80,17 +80,20 @@ const BracketList: React.FC = () => {
 
   // Dynamic Theme
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
+  const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
   const theme = {
-    bg: isModern ? "bg-black" : "bg-gradient-to-br from-white via-red/5 to-yellow/10",
-    textMain: isModern ? "text-white" : "text-black/80",
-    textSec: isModern ? "text-gray-400" : "text-black/60",
-    cardBg: isModern ? "bg-[#111] border border-gray-800" : "bg-white/60 backdrop-blur-sm border border-white/50",
-    cardHover: isModern ? "hover:border-red-600/50 hover:bg-[#161616]" : "hover:shadow-xl",
-    filterBg: isModern ? "bg-[#161616] border border-gray-800" : "bg-white/80 border border-white/50",
-    inputBg: isModern ? "bg-[#0a0a0a] border-gray-800 text-white" : "bg-white border-red/20",
-    headerBg: isModern ? "bg-red-900/10 border-b border-red-900/20" : "bg-gradient-to-r from-red/5 to-red/10 border-b border-white/30"
+    bg: isDark ? "bg-black" : (isWhite ? "bg-white" : "bg-gradient-to-br from-white via-red/5 to-yellow/10"),
+    textMain: isDark ? "text-white" : "text-black/80",
+    textSec: isDark ? "text-gray-400" : (isWhite ? "text-gray-500" : "text-black/60"),
+    cardBg: isDark ? "bg-[#111] border border-gray-800" : (isWhite ? "bg-white border border-gray-100" : "bg-white/60 backdrop-blur-sm border border-white/50"),
+    cardHover: isDark ? "hover:border-red-600/50 hover:bg-[#161616]" : "hover:shadow-xl",
+    filterBg: isDark ? "bg-[#161616] border border-gray-800" : (isWhite ? "bg-gray-50 border border-gray-200" : "bg-white/80 border border-white/50"),
+    inputBg: isDark ? "bg-[#0a0a0a] border-gray-800 text-white" : (isWhite ? "bg-white border-gray-200 text-gray-900" : "bg-white border-red/20"),
+    headerBg: isDark ? "bg-red-900/10 border-b border-red-900/20" : (isWhite ? "bg-white border-b border-gray-100" : "bg-gradient-to-r from-red/5 to-red/10 border-b border-white/30"),
+    primary: primaryColor
   };
 
   // ✅ TAMBAH FILTER STATE

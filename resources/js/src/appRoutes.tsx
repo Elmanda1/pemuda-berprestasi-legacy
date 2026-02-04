@@ -140,6 +140,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               <strong>Your role:</strong> {user?.role}
             </p>
           </div>
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="w-full px-4 py-2 bg-red text-white rounded-lg font-bold hover:opacity-90 transition-all"
+            >
+              Kembali ke Beranda
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/login';
+              }}
+              className="w-full px-4 py-2 border border-red text-red rounded-lg font-bold hover:bg-red/5 transition-all"
+            >
+              Logout & Coba Lagi
+            </button>
+          </div>
         </div>
       </div>
     );

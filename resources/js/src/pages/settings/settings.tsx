@@ -59,15 +59,16 @@ const FilePreview = ({
   const [previewError, setPreviewError] = useState(false);
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
 
   const theme = {
-    bg: isModern ? '#0a0a0a' : '#FFF5F7',
-    cardBg: isModern ? '#111111' : '#FFFFFF',
-    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
-    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
-    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+    bg: isDark ? '#0a0a0a' : (isWhite ? '#FFFFFF' : '#FFF5F7'),
+    cardBg: isDark ? '#111111' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+    textSecondary: isDark ? '#A1A1AA' : '#6B7280',
+    primary: kompetisiDetail?.primary_color || '#DC2626',
+    border: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)'),
   };
 
   useEffect(() => {
@@ -182,7 +183,7 @@ const FilePreview = ({
   const fileName = getDisplayFileName();
 
   return (
-    <div className={`mt-2 p-3 rounded-xl border`} style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.7)', borderColor: theme.border }}>
+    <div className={`mt-2 p-3 rounded-xl border`} style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : (isWhite ? 'rgba(0,0,0,0.01)' : 'rgba(255,255,255,0.7)'), borderColor: theme.border }}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium" style={{ color: theme.textSecondary }}>
           {file ? `File baru: ${fileName}` : fileName}
@@ -191,7 +192,7 @@ const FilePreview = ({
           <button
             onClick={onRemove}
             className="p-1 rounded-full transition-colors"
-            style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)' }}
+            style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)') }}
             type="button"
           >
             <X size={16} style={{ color: theme.primary }} />
@@ -267,14 +268,15 @@ const PasswordResetModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
 
   const theme = {
-    cardBg: isModern ? '#111111' : '#FFFFFF',
-    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
-    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
-    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
+    cardBg: isDark ? '#111111' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+    textSecondary: isDark ? '#A1A1AA' : '#6B7280',
+    primary: kompetisiDetail?.primary_color || '#DC2626',
+    border: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)'),
   };
 
   if (!isOpen) return null;
@@ -306,7 +308,7 @@ const PasswordResetModal = ({
         <div className="relative backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border overflow-hidden"
           style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
           {/* Glass morphism overlay */}
-          <div className="absolute inset-0 backdrop-blur-[1px]" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)' }} />
+          <div className="absolute inset-0 backdrop-blur-[1px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : (isWhite ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)') }} />
 
           {/* Header */}
           <div className="relative px-6 py-5 border-b" style={{ borderColor: theme.border }}>
@@ -462,17 +464,18 @@ const Settings = () => {
   const navigate = useNavigate();
 
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
 
   const theme = {
-    bg: isModern ? '#0a0a0a' : '#FFF5F7',
-    cardBg: isModern ? '#111111' : '#FFFFFF',
-    textPrimary: isModern ? '#FFFFFF' : '#1F2937',
-    textSecondary: isModern ? '#A1A1AA' : '#6B7280',
-    primary: isModern ? '#DC2626' : '#DC2626',
-    border: isModern ? 'rgba(255,255,255,0.1)' : 'rgba(220, 38, 38, 0.1)',
-    shadow: isModern ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
-    gradient: isModern ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)'
+    bg: isDark ? '#0a0a0a' : (isWhite ? '#FFFFFF' : '#FFF5F7'),
+    cardBg: isDark ? '#111111' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+    textSecondary: isDark ? '#A1A1AA' : '#6B7280',
+    primary: kompetisiDetail?.primary_color || '#DC2626',
+    border: isDark ? 'rgba(255,255,255,0.1)' : (isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(220, 38, 38, 0.1)'),
+    shadow: isDark ? '0 10px 15px -3px rgba(0, 0, 0, 0.5)' : '0 10px 15px -3px rgba(220, 38, 38, 0.05)',
+    gradient: isDark ? 'linear-gradient(135deg, #111111 0%, #0a0a0a 100%)' : (isWhite ? 'linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%)' : 'linear-gradient(to bottom right, #ffffff, #FFF5F7, #FFF0F0)')
   };
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -825,7 +828,7 @@ const Settings = () => {
               <div className="relative backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl border transition-all duration-500"
                 style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
                 {/* Glass morphism overlay */}
-                <div className="absolute inset-0 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)' }}></div>
+                <div className="absolute inset-0 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)' }}></div>
 
                 <div className="relative text-center space-y-4 sm:space-y-6">
                   <div className="relative inline-block">
@@ -879,7 +882,7 @@ const Settings = () => {
               <div className="backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl border overflow-hidden transition-all duration-500"
                 style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
                 {/* Glass morphism overlay */}
-                <div className="absolute inset-0 backdrop-blur-[0.5px]" style={{ backgroundColor: isModern ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.05)' }}></div>
+                <div className="absolute inset-0 backdrop-blur-[0.5px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.05)' }}></div>
 
                 {/* Enhanced Form Header - Mobile Responsive */}
                 <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b"
@@ -1087,22 +1090,18 @@ const Settings = () => {
                           options={genderOptions}
                           placeholder="Pilih jenis kelamin"
                           classNames={{
-                            control: () =>
-                              `flex items-center border-2 ${isEditing
-                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
-                                : 'border-gray-200 bg-gray-50'
-                              } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
+                            control: (state) =>
+                              `flex w-full items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all duration-300 ${isDark ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : (isWhite ? 'border-gray-100 hover:border-gray-200 focus-within:border-gray-300 bg-gray-50' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80')} ${state.isFocused ? 'shadow-none' : ''}`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
-                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
+                            singleValue: () => `${isDark ? 'text-white' : (isWhite ? 'text-gray-900' : 'text-black/80')} font-plex text-sm`,
+                            menu: () => `border ${isDark ? 'border-white/10 bg-black/95' : (isWhite ? 'border-gray-100 bg-white/95' : 'border-red/20 bg-white/95')} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
-                            option: ({ isFocused, isSelected }) =>
-                              [
-                                "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200",
-                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
-                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
-                              ].join(" "),
+                            option: ({ isFocused, isSelected }) => `
+                                px-4 py-3 cursor-pointer transition-colors text-sm font-plex
+                                ${isFocused ? (isDark ? "bg-white/10 text-white" : (isWhite ? "bg-gray-100 text-gray-900" : "bg-red/10 text-red")) : (isDark ? "text-white/80" : "text-black/80")},
+                                ${isSelected ? (isDark ? "bg-white/20 text-white" : (isWhite ? "bg-gray-200 text-gray-900" : "bg-red text-white")) : ""}
+                                `.split('\n').map(line => line.trim()).filter(Boolean).join(" "),
                           }}
                         />
                         {!isEditing && <div className="absolute inset-0 bg-gray-100/50 rounded-xl" />}
@@ -1129,19 +1128,19 @@ const Settings = () => {
                           classNames={{
                             control: () =>
                               `flex items-center border-2 ${isEditing
-                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
+                                ? isDark ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
                                 : 'border-gray-200 bg-gray-50'
                               } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
-                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
+                            singleValue: () => `${isDark ? 'text-white' : 'text-black/80'} font-plex text-sm`,
+                            menu: () => `border ${isDark ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
                             option: ({ isFocused, isSelected }) =>
                               [
                                 "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200 hover:text-red",
-                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
-                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
+                                isFocused ? (isDark ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isDark ? "text-white/80" : "text-black/80"),
+                                isSelected ? (isDark ? "bg-white/20 text-white" : "bg-red text-white") : ""
                               ].join(" "),
                           }}
                         />
@@ -1169,19 +1168,19 @@ const Settings = () => {
                           classNames={{
                             control: () =>
                               `flex items-center border-2 ${isEditing && formData.Provinsi
-                                ? isModern ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
+                                ? isDark ? 'border-white/10 hover:border-white/30 focus-within:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus-within:border-red bg-white/80'
                                 : 'border-gray-200 bg-gray-50'
                               } rounded-xl px-4 py-3 gap-3 backdrop-blur-sm transition-all duration-300 hover:shadow-lg`,
                             valueContainer: () => "px-1",
                             placeholder: () => "text-gray-400 font-plex text-sm",
-                            singleValue: () => `${isModern ? 'text-white' : 'text-black/80'} font-plex text-sm`,
-                            menu: () => `border ${isModern ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
+                            singleValue: () => `${isDark ? 'text-white' : 'text-black/80'} font-plex text-sm`,
+                            menu: () => `border ${isDark ? 'border-white/10 bg-black/95' : 'border-red/20 bg-white/95'} backdrop-blur-sm rounded-xl shadow-xl mt-2 overflow-hidden z-50`,
                             menuList: () => "max-h-32 overflow-y-auto",
                             option: ({ isFocused, isSelected }) =>
                               [
                                 "px-4 py-3 cursor-pointer font-plex text-sm transition-colors duration-200 hover:text-red",
-                                isFocused ? (isModern ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isModern ? "text-white/80" : "text-black/80"),
-                                isSelected ? (isModern ? "bg-white/20 text-white" : "bg-red text-white") : ""
+                                isFocused ? (isDark ? "bg-white/10 text-white" : "bg-red/10 text-red") : (isDark ? "text-white/80" : "text-black/80"),
+                                isSelected ? (isDark ? "bg-white/20 text-white" : "bg-red text-white") : ""
                               ].join(" "),
                           }}
                         />
@@ -1204,7 +1203,7 @@ const Settings = () => {
                           disabled={!isEditing}
                           rows={3}
                           className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 backdrop-blur-sm placeholder-gray-400 font-plex border-2 ${isEditing
-                            ? isModern ? 'border-white/10 hover:border-white/30 focus:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus:border-red bg-white'
+                            ? isDark ? 'border-white/10 hover:border-white/30 focus:border-white/30 bg-white/5' : 'border-red/20 hover:border-red/40 focus:border-red bg-white'
                             : 'border-gray-200 bg-gray-50'
                             } rounded-xl text-sm transition-all duration-300 hover:shadow-lg focus:shadow-lg resize-none`}
                           style={{ color: isEditing ? theme.textPrimary : '#1F2937' }}

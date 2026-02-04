@@ -61,20 +61,22 @@ const NavbarDashboard: React.FC<NavbarProps> = ({ mobile = false, onClose }) => 
   };
 
   const templateType = kompetisiDetail?.template_type || 'default';
-  const isModern = templateType === 'modern' || templateType === 'template_b';
+  const isDark = templateType === 'modern' || templateType === 'template_b';
+  const isWhite = templateType === 'template_c';
+  const primaryColor = kompetisiDetail?.primary_color || '#DC2626';
 
   const theme = {
-    bg: isModern ? '#111111' : '#ffffff',
-    headerBg: isModern ? '#0a0a0a' : '#F5FBEF',
-    textPrimary: isModern ? '#e5e7eb' : '#990D35',
-    textSecondary: isModern ? '#9ca3af' : '#6B7280',
-    activeBg: isModern ? '#dc2626' : '#990D35',
-    activeText: isModern ? '#ffffff' : '#F5FBEF',
-    border: isModern ? '#374151' : '#E5E7EB',
-    hoverBg: isModern ? '#dc2626' : '#990D35',
-    hoverText: isModern ? '#ffffff' : '#F5FBEF',
-    titleColor: isModern ? '#ffffff' : '#050505',
-    accentColor: isModern ? '#dc2626' : '#990D35'
+    bg: isDark ? '#111111' : '#ffffff',
+    headerBg: isDark ? '#0a0a0a' : (isWhite ? '#ffffff' : '#F5FBEF'),
+    textPrimary: isDark ? '#e5e7eb' : (isWhite ? '#111111' : '#990D35'),
+    textSecondary: isDark ? '#9ca3af' : (isWhite ? '#4B5563' : '#6B7280'),
+    activeBg: isDark ? primaryColor : (isWhite ? primaryColor : '#990D35'),
+    activeText: '#ffffff',
+    border: isDark ? '#374151' : '#E5E7EB',
+    hoverBg: isDark ? primaryColor : (isWhite ? primaryColor + '15' : '#990D35'),
+    hoverText: isDark ? '#ffffff' : (isWhite ? primaryColor : '#F5FBEF'),
+    titleColor: isDark ? '#ffffff' : (isWhite ? '#111111' : '#050505'),
+    accentColor: primaryColor
   };
 
   return (
