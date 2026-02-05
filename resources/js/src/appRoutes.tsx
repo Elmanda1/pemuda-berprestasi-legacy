@@ -223,7 +223,7 @@ export default function AppRoutes() {
           <Route path="penimbangan" element={<Penimbangan />} />
           <Route path="bulk-cetak-sertifikat" element={<BulkCetakSertifikat />} />
           <Route path="bulk-generate-id-card" element={<BulkGenerateIDCard />} />
-          <Route path="settings" element={<AdminSettings />} />
+
         </Route>
 
         {/* Admin routes - protected for ADMIN role only */}

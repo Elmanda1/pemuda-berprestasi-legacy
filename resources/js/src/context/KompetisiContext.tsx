@@ -58,6 +58,8 @@ export interface Kompetisi {
   template_type?: string;
   modules_enabled?: string | any; // JSON string or object
   slug?: string;
+  link_streaming?: string;
+  streaming_data?: any[] | string; // JSON Array of { title, url, description }
 }
 
 export interface KelasKejuaraan {

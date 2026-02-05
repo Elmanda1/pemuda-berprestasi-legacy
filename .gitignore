@@ -3,6 +3,7 @@
 /public/hot
 /public/storage
 /storage/*.key
+/public/uploads
 /vendor
 .env
 .env.backup
@@ -38,6 +39,8 @@ Thumbs.db
 # Misc
 d
 pemuda-app
+pemuda_prod/
+pemuda_prod_new/
 
 # Compiled assets
 /public/js/

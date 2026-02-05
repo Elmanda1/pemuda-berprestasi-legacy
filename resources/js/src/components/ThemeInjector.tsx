@@ -15,6 +15,8 @@ const ThemeInjector: React.FC = () => {
 
     useEffect(() => {
         let targetId: number | null = null;
+        const searchParams = new URLSearchParams(location.search);
+        const queryId = searchParams.get('id_kompetisi');
 
         // priority 1: Slug from URL
         if (slug) {
@@ -24,9 +26,11 @@ const ThemeInjector: React.FC = () => {
             return;
         }
 
-        // priority 2: ID parameter
+        // priority 2: ID parameter (Route Param OR Query Param)
         if (idKompetisi) {
             targetId = parseInt(idKompetisi);
+        } else if (queryId) {
+            targetId = parseInt(queryId);
         }
         // priority 3: Admin Kompetisi user
         else if (user?.role === "ADMIN_KOMPETISI" && user.admin_kompetisi?.id_kompetisi) {
@@ -41,7 +45,7 @@ const ThemeInjector: React.FC = () => {
         if (targetId && (!kompetisiDetail || kompetisiDetail.id_kompetisi !== targetId)) {
             fetchKompetisiById(targetId);
         }
-    }, [idKompetisi, slug, user, location.pathname]);
+    }, [idKompetisi, slug, user, location.pathname, location.search]);
 
     useEffect(() => {
         const root = document.documentElement.style;

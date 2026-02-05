@@ -87,7 +87,9 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
 
   console.log(`Making API request to: ${endpoint}`);
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+  // Mix uses process.env.MIX_API_URL
+  const baseUrl = process.env.MIX_API_URL || '/api/v1';
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

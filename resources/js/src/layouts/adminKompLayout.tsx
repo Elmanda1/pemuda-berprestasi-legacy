@@ -103,13 +103,7 @@ const AdminKompetisiLayout: React.FC = () => {
       active: location.pathname === "/admin-kompetisi/bulk-generate-id-card",
       description: "Generate ID card untuk banyak peserta",
     },
-    {
-      icon: Settings,
-      label: "Pengaturan Website",
-      path: "/admin-kompetisi/settings",
-      active: location.pathname === "/admin-kompetisi/settings",
-      description: "Kelola konten dan tampilan website",
-    },
+
   ];
 
   const displayName =
@@ -196,7 +190,7 @@ const AdminKompetisiLayout: React.FC = () => {
           {/* Settings & Logout */}
           <div className="absolute bottom-6 left-6 right-6 space-y-2">
             <a
-              href="/event/home"
+              href={user?.admin_kompetisi?.id_kompetisi ? `/event/home?id_kompetisi=${user.admin_kompetisi.id_kompetisi}` : "/event/home"}
               target="_blank"
               className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm"
             >
@@ -387,17 +381,7 @@ const AdminKompetisiLayout: React.FC = () => {
             </nav>
 
             <div className="absolute bottom-6 left-6 right-6 space-y-2">
-              <button
-                onClick={() => navigate("/admin-kompetisi/settings")}
-                className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:shadow-sm"
-                style={{
-                  color: "#050505",
-                  backgroundColor: "rgba(5, 5, 5, 0.05)",
-                }}
-              >
-                <Settings size={18} />
-                <span className="font-medium text-sm">Pengaturan</span>
-              </button>
+
 
               <a
                 href="/event/home"

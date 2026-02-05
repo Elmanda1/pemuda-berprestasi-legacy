@@ -126,12 +126,24 @@ const BuktiTf = () => {
         console.log('📋 Bukti Transfer Response:', result);
         const buktiList = result.data || [];
 
-        if (buktiList.length > 0) {
-          console.log('📋 Sample bukti transfer:', buktiList[0]);
+        // Strict Client-Side Filtering
+        const userKompId = user?.admin_kompetisi?.id_kompetisi;
+        let strictFiltered = buktiList;
+
+        if (userKompId) {
+          strictFiltered = buktiList.filter((item: BuktiTransfer) => {
+            // Backend might return items from other competitions if filter fails
+            // We ensure we ONLY show items belonging to this competition
+            // Note: BuktiTransfer needs 'id_kompetisi' field. If missing, we might need to rely on backend.
+            // Assuming structure has id_kompetisi or we can't strict filter. 
+            // If the API returns ALL data, we MUST filter.
+            return (item as any).id_kompetisi == userKompId;
+          });
+          console.log(`🛡️ Strict Filter: ${buktiList.length} -> ${strictFiltered.length} items (Kompetisi ID: ${userKompId})`);
         }
 
-        setBuktiTransferList(buktiList);
-        setFilteredBukti(buktiList);
+        setBuktiTransferList(strictFiltered);
+        setFilteredBukti(strictFiltered);
       }
     } catch (error) {
       console.error('Error fetching bukti transfer:', error);
