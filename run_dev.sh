@@ -72,9 +72,12 @@ done
 echo "Ready!"
 
 # Cek apakah database sudah ada isinya
+# Note: Menggunakan 'pemuda_mvp' karena itu nama database yang dipakai aplikasi
 TABLE_COUNT=$(docker exec pemuda-db mysql -u root -proot -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'pemuda_mvp';" 2>/dev/null || echo "0")
 
-if [ "$TABLE_COUNT" = "0" ] || [ "$FIRST_RUN" = true ]; then
+# Hanya import jika VOLUME baru dibuat (FIRST_RUN) DAN database kosong
+# TIDAK import ulang hanya karena container restart
+if [ "$FIRST_RUN" = "true" ] && [ "$TABLE_COUNT" = "0" ]; then
     echo "🔄 First run detected - Initializing Application Data..."
     
     echo "📥 Importing Data from SQL Dump (pemuda-db.sql)..."
