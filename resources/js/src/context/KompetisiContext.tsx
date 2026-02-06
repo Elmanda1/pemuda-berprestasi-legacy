@@ -60,6 +60,7 @@ export interface Kompetisi {
   slug?: string;
   link_streaming?: string;
   streaming_data?: any[] | string; // JSON Array of { title, url, description }
+  tipe_kompetisi?: 'MASTER' | 'TUNGGAL';
 }
 
 export interface KelasKejuaraan {

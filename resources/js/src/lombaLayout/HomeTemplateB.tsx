@@ -89,16 +89,25 @@ const HomeTemplateB = () => {
 
                             {/* Buttons */}
                             <div className="flex flex-wrap gap-4 pt-4">
-                                <button
-                                    onClick={handleJoinClick}
-                                    className="px-8 py-4 text-black font-bold font-plex rounded-none skew-x-[-10deg] hover:bg-white transition-colors duration-300 group"
-                                    style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
-                                >
-                                    <span className="block skew-x-[10deg]">
-                                        DAFTAR SEKARANG
-                                    </span>
-                                </button>
-                                {(kompetisiDetail?.show_antrian === 1 || !kompetisiDetail) && (
+                                {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
+                                    <button
+                                        onClick={handleJoinClick}
+                                        className="px-8 py-4 text-black font-bold font-plex rounded-none skew-x-[-10deg] hover:bg-white transition-colors duration-300 group"
+                                        style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
+                                    >
+                                        <span className="block skew-x-[10deg]">
+                                            DAFTAR SEKARANG
+                                        </span>
+                                    </button>
+                                )}
+                                {kompetisiDetail?.tipe_kompetisi === 'MASTER' && (
+                                    <div className="px-8 py-4 border border-white text-white font-bold font-plex rounded-none skew-x-[-10deg]">
+                                        <span className="block skew-x-[10deg]">
+                                            INFORMASI EVENT
+                                        </span>
+                                    </div>
+                                )}
+                                {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (kompetisiDetail?.show_antrian === 1 || !kompetisiDetail) && (
                                     <Link
                                         to={`/event/pertandingan/${kompetisiDetail?.id_kompetisi || 1}`}
                                         className="px-8 py-4 border border-white text-white font-bold font-plex rounded-none skew-x-[-10deg] hover:bg-white hover:text-black transition-all duration-300"
@@ -160,36 +169,38 @@ const HomeTemplateB = () => {
             </section>
 
             {/* Registration Steps - Minimalist Cards */}
-            <section className="py-20 bg-black relative">
-                <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-6xl font-bebas text-white mb-4">
-                            Alur <span style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>Pendaftaran</span>
-                        </h2>
-                    </div>
+            {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
+                <section className="py-20 bg-black relative">
+                    <div className="container mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl md:text-6xl font-bebas text-white mb-4">
+                                Alur <span style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>Pendaftaran</span>
+                            </h2>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        {[
-                            { step: "01", title: "Buat Akun", desc: "Daftar akun di website." },
-                            { step: "02", title: "Pilih Kategori", desc: "Tentukan kelas tanding." },
-                            { step: "03", title: "Upload Data", desc: "Lengkapi dokumen atlet." },
-                            { step: "04", title: "Finalisasi", desc: "Konfirmasi pendaftaran." }
-                        ].map((item, idx) => (
-                            <div key={idx} className="group p-6 border border-white/10 transition-colors duration-300" style={{ borderColor: kompetisiDetail?.primary_color ? kompetisiDetail.primary_color : 'rgba(255,255,255,0.1)' }}>
-                                <div className="text-6xl font-bebas text-white/10 group-hover:text-opacity-20 transition-colors mb-4" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
-                                    {item.step}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {[
+                                { step: "01", title: "Buat Akun", desc: "Daftar akun di website." },
+                                { step: "02", title: "Pilih Kategori", desc: "Tentukan kelas tanding." },
+                                { step: "03", title: "Upload Data", desc: "Lengkapi dokumen atlet." },
+                                { step: "04", title: "Finalisasi", desc: "Konfirmasi pendaftaran." }
+                            ].map((item, idx) => (
+                                <div key={idx} className="group p-6 border border-white/10 transition-colors duration-300" style={{ borderColor: kompetisiDetail?.primary_color ? kompetisiDetail.primary_color : 'rgba(255,255,255,0.1)' }}>
+                                    <div className="text-6xl font-bebas text-white/10 group-hover:text-opacity-20 transition-colors mb-4" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                        {item.step}
+                                    </div>
+                                    <h3 className="text-xl font-bold font-plex text-white mb-2 group-hover:text-opacity-100 transition-colors" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                        {item.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-400 font-plex">
+                                        {item.desc}
+                                    </p>
                                 </div>
-                                <h3 className="text-xl font-bold font-plex text-white mb-2 group-hover:text-opacity-100 transition-colors" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
-                                    {item.title}
-                                </h3>
-                                <p className="text-sm text-gray-400 font-plex">
-                                    {item.desc}
-                                </p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
 
             {/* Footer Info - Simple & Bold */}
             <section className="py-20 bg-stone-900 border-t border-white/10">

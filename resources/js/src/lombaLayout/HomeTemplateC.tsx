@@ -96,14 +96,21 @@ const HomeTemplateC = () => {
                                 </p>
 
                                 <div className="flex flex-wrap gap-4">
-                                    <button
-                                        onClick={handleJoinClick}
-                                        className="px-8 py-4 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:-translate-y-1 hover:opacity-90"
-                                        style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626', boxShadow: `0 10px 15px -3px ${(kompetisiDetail?.primary_color || '#DC2626')}33` }}
-                                    >
-                                        Daftar Sekarang
-                                    </button>
-                                    {(kompetisiDetail?.show_antrian === 1 || !kompetisiDetail) && (
+                                    {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
+                                        <button
+                                            onClick={handleJoinClick}
+                                            className="px-8 py-4 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:-translate-y-1 hover:opacity-90"
+                                            style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626', boxShadow: `0 10px 15px -3px ${(kompetisiDetail?.primary_color || '#DC2626')}33` }}
+                                        >
+                                            Daftar Sekarang
+                                        </button>
+                                    )}
+                                    {kompetisiDetail?.tipe_kompetisi === 'MASTER' && (
+                                        <div className="px-8 py-4 bg-gray-900/10 text-gray-900 font-semibold rounded-xl border border-gray-200">
+                                            Informasi Event
+                                        </div>
+                                    )}
+                                    {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (kompetisiDetail?.show_antrian === 1 || !kompetisiDetail) && (
                                         <Link
                                             to={`/event/pertandingan/${kompetisiDetail?.id_kompetisi || 1}`}
                                             className="px-8 py-4 bg-white text-gray-900 border border-gray-200 font-semibold rounded-xl hover:bg-gray-50 transition-all"
@@ -142,7 +149,7 @@ const HomeTemplateC = () => {
             )}
 
             {/* 2. Registration Steps (Moved Up as requested "Rearrange") */}
-            {isModuleEnabled('registration') && (
+            {isModuleEnabled('registration') && kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
                 <section className="py-20 bg-white">
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-16">

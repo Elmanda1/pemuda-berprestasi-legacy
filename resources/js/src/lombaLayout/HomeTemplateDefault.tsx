@@ -136,26 +136,34 @@ const HomeTemplateDefault = () => {
 
                         {/* Enhanced CTA Button */}
                         <div className="pt-2 md:pt-4 flex justify-center items-center gap-6">
-                            <button
-                                onClick={handleJoinClick}
-                                className="group relative inline-flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 text-base md:text-lg lg:text-xl font-plex font-semibold bg-yellow text-black hover:bg-yellow/90 transition-all duration-300 rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-yellow/30"
-                            >
-                                <span className="relative z-10">Daftar Kompetisi</span>
-                                <svg
-                                    className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform duration-300"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                            {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
+                                <button
+                                    onClick={handleJoinClick}
+                                    className="group relative inline-flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 text-base md:text-lg lg:text-xl font-plex font-semibold bg-yellow text-black hover:bg-yellow/90 transition-all duration-300 rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-yellow/30"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                    />
-                                </svg>
-                            </button>
-                            {(kompetisiDetail?.show_antrian === 1 || kompetisiDetail?.show_antrian === true || !kompetisiDetail) && (
+                                    <span className="relative z-10">Daftar Kompetisi</span>
+                                    <svg
+                                        className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform duration-300"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                                        />
+                                    </svg>
+                                </button>
+
+                            )}
+                            {kompetisiDetail?.tipe_kompetisi === 'MASTER' && (
+                                <p className="text-white text-lg font-plex font-light bg-black/40 px-6 py-2 rounded-full border border-white/20">
+                                    Informasi Event
+                                </p>
+                            )}
+                            {kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (kompetisiDetail?.show_antrian === 1 || kompetisiDetail?.show_antrian === true || !kompetisiDetail) && (
                                 <Link
                                     to={`/event/pertandingan/${kompetisiDetail?.id_kompetisi || 1}`}
                                     className="group relative inline-flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 text-base md:text-lg lg:text-xl font-plex font-semibold bg-red text-white hover:bg-red/90 transition-all duration-300 rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-red/30"
@@ -272,133 +280,139 @@ const HomeTemplateDefault = () => {
                 </div>
             </section>
 
+
+
             {/* Enhanced Registration Steps Section - Mobile Optimized */}
-            <section className="relative w-full flex flex-col justify-center items-center bg-gradient-to-br from-white via-yellow/[0.02] to-white overflow-hidden py-8 md:py-12 lg:py-16">
-                {/* Background pattern */}
-                <div className="absolute inset-0 opacity-[0.02]">
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            backgroundImage: `
+            {
+                kompetisiDetail?.tipe_kompetisi !== 'MASTER' && (
+                    <section className="relative w-full flex flex-col justify-center items-center bg-gradient-to-br from-white via-yellow/[0.02] to-white overflow-hidden py-8 md:py-12 lg:py-16">
+                        {/* Background pattern */}
+                        <div className="absolute inset-0 opacity-[0.02]">
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    backgroundImage: `
               linear-gradient(rgba(251,191,36,.4) 1px, transparent 1px),
               linear-gradient(90deg, rgba(251,191,36,.4) 1px, transparent 1px)
             `,
-                            backgroundSize: "60px 60px",
-                        }}
-                    ></div>
-                </div>
-
-                <div className="container mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
-                    {/* Section Header */}
-                    <div className="text-center space-y-3 md:space-y-6 mb-6 md:mb-12 lg:mb-16">
-                        {/* Section Label */}
-                        <div className="inline-block group">
-                            <span className="text-red font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 border-red pl-3 md:pl-6 relative">
-                                Cara Pendaftaran
-                                <div className="absolute -left-1 top-0 bottom-0 w-1 bg-red/20 group-hover:bg-red/40 transition-colors duration-300"></div>
-                            </span>
-                        </div>
-
-                        <div className="relative">
-                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bebas leading-[0.85] tracking-wide">
-                                <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
-                                    Panduan
-                                </span>
-                                <span className="block bg-gradient-to-r from-red/80 via-red/90 to-red bg-clip-text text-transparent">
-                                    Pendaftaran
-                                </span>
-                            </h2>
-                            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 md:w-20 h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
-                        </div>
-
-                        <p className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-4 font-plex text-black/80 max-w-3xl mx-auto leading-relaxed font-light">
-                            {kompetisiDetail?.registration_description || `Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta ${kompetisiDetail?.nama_event || "Sriwijaya Competition"} ${kompetisiDetail?.event_year || "2025"} dengan mudah dan efisien.`}
-                        </p>
-                    </div>
-
-                    {/* Mobile Optimized Steps Container */}
-                    <div className="max-w-5xl mx-auto">
-                        {/* Mobile: Single Column, Tablet+: 2 Columns */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 py-2 md:py-6">
-                            {(() => {
-                                const stepsData = kompetisiDetail?.registration_steps as any;
-                                const steps = (() => {
-                                    if (Array.isArray(stepsData) && stepsData.length > 0) return stepsData;
-                                    if (typeof stepsData === 'string' && stepsData.trim().length > 0) {
-                                        try {
-                                            const parsed = JSON.parse(stepsData);
-                                            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-                                        } catch (e) {
-                                            console.error("Failed to parse registration_steps:", e);
-                                        }
-                                    }
-                                    return registerStep;
-                                })();
-
-                                return steps.map((step: any, idx: number) => (
-                                    <div
-                                        key={idx}
-                                        className="group relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red/10 hover:border-red/20 shadow-md hover:shadow-lg hover:shadow-red/10 transition-all duration-300 hover:-translate-y-1"
-                                    >
-                                        {/* Mobile Optimized Step Content */}
-                                        <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
-                                            {/* Step Number - Smaller on Mobile */}
-                                            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `linear-gradient(to bottom right, ${kompetisiDetail?.primary_color || '#DC2626'}, ${kompetisiDetail?.primary_color || '#DC2626'}80)` }}>
-                                                <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
-                                                    {step.number || idx + 1}
-                                                </span>
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl mb-1 sm:mb-2 leading-tight" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
-                                                    {step.title}
-                                                </h3>
-                                                <p className="text-xs sm:text-sm md:text-sm text-black/70 font-plex leading-relaxed">
-                                                    {step.desc}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Decorative elements - Smaller on Mobile */}
-                                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full group-hover:bg-red/40 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}20` }}></div>
-                                        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full group-hover:bg-red/30 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}15` }}></div>
-
-                                        {/* Hover Effect Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-red/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg sm:rounded-xl"></div>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
-
-                        {/* Mobile CTA Button */}
-                        <div className="text-center mt-6 sm:mt-8 md:mt-10">
-                            <button
-                                onClick={() => {
-                                    window.scrollTo(0, 0);
+                                    backgroundSize: "60px 60px",
                                 }}
-                                className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-plex font-semibold text-white hover:bg-red/90 transition-all duration-300 rounded-lg sm:rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red/30"
-                                style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
-                            >
-                                <span>Mulai Daftar Sekarang</span>
-                                <svg
-                                    className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                    />
-                                </svg>
-                            </button>
+                            ></div>
                         </div>
-                    </div>
-                </div>
-            </section>
+
+                        <div className="container mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
+                            {/* Section Header */}
+                            <div className="text-center space-y-3 md:space-y-6 mb-6 md:mb-12 lg:mb-16">
+                                {/* Section Label */}
+                                <div className="inline-block group">
+                                    <span className="text-red font-plex font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] border-l-4 border-red pl-3 md:pl-6 relative">
+                                        Cara Pendaftaran
+                                        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-red/20 group-hover:bg-red/40 transition-colors duration-300"></div>
+                                    </span>
+                                </div>
+
+                                <div className="relative">
+                                    <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bebas leading-[0.85] tracking-wide">
+                                        <span className="bg-gradient-to-r from-red via-red/90 to-red/80 bg-clip-text text-transparent">
+                                            Panduan
+                                        </span>
+                                        <span className="block bg-gradient-to-r from-red/80 via-red/90 to-red bg-clip-text text-transparent">
+                                            Pendaftaran
+                                        </span>
+                                    </h2>
+                                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-12 md:w-20 h-1 bg-gradient-to-r from-red to-red/60 rounded-full"></div>
+                                </div>
+
+                                <p className="text-xs sm:text-sm md:text-base lg:text-lg px-2 sm:px-4 font-plex text-black/80 max-w-3xl mx-auto leading-relaxed font-light">
+                                    {kompetisiDetail?.registration_description || `Ikuti langkah-langkah berikut untuk mendaftar sebagai peserta ${kompetisiDetail?.nama_event || "Sriwijaya Competition"} ${kompetisiDetail?.event_year || "2025"} dengan mudah dan efisien.`}
+                                </p>
+                            </div>
+
+                            {/* Mobile Optimized Steps Container */}
+                            <div className="max-w-5xl mx-auto">
+                                {/* Mobile: Single Column, Tablet+: 2 Columns */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 py-2 md:py-6">
+                                    {(() => {
+                                        const stepsData = kompetisiDetail?.registration_steps as any;
+                                        const steps = (() => {
+                                            if (Array.isArray(stepsData) && stepsData.length > 0) return stepsData;
+                                            if (typeof stepsData === 'string' && stepsData.trim().length > 0) {
+                                                try {
+                                                    const parsed = JSON.parse(stepsData);
+                                                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                                                } catch (e) {
+                                                    console.error("Failed to parse registration_steps:", e);
+                                                }
+                                            }
+                                            return registerStep;
+                                        })();
+
+                                        return steps.map((step: any, idx: number) => (
+                                            <div
+                                                key={idx}
+                                                className="group relative bg-white/90 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 border border-red/10 hover:border-red/20 shadow-md hover:shadow-lg hover:shadow-red/10 transition-all duration-300 hover:-translate-y-1"
+                                            >
+                                                {/* Mobile Optimized Step Content */}
+                                                <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+                                                    {/* Step Number - Smaller on Mobile */}
+                                                    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `linear-gradient(to bottom right, ${kompetisiDetail?.primary_color || '#DC2626'}, ${kompetisiDetail?.primary_color || '#DC2626'}80)` }}>
+                                                        <span className="text-white font-bebas text-sm sm:text-base md:text-lg font-bold">
+                                                            {step.number || idx + 1}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-bebas text-sm sm:text-base md:text-lg lg:text-xl mb-1 sm:mb-2 leading-tight" style={{ color: kompetisiDetail?.primary_color || '#DC2626' }}>
+                                                            {step.title}
+                                                        </h3>
+                                                        <p className="text-xs sm:text-sm md:text-sm text-black/70 font-plex leading-relaxed">
+                                                            {step.desc}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Decorative elements - Smaller on Mobile */}
+                                                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full group-hover:bg-red/40 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}20` }}></div>
+                                                <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full group-hover:bg-red/30 transition-colors duration-300" style={{ backgroundColor: `${kompetisiDetail?.primary_color || '#DC2626'}15` }}></div>
+
+                                                {/* Hover Effect Overlay */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-red/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg sm:rounded-xl"></div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+
+                                {/* Mobile CTA Button */}
+                                <div className="text-center mt-6 sm:mt-8 md:mt-10">
+                                    <button
+                                        onClick={() => {
+                                            window.scrollTo(0, 0);
+                                        }}
+                                        className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-plex font-semibold text-white hover:bg-red/90 transition-all duration-300 rounded-lg sm:rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red/30"
+                                        style={{ backgroundColor: kompetisiDetail?.primary_color || '#DC2626' }}
+                                    >
+                                        <span>Mulai Daftar Sekarang</span>
+                                        <svg
+                                            className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M17 8l4 4m0 0l-4 4m4-4H3"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )
+            }
 
             {/* Enhanced Contact Section - Fixed Layout */}
             <section className="relative w-full flex flex-col justify-center items-center bg-gradient-to-br from-white via-blue/[0.02] to-white overflow-hidden py-12 md:py-16 lg:py-20">
@@ -563,7 +577,7 @@ const HomeTemplateDefault = () => {
                 isOpen={isRegistrationOpen}
                 onClose={() => setIsRegistrationOpen(false)}
             />
-        </div>
+        </div >
     );
 };
 
