@@ -43,6 +43,31 @@ const AdminLayout: React.FC = () => {
   };
 
   const menuItems = [
+    // Super Admin Only Section
+    ...(isSuperAdmin ? [
+      {
+        icon: Building2,
+        label: 'Penyelenggara',
+        path: '/admin/penyelenggara',
+        active: location.pathname === '/admin/penyelenggara',
+        section: 'super'
+      },
+      {
+        icon: Users,
+        label: 'Manajemen User',
+        path: '/admin/users',
+        active: location.pathname === '/admin/users',
+        section: 'super'
+      },
+      {
+        icon: Trophy,
+        label: 'Manajemen Kompetisi',
+        path: '/admin/kompetisi',
+        active: location.pathname === '/admin/kompetisi',
+        section: 'super'
+      },
+    ] : []),
+    // Common Admin Items
     {
       icon: Trophy,
       label: 'Validasi Peserta',
@@ -73,19 +98,14 @@ const AdminLayout: React.FC = () => {
       path: '/admin/settings',
       active: location.pathname === '/admin/settings'
     },
-    ...(isSuperAdmin ? [{
-      icon: Building2,
-      label: 'Penyelenggara',
-      path: '/admin/penyelenggara',
-      active: location.pathname === '/admin/penyelenggara'
-    }] : []),
   ];
 
   if (!isAdmin) {
     return null;
   }
 
-  const displayName = user?.admin?.nama_admin || user?.email || 'Admin';
+  const displayName = user?.super_admin?.nama || user?.admin?.nama_admin || user?.email || 'Admin';
+  const roleLabel = isSuperAdmin ? 'Super Administrator' : 'Administrator';
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F5FBEF' }}>
@@ -111,29 +131,39 @@ const AdminLayout: React.FC = () => {
 
           {/* Navigation */}
           <nav className="p-6 space-y-2">
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${item.active
-                  ? 'bg-red text-white shadow-md'
-                  : 'hover:bg-red/10 hover:text-red hover:shadow-sm'
-                  }`}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon
-                    size={20}
-                    className={`transition-colors ${item.active ? 'text-yellow' : 'text-black group-hover:text-red'}`}
+            {isSuperAdmin && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">Super Admin</p>
+              </div>
+            )}
+            {menuItems.map((item, index) => (
+              <React.Fragment key={item.path}>
+                {/* Separator after Super Admin section */}
+                {isSuperAdmin && index === 2 && (
+                  <div className="my-4 border-t border-gray-200" />
+                )}
+                <button
+                  onClick={() => navigate(item.path)}
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${item.active
+                    ? 'bg-red text-white shadow-md'
+                    : 'hover:bg-red/10 hover:text-red hover:shadow-sm'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon
+                      size={20}
+                      className={`transition-colors ${item.active ? 'text-yellow' : 'text-black group-hover:text-red'}`}
+                    />
+                    <span className="font-medium text-base">
+                      {item.label}
+                    </span>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className={`transition-all duration-200 group-hover:translate-x-0.5 ${item.active ? 'text-yellow' : 'text-black/40 group-hover:text-red'}`}
                   />
-                  <span className="font-medium text-base">
-                    {item.label}
-                  </span>
-                </div>
-                <ChevronRight
-                  size={16}
-                  className={`transition-all duration-200 group-hover:translate-x-0.5 ${item.active ? 'text-yellow' : 'text-black/40 group-hover:text-red'}`}
-                />
-              </button>
+                </button>
+              </React.Fragment>
             ))}
           </nav>
 

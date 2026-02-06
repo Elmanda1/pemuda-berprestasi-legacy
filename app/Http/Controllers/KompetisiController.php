@@ -97,6 +97,7 @@ class KompetisiController extends Controller
         $validator = Validator::make($request->all(), [
             'id_penyelenggara' => 'required|exists:tb_penyelenggara,id_penyelenggara',
             'nama_event' => 'required|string',
+            'tipe_kompetisi' => 'required|in:MASTER,TUNGGAL',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'status' => 'required|in:PENDAFTARAN,SEDANG_DIMULAI,SELESAI,DIBATALKAN', // Enum check
@@ -133,7 +134,7 @@ class KompetisiController extends Controller
             // Better create first to get ID for filename if choosing that pattern, 
             // but update pattern at line 107 uses $id. 
             // For create, we can use a temporary name or timestamp.
-            
+
             $kompetisi = Kompetisi::create($data);
             $id = $kompetisi->id_kompetisi;
 
@@ -162,7 +163,7 @@ class KompetisiController extends Controller
             $user = User::create([
                 'email' => $data['admin_email'],
                 'password_hash' => Hash::make($data['admin_password']),
-                'role' => 'ADMINKOMPETISI',
+                'role' => 'ADMIN_KOMPETISI',
             ]);
 
             AdminKompetisi::create([

@@ -161,6 +161,23 @@ Route::prefix('v1')->group(function () {
             Route::get('{id}/numbering-status', 'LapanganController@getNumberingStatus');
         });
 
+        // Super Admin: User Management
+        Route::prefix('admin/users')->group(function () {
+            Route::get('/', 'UserController@index');
+            Route::post('/', 'UserController@store');
+            Route::delete('{id}', 'UserController@destroy');
+            Route::get('penyelenggara-list', 'UserController@getPenyelenggaraList');
+            Route::get('kompetisi-list', 'UserController@getKompetisiList');
+        });
+
+        // Super Admin: Penyelenggara Management
+        Route::prefix('admin/penyelenggara')->group(function () {
+            Route::get('/', 'PenyelenggaraController@index');
+            Route::post('/', 'PenyelenggaraController@store');
+            Route::put('{id}', 'PenyelenggaraController@update');
+            Route::delete('{id}', 'PenyelenggaraController@destroy');
+        });
+
         // Admin Stats
         Route::get('admin/stats', 'DashboardController@getAdminStats');
     });

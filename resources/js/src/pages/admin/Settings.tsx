@@ -42,7 +42,12 @@ const SettingsPage: React.FC = () => {
   });
   const [activeThemeTab, setActiveThemeTab] = useState<string>('tampilan');
 
-  const { kompetisiList, updateKompetisiTheme, fetchKompetisiList, loadingKompetisi, createKompetisi } = useKompetisi();
+  // const { kompetisiList, updateKompetisiTheme, fetchKompetisiList, loadingKompetisi, createKompetisi } = useKompetisi(); // Removed
+  const kompetisiList: any[] = [];
+  const updateKompetisiTheme = () => { };
+  const fetchKompetisiList = () => { };
+  const loadingKompetisi = false;
+  const createKompetisi = () => { };
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     primary_color: '',
@@ -95,6 +100,7 @@ const SettingsPage: React.FC = () => {
     tanggal_selesai: '',
     id_penyelenggara: '1', // Default
     status: 'PENDAFTARAN',
+    tipe_kompetisi: 'TUNGGAL',
     primary_color: '#990D35',
     secondary_color: '#F5B700',
     template_type: 'default',
@@ -150,8 +156,8 @@ const SettingsPage: React.FC = () => {
     { id: 'security', label: 'Keamanan', icon: Shield },
     { id: 'notifications', label: 'Notifikasi', icon: Bell },
     { id: 'system', label: 'Sistem', icon: Database },
-    { id: 'email', label: 'Email', icon: Mail },
-    { id: 'kompetisi', label: 'Pengaturan Website', icon: Trophy }
+    { id: 'email', label: 'Email', icon: Mail }
+    // { id: 'kompetisi', label: 'Pengaturan Website', icon: Trophy }
   ];
 
   const renderProfileTab = () => (
@@ -749,6 +755,7 @@ const SettingsPage: React.FC = () => {
           tanggal_selesai: '',
           id_penyelenggara: '1',
           status: 'PENDAFTARAN',
+          tipe_kompetisi: 'TUNGGAL',
           primary_color: '#990D35',
           secondary_color: '#F5B700',
           template_type: 'default',
@@ -1065,6 +1072,60 @@ const SettingsPage: React.FC = () => {
             <div className="p-8">
               {addStep === 1 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
+                  {/* Competition Type Selection */}
+                  <div className="max-w-xl mx-auto text-center mb-8">
+                    <h5 className="font-inter font-bold text-xl text-gray-900 mb-2">Pilih Tipe Kompetisi</h5>
+                    <p className="text-sm text-gray-500">Tentukan jenis kompetisi yang akan dibuat.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div
+                      onClick={() => setNewKompData({ ...newKompData, tipe_kompetisi: 'MASTER' })}
+                      className={`cursor-pointer group relative rounded-2xl border-4 p-6 transition-all hover:-translate-y-2 ${newKompData.tipe_kompetisi === 'MASTER' ? 'border-red ring-4 ring-red/10 bg-red/5' : 'border-white hover:border-red/30 bg-white'
+                        }`}
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className={`p-3 rounded-xl ${newKompData.tipe_kompetisi === 'MASTER' ? 'bg-red text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          <Database size={24} />
+                        </div>
+                        <div>
+                          <h6 className="font-bold text-lg text-gray-900">Master Kompetisi</h6>
+                          <span className="text-xs font-semibold text-gray-500">Landing Page Only</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Pilihan ini hanya membuat Landing Page informasi tanpa fitur manajemen pertandingan. Cocok untuk event induk atau portal informasi.
+                      </p>
+                      <div className={`mt-4 w-6 h-6 rounded-full border-2 flex items-center justify-center ml-auto ${newKompData.tipe_kompetisi === 'MASTER' ? 'bg-red border-red text-white' : 'border-gray-300'}`}>
+                        {newKompData.tipe_kompetisi === 'MASTER' && <span className="text-[10px]">✓</span>}
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setNewKompData({ ...newKompData, tipe_kompetisi: 'TUNGGAL' })}
+                      className={`cursor-pointer group relative rounded-2xl border-4 p-6 transition-all hover:-translate-y-2 ${newKompData.tipe_kompetisi === 'TUNGGAL' ? 'border-red ring-4 ring-red/10 bg-red/5' : 'border-white hover:border-red/30 bg-white'
+                        }`}
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className={`p-3 rounded-xl ${newKompData.tipe_kompetisi === 'TUNGGAL' ? 'bg-red text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          <Trophy size={24} />
+                        </div>
+                        <div>
+                          <h6 className="font-bold text-lg text-gray-900">Kompetisi Tunggal</h6>
+                          <span className="text-xs font-semibold text-gray-500">Full Features</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Kompetisi standar dengan fitur lengkap: Pendaftaran Atlet, Drawing, Bagan Pertandingan, dan Manajemen Event penuh.
+                      </p>
+                      <div className={`mt-4 w-6 h-6 rounded-full border-2 flex items-center justify-center ml-auto ${newKompData.tipe_kompetisi === 'TUNGGAL' ? 'bg-red border-red text-white' : 'border-gray-300'}`}>
+                        {newKompData.tipe_kompetisi === 'TUNGGAL' && <span className="text-[10px]">✓</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-8"></div>
+
                   <div className="max-w-xl mx-auto text-center mb-8">
                     <h5 className="font-inter font-bold text-xl text-gray-900 mb-2">Pilih Template Website</h5>
                     <p className="text-sm text-gray-500">Tentukan struktur dasar layout untuk website kompetisi Anda.</p>
@@ -2882,7 +2943,7 @@ const SettingsPage: React.FC = () => {
       case 'notifications': return renderNotificationsTab();
       case 'system': return renderSystemTab();
       case 'email': return renderEmailTab();
-      case 'kompetisi': return renderKompetisiTab();
+      // case 'kompetisi': return renderKompetisiTab();
       default: return renderProfileTab();
     }
   };

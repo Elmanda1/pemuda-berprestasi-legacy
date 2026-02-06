@@ -54,6 +54,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminStats from "./pages/admin/AdminStats";
 import Reports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
+import AdminKompetisi from "./pages/admin/AdminKompetisi";
+import Penyelenggara from "./pages/admin/Penyelenggara";
 import JadwalPertandingan from "./pages/adminkomp/JadwalTanding";
 import StatistikAdminKomp from "./pages/adminkomp/Statistik";
 
@@ -252,7 +254,8 @@ export default function AppRoutes() {
           <Route path="statistik" element={<AdminStats />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="penyelenggara" element={<div>Halaman Penyelenggara (Under Construction)</div>} />
+          <Route path="kompetisi" element={<AdminKompetisi />} />
+          <Route path="penyelenggara" element={<Penyelenggara />} />
         </Route>
 
         {/* Auth routes - only accessible when not logged in */}
