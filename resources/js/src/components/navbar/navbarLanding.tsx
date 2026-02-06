@@ -1,4 +1,4 @@
-import {
+  import {
   ChevronDown,
   Menu,
   X,
@@ -128,8 +128,8 @@ const NavbarLanding = ({
   const getDashboardLink = () => {
     if (user?.role === "PELATIH")
       return { to: "/dashboard/dojang", label: "Dashboard", icon: Home };
-    if (user?.role === "ADMIN")
-      return { to: "/admin/validasi-peserta", label: "Dashboard", icon: Home };
+    if (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN")
+      return { to: "/admin/statistik", label: "Dashboard", icon: Home };
     if (user?.role === "ADMIN_KOMPETISI")
       return { to: "/admin-kompetisi", label: "Dashboard", icon: Home };
     return { to: "/", label: "Dashboard", icon: Home }; // fallback
@@ -220,7 +220,7 @@ const NavbarLanding = ({
                       style={styles.textStyle}
                     />
                     <span className="max-w-24 xl:max-w-48 truncate" style={styles.textStyle}>
-                      {user?.pelatih?.nama_pelatih ?? "User"}
+                      {user?.super_admin?.nama || user?.admin_penyelenggara?.nama || user?.pelatih?.nama_pelatih || user?.admin_kompetisi?.nama || "User"}
                     </span>
                     <ChevronDown
                       size={14}
@@ -369,7 +369,7 @@ const NavbarLanding = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-plex font-semibold truncate text-sm" style={{ color: kompetisiDetail?.primary_color || '#dc2626' }}>
-                        {user?.pelatih?.nama_pelatih ?? "User"}
+                        {user?.super_admin?.nama || user?.admin_penyelenggara?.nama || user?.pelatih?.nama_pelatih || user?.admin_kompetisi?.nama || "User"}
                       </p>
                       <p className="text-xs text-gray-500">Logged in</p>
                     </div>

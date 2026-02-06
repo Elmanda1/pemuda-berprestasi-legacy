@@ -61,6 +61,11 @@ class User extends Authenticatable
         return $this->hasOne(SuperAdmin::class, 'id_akun', 'id_akun');
     }
 
+    public function admin()
+    {
+        return $this->admin_penyelenggara();
+    }
+
     public function pelatih()
     {
         return $this->hasOne(Pelatih::class, 'id_akun', 'id_akun');

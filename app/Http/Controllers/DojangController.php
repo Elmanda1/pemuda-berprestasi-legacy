@@ -10,8 +10,11 @@ use App\Models\Kompetisi;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+use App\Traits\HasScopedAccess;
+
 class DojangController extends Controller
 {
+    use HasScopedAccess;
     // Check name availability
     public function checkNameAvailability(Request $request)
     {
@@ -27,7 +30,7 @@ class DojangController extends Controller
     // Get stats (total dojang)
     public function getStats()
     {
-        $total = Dojang::count();
+        $total = $this->scopeByOrganizer(Dojang::query())->count();
         return response()->json(['totalDojang' => $total]);
     }
 
@@ -110,6 +113,7 @@ class DojangController extends Controller
         $search = $request->query('search');
 
         $query = Dojang::withCount('atlet');
+        $this->scopeByOrganizer($query);
 
         if ($search) {
             $query->where('nama_dojang', 'like', "%{$search}%");
@@ -182,12 +186,10 @@ class DojangController extends Controller
 
         $data = $request->except(['logo']);
 
-        if ($request->hasFile('logo')) {
-            $file = $request->file('logo');
-            $filename = time() . '_' . Str::slug($request->nama_dojang ?? $dojang->nama_dojang) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/dojang/logos'), $filename);
-            $data['logo'] = $filename;
-        }
+                $file = $request->file('logo');
+                $dojangName = $request->has('nama_dojang') ? $request->nama_dojang : $dojang->nama_dojang;
+                $filename = time() . '_' . Str::slug($dojangName) . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/dojang/logos'), $filename);
 
         $dojang->update($data);
 

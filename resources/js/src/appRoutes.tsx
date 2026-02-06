@@ -80,7 +80,7 @@ import BulkGenerateIDCard from "./pages/adminkomp/BulkGenerateIDCard";
 // Protected Route Component
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "ADMIN" | "PELATIH" | "ADMIN_KOMPETISI";
+  requiredRole?: "ADMIN" | "PELATIH" | "ADMIN_KOMPETISI" | "SUPER_ADMIN";
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -107,6 +107,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check role requirement
+  // Super Admin can access everything
+  if (user?.role === "SUPER_ADMIN") {
+    return <>{children}</>;
+  }
+
   if (requiredRole && user?.role !== requiredRole) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -179,7 +184,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Redirect based on user role if already authenticated
   if (isAuthenticated && user) {
-    if (user.role === "ADMIN") {
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
       return <Navigate to="/admin" replace />;
     } else if (user.role === "PELATIH") {
       return <Navigate to="/dashboard" replace />;
@@ -247,6 +252,7 @@ export default function AppRoutes() {
           <Route path="statistik" element={<AdminStats />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="penyelenggara" element={<div>Halaman Penyelenggara (Under Construction)</div>} />
         </Route>
 
         {/* Auth routes - only accessible when not logged in */}

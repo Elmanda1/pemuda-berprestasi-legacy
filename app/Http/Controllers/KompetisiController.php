@@ -18,8 +18,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+use App\Traits\HasScopedAccess;
+
 class KompetisiController extends Controller
 {
+    use HasScopedAccess;
     // Public: Get All
     public function getAll(Request $request)
     {
@@ -32,6 +35,9 @@ class KompetisiController extends Controller
                 $q->select('id_penyelenggara', 'nama_penyelenggara', 'email');
             }
         ]);
+
+        $this->scopeByOrganizer($query);
+        $this->scopeByKompetisi($query);
 
         if ($search) {
             $query->where(function ($q) use ($search) {

@@ -45,9 +45,12 @@ const Login = () => {
     if (isAuthenticated && user) {
       const redirectTimeout = setTimeout(() => {
         // Check user role and redirect accordingly
-        if (user.role === 'ADMIN') {
+        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
           navigate("/admin", { replace: true });
-          toast.success("Login berhasil sebagai Admin!");
+          toast.success(`Login berhasil sebagai ${user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}!`);
+        } else if (user.role === 'ADMIN_KOMPETISI') {
+          navigate("/admin-kompetisi", { replace: true });
+          toast.success("Login berhasil sebagai Admin Kompetisi!");
         } else if (user.role === 'PELATIH') {
           navigate("/", { replace: true });
           toast.success("Login berhasil sebagai Pelatih!");

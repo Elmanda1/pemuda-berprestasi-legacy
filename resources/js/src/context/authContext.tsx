@@ -140,7 +140,7 @@ const authAPI = {
 interface User {
   id_akun: number;
   email: string;
-  role: 'ADMIN' | 'PELATIH' | 'ADMIN_KOMPETISI';
+  role: 'ADMIN' | 'PELATIH' | 'ADMIN_KOMPETISI' | 'SUPER_ADMIN';
   admin?: {
     id_admin: number;
     nama_admin: string;
@@ -162,6 +162,10 @@ interface User {
     nama: string;
     id_kompetisi: number;
   };
+  super_admin?: {
+    id_super_admin: number;
+    nama: string;
+  };
 }
 
 interface AuthContextType {
@@ -178,6 +182,7 @@ interface AuthContextType {
   // Computed values
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isPelatih: boolean;
   isAdminKompetisi: boolean;
   userName: string;
@@ -342,10 +347,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // ===== COMPUTED VALUES =====
   const isAuthenticated = !!user && !!token;
-  const isAdmin = user?.role === 'ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin;
   const isPelatih = user?.role === 'PELATIH';
   const isAdminKompetisi = user?.role === 'ADMIN_KOMPETISI';
-  const userName = user?.admin?.nama_admin || user?.pelatih?.nama_pelatih || user?.admin_kompetisi?.nama || user?.email || 'User';
+  const userName = user?.admin?.nama_admin || user?.pelatih?.nama_pelatih || user?.admin_kompetisi?.nama || user?.super_admin?.nama || user?.email || 'User';
 
   // ===== CONTEXT VALUE =====
   const value: AuthContextType = {
@@ -362,6 +368,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Computed
     isAuthenticated,
     isAdmin,
+    isSuperAdmin,
     isPelatih,
     isAdminKompetisi,
     userName,

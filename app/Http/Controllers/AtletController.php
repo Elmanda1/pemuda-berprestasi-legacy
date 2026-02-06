@@ -9,15 +9,30 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+use App\Traits\HasScopedAccess;
+
 class AtletController extends Controller
 {
+    use HasScopedAccess;
     // Public: Get Stats
     public function getStats()
     {
+        $orgId = $this->getOrganizerId();
+        $query = Atlet::query();
+        
+        if ($orgId) {
+            $query->whereIn('id_dojang', function($q) use ($orgId) {
+                $q->select('id_dojang')->from('tb_dojang')->where('id_penyelenggara', $orgId);
+            });
+        }
+
+        $lakiQuery = clone $query;
+        $perempuanQuery = clone $query;
+        
         $stats = [
-            'total' => Atlet::count(),
-            'laki_laki' => Atlet::where('jenis_kelamin', 'LAKI_LAKI')->count(),
-            'perempuan' => Atlet::where('jenis_kelamin', 'PEREMPUAN')->count(),
+            'total' => $query->count(),
+            'laki_laki' => $lakiQuery->where('jenis_kelamin', 'LAKI_LAKI')->count(),
+            'perempuan' => $perempuanQuery->where('jenis_kelamin', 'PEREMPUAN')->count(),
         ];
         return response()->json(['success' => true, 'data' => $stats]);
     }
@@ -92,7 +107,8 @@ class AtletController extends Controller
         foreach ($files as $field) {
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
-                $filename = time() . '_' . $field . '_' . Str::slug($request->nama_atlet ?? $atlet->nama_atlet) . '.' . $file->getClientOriginalExtension();
+                $atletName = $request->has('nama_atlet') ? $request->nama_atlet : $atlet->nama_atlet;
+                $filename = time() . '_' . $field . '_' . Str::slug($atletName) . '.' . $file->getClientOriginalExtension();
                 $file->move(public_path("uploads/atlet/{$field}"), $filename);
                 $data[$field] = $filename;
             }
@@ -117,6 +133,13 @@ class AtletController extends Controller
     {
         $limit = $request->query('limit', 1000);
         $query = Atlet::query();
+        
+        $orgId = $this->getOrganizerId();
+        if ($orgId) {
+            $query->whereIn('id_dojang', function($q) use ($orgId) {
+                $q->select('id_dojang')->from('tb_dojang')->where('id_penyelenggara', $orgId);
+            });
+        }
 
         if ($request->id_dojang)
             $query->where('id_dojang', $request->id_dojang);

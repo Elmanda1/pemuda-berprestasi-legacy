@@ -1,6 +1,7 @@
 // src/pages/admin/AdminStats.tsx
 import React, { useState, useEffect } from 'react';
-import { Users, Trophy, Building2, Activity, TrendingUp, Loader } from 'lucide-react';
+import { Users, Trophy, Building2, Activity, TrendingUp, Loader, ChevronRight, LayoutList } from 'lucide-react';
+import { useAuth } from '../../context/authContext';
 import { apiClient } from "../../config/api";
 
 interface Stats {
@@ -12,6 +13,15 @@ interface Stats {
   recentActivity: ActivityItem[];
   userGrowth: GrowthData[];
   atletByCategory: CategoryData[];
+  detailPenyelenggara?: PenyelenggaraDetail[];
+}
+
+interface PenyelenggaraDetail {
+  id: number;
+  nama: string;
+  totalKompetisi: number;
+  totalDojang: number;
+  totalAtlet: number;
 }
 
 interface ActivityItem {
@@ -36,8 +46,8 @@ interface CategoryData {
 const adminService = {
   getStats: async (): Promise<Stats> => {
     try {
-      const response = await apiClient.get('/admin/stats');
-      return response.data;
+      const response = await apiClient.get<Stats>('/admin/stats');
+      return response;
     } catch (error: any) {
       throw {
         data: {
@@ -49,6 +59,7 @@ const adminService = {
 };
 
 const AdminStats: React.FC = () => {
+  const { isSuperAdmin } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +76,7 @@ const AdminStats: React.FC = () => {
       setStats(data);
     } catch (err: any) {
       console.error('Error fetching stats:', err);
-      setError(err.data?.message || 'Gagal memuat statistik');
+      setError(err.message || 'Gagal memuat statistik');
     } finally {
       setLoading(false);
     }
@@ -238,7 +249,7 @@ const AdminStats: React.FC = () => {
       </div>
 
       {/* Growth Chart Placeholder */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">Pertumbuhan User</h2>
           <TrendingUp size={20} className="text-gray-400" />
@@ -257,6 +268,65 @@ const AdminStats: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Detail Penyelenggara for Super Admin */}
+      {isSuperAdmin && stats?.detailPenyelenggara && (
+        <div className="bg-white rounded-xl p-6 shadow-md border border-red/10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red/10 rounded-lg">
+                <LayoutList className="text-red" size={24} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Detail per Penyelenggara</h2>
+                <p className="text-sm text-gray-500">Breakdown data kompetisi, dojang, dan atlet</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Nama Penyelenggara</th>
+                  <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Kompetisi</th>
+                  <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Dojang</th>
+                  <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Atlet</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {stats.detailPenyelenggara.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
+                          {item.nama.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-gray-800">{item.nama}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                        {item.totalKompetisi} Event
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                        {item.totalDojang} Dojang
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                        {item.totalAtlet} Atlet
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Additional Info */}
       <div className="mt-6 text-center text-sm text-gray-500">

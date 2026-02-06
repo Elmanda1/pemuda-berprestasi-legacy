@@ -12,7 +12,8 @@ import {
   UserCheck,
   CreditCard,
   Settings,
-  Home
+  Home,
+  Building2
 } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
@@ -20,7 +21,7 @@ const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
 
   useEffect(() => {
     if (!isAdmin) {
@@ -72,6 +73,12 @@ const AdminLayout: React.FC = () => {
       path: '/admin/settings',
       active: location.pathname === '/admin/settings'
     },
+    ...(isSuperAdmin ? [{
+      icon: Building2,
+      label: 'Penyelenggara',
+      path: '/admin/penyelenggara',
+      active: location.pathname === '/admin/penyelenggara'
+    }] : []),
   ];
 
   if (!isAdmin) {

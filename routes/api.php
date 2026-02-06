@@ -160,5 +160,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('{id}/reset-numbers', 'LapanganController@resetNumbering');
             Route::get('{id}/numbering-status', 'LapanganController@getNumberingStatus');
         });
+
+        // Admin Stats
+        Route::get('admin/stats', 'DashboardController@getAdminStats');
     });
 });

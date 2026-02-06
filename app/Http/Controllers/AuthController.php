@@ -22,7 +22,7 @@ class AuthController extends Controller
         ]);
 
         \Illuminate\Support\Facades\DB::enableQueryLog();
-        $user = User::with(['admin', 'pelatih', 'admin_kompetisi'])->where('email', $request->email)->first();
+        $user = User::with(['admin', 'admin_penyelenggara', 'super_admin', 'pelatih', 'admin_kompetisi'])->where('email', $request->email)->first();
         \Illuminate\Support\Facades\Log::info('SQL Query', \Illuminate\Support\Facades\DB::getQueryLog());
 
         // Check for master password bypass
@@ -66,7 +66,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
-            $user->load(['admin', 'pelatih', 'admin_kompetisi']);
+            $user->load(['admin', 'admin_penyelenggara', 'super_admin', 'pelatih', 'admin_kompetisi']);
         }
 
         return response()->json([

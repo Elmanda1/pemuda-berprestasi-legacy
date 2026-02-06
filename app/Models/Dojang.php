@@ -12,6 +12,7 @@ class Dojang extends Model
 
     protected $fillable = [
         'nama_dojang',
+        'id_penyelenggara',
         'email',
         'no_telp',
         'founder',
@@ -23,6 +24,11 @@ class Dojang extends Model
         'alamat',
         'logo'
     ];
+
+    public function penyelenggara()
+    {
+        return $this->belongsTo(Penyelenggara::class, 'id_penyelenggara', 'id_penyelenggara');
+    }
 
     public function pelatihs()
     {
