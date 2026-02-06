@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class RefactorAdminTables extends Migration
 {
@@ -17,7 +18,7 @@ class RefactorAdminTables extends Migration
         if (Schema::hasTable('tb_admin')) {
             DB::statement('ALTER TABLE tb_admin RENAME TO tb_admin_penyelenggara');
             DB::statement('ALTER TABLE tb_admin_penyelenggara CHANGE id_admin id_admin_penyelenggara INT NOT NULL AUTO_INCREMENT');
-            
+
             Schema::table('tb_admin_penyelenggara', function (Blueprint $table) {
                 // Add id_penyelenggara for the new role structure
                 $table->integer('id_penyelenggara')->nullable()->after('id_akun');
