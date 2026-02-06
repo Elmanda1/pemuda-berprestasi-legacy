@@ -46,3 +46,7 @@ pemuda_prod_new/
 /public/js/
 /public/css/
 /public/mix-manifest.json
+
+# Database dump - shared manually for security
+pemuda-db.sql
+*.sql
