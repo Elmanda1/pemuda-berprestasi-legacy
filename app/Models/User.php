@@ -56,9 +56,9 @@ class User extends Authenticatable
     }
 
     // Relations
-    public function admin()
+    public function super_admin()
     {
-        return $this->hasOne(Admin::class, 'id_akun', 'id_akun');
+        return $this->hasOne(SuperAdmin::class, 'id_akun', 'id_akun');
     }
 
     public function pelatih()
@@ -69,6 +69,11 @@ class User extends Authenticatable
     public function admin_kompetisi()
     {
         return $this->hasOne(AdminKompetisi::class, 'id_akun', 'id_akun');
+    }
+
+    public function admin_penyelenggara()
+    {
+        return $this->hasOne(AdminPenyelenggara::class, 'id_akun', 'id_akun');
     }
 
     public function competitions()

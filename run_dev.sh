@@ -71,13 +71,10 @@ until docker exec pemuda-db mysqladmin ping -u root -proot --silent; do
 done
 echo "Ready!"
 
-# Cek apakah database sudah ada isinya
-# Note: Menggunakan 'pemuda_mvp' karena itu nama database yang dipakai aplikasi
-TABLE_COUNT=$(docker exec pemuda-db mysql -u root -proot -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'pemuda_mvp';" 2>/dev/null || echo "0")
+# Cek apakah database sudah ada datanya (cek baris di tb_akun)
+ROW_COUNT=$(docker exec pemuda-db mysql -u root -proot -N -e "SELECT COUNT(*) FROM tb_akun;" 2>/dev/null || echo "0")
 
-# Hanya import jika VOLUME baru dibuat (FIRST_RUN) DAN database kosong
-# TIDAK import ulang hanya karena container restart
-if [ "$FIRST_RUN" = "true" ] && [ "$TABLE_COUNT" = "0" ]; then
+if [ "$ROW_COUNT" = "0" ] || [ "$FIRST_RUN" = "true" ]; then
     echo "🔄 First run detected - Initializing Application Data..."
     
     echo "📥 Importing Data from SQL Dump (pemuda-db.sql)..."
@@ -93,6 +90,7 @@ if [ "$FIRST_RUN" = "true" ] && [ "$TABLE_COUNT" = "0" ]; then
     echo "🌱 Running Seeders (Users & Access Normalization)..."
     docker exec pemuda-app composer dump-autoload --quiet
     docker exec pemuda-app php artisan db:seed --class=UserSeeder --force
+    docker exec pemuda-app php artisan db:seed --class=CustomRolesSeeder --force
     docker exec pemuda-db mysql -u root -proot pemuda_mvp -e "UPDATE tb_akun SET role = UPPER(role);"
 else
     echo "📊 Database already contains data ($TABLE_COUNT tables) - Skipping import!"

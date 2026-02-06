@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Model
+class SuperAdmin extends Model
 {
-    protected $table = 'tb_admin';
-    protected $primaryKey = 'id_admin';
+    protected $table = 'tb_super_admin';
+    protected $primaryKey = 'id_super_admin';
     public $timestamps = false;
 
     protected $fillable = [
         'nama',
-        'id_akun'
+        'id_akun',
     ];
 
     public function user()
