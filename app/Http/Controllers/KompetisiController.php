@@ -94,6 +94,11 @@ class KompetisiController extends Controller
     // Auth (Admin): Create
     public function create(Request $request)
     {
+        $user = $request->user();
+        if ($user->role !== 'SUPER_ADMIN' && $user->role !== 'ADMIN_PENYELENGGARA') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'id_penyelenggara' => 'required|exists:tb_penyelenggara,id_penyelenggara',
             'nama_event' => 'required|string',

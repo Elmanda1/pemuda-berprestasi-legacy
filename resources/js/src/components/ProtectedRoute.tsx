@@ -5,7 +5,7 @@ import { useAuth } from '../context/authContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'ADMIN' | 'PELATIH';
+  requiredRole?: 'ADMIN_PENYELENGGARA' | 'PELATIH';
   redirectTo?: string;
 }
 
@@ -34,7 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check role requirement
-  if (requiredRole && user?.role !== requiredRole) {
+  if (requiredRole && user?.role !== requiredRole && user?.role !== 'SUPER_ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-auto">

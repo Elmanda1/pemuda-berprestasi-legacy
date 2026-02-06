@@ -252,7 +252,7 @@ const AdminUsers: React.FC = () => {
     
     return (
       <span className={`text-xs px-2 py-1 rounded-full font-medium ${styles[role as keyof typeof styles]}`}>
-        {role === 'ADMIN' ? 'Admin' : 'Pelatih'}
+        {role === 'ADMIN' ? 'Admin Penyelenggara' : 'Pelatih'}
       </span>
     );
   };
@@ -326,7 +326,7 @@ const AdminUsers: React.FC = () => {
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           >
             <option value="ALL">Semua Role</option>
-            <option value="ADMIN">Admin</option>
+            <option value="ADMIN">Admin Penyelenggara</option>
             <option value="PELATIH">Pelatih</option>
           </select>
           
@@ -454,11 +454,10 @@ const AdminUsers: React.FC = () => {
         )}
       </div>
 
-      {/* Stats Footer */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">{users.filter(u => u.role === 'ADMIN').length}</p>
-          <p className="text-sm text-blue-700">Admin</p>
+          <p className="text-sm text-blue-700">Admin Penyelenggara</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-green-600">{users.filter(u => u.role === 'PELATIH').length}</p>
