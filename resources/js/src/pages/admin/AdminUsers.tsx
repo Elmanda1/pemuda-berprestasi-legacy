@@ -1,200 +1,201 @@
 // src/pages/admin/AdminUsers.tsx
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, UserPlus, Loader, AlertTriangle, Users, Eye, Ban, CheckCircle } from 'lucide-react';
+import { Search, Trash2, UserPlus, Loader, AlertTriangle, Users, X, Building2, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../context/authContext';
 
 interface User {
   id_akun: number;
   email: string;
-  role: 'ADMIN' | 'PELATIH';
-  status: 'ACTIVE' | 'INACTIVE';
-  created_at: string;
-  updated_at?: string;
-  admin?: {
-    nama_admin: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'ADMIN_KOMPETISI' | 'PELATIH';
+  nama: string;
+  penyelenggara?: {
+    id_penyelenggara: number;
+    nama_penyelenggara: string;
   };
-  pelatih?: {
-    nama_pelatih: string;
-    dojang?: {
-      nama_dojang: string;
-    };
+  kompetisi?: {
+    id_kompetisi: number;
+    nama_event: string;
+  };
+  dojang?: {
+    id_dojang: number;
+    nama_dojang: string;
   };
 }
 
-interface UserResponse {
-  users: User[];
-  total: number;
-  page?: number;
-  limit?: number;
+interface Penyelenggara {
+  id_penyelenggara: number;
+  nama_penyelenggara: string;
+  email?: string;
 }
 
-// Admin Service untuk mengambil users
-const adminService = {
-  getUsers: async (): Promise<User[]> => {
-    try {
-      // Mock API call - replace with actual API endpoint
-      const response = await fetch('/api/v1/admin/users', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      
-      const data: UserResponse = await response.json();
-      return data.users || data as any; // Handle both wrapped and unwrapped responses
-    } catch (error: any) {
-      console.error('Error fetching users:');
-      
-      // Return mock data for development
-      const mockUsers: User[] = [
-        {
-          id_akun: 1,
-          email: 'admin@taekwondo.com',
-          role: 'ADMIN',
-          status: 'ACTIVE',
-          created_at: '2024-01-15T08:00:00Z',
-          admin: {
-            nama_admin: 'Super Admin'
-          }
-        },
-        {
-          id_akun: 2,
-          email: 'pelatih1@dojang.com',
-          role: 'PELATIH',
-          status: 'ACTIVE',
-          created_at: '2024-02-10T10:30:00Z',
-          pelatih: {
-            nama_pelatih: 'John Doe',
-            dojang: {
-              nama_dojang: 'Dojang Taekwondo Garuda'
-            }
-          }
-        },
-        {
-          id_akun: 3,
-          email: 'pelatih2@dojang.com',
-          role: 'PELATIH',
-          status: 'INACTIVE',
-          created_at: '2024-01-20T14:15:00Z',
-          pelatih: {
-            nama_pelatih: 'Jane Smith',
-            dojang: {
-              nama_dojang: 'Dojang Champions'
-            }
-          }
-        }
-      ];
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (error.message.includes('network') || error.name === 'TypeError') {
-        throw {
-          data: {
-            message: 'Tidak dapat terhubung ke server. Menggunakan data contoh.'
-          }
-        };
-      }
-      
-      return mockUsers;
-    }
-  },
-
-  updateUserStatus: async (userId: number, status: 'ACTIVE' | 'INACTIVE'): Promise<void> => {
-    try {
-      const response = await fetch(`/api/v1/admin/users/${userId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update user status');
-      }
-    } catch (error: any) {
-      throw {
-        data: {
-          message: error.message || 'Gagal mengupdate status user'
-        }
-      };
-    }
-  },
-
-  deleteUser: async (userId: number): Promise<void> => {
-    try {
-      const response = await fetch(`/api/v1/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete user');
-      }
-    } catch (error: any) {
-      throw {
-        data: {
-          message: error.message || 'Gagal menghapus user'
-        }
-      };
-    }
-  }
-};
+interface Kompetisi {
+  id_kompetisi: number;
+  nama_event: string;
+  status: string;
+  penyelenggara?: {
+    nama_penyelenggara: string;
+  };
+}
 
 const AdminUsers: React.FC = () => {
+  const { token, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState<'ALL' | 'ADMIN' | 'PELATIH'>('ALL');
-  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [filterRole, setFilterRole] = useState<'ALL' | 'SUPER_ADMIN' | 'ADMIN' | 'ADMIN_KOMPETISI' | 'PELATIH'>('ALL');
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [stats, setStats] = useState({
+    total_users: 0,
+    super_admin: 0,
+    admin_penyelenggara: 0,
+    admin_kompetisi: 0,
+    pelatih: 0
+  });
+
+  // Create modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    password: '',
+    nama: '',
+    role: 'ADMIN' as 'ADMIN' | 'ADMIN_KOMPETISI',
+    id_penyelenggara: '',
+    id_kompetisi: ''
+  });
+
+  // Dropdown options
+  const [penyelenggaraList, setPenyelenggaraList] = useState<Penyelenggara[]>([]);
+  const [kompetisiList, setKompetisiList] = useState<Kompetisi[]>([]);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [limit, setLimit] = useState(15);
 
   useEffect(() => {
+    if (!isSuperAdmin) {
+      setError('Anda tidak memiliki akses ke halaman ini');
+      setLoading(false);
+      return;
+    }
     fetchUsers();
-  }, []);
+    fetchPenyelenggaraList();
+    fetchKompetisiList();
+  }, [isSuperAdmin, page, filterRole, limit]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminService.getUsers();
-      setUsers(data);
+      const roleParam = filterRole !== 'ALL' ? `&role=${filterRole}` : '';
+      const response = await fetch(`/api/v1/admin/users?page=${page}&limit=${limit}${roleParam}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data = await response.json();
+      setUsers(data.data || []);
+      setTotal(data.total || 0);
+      setTotalPages(data.last_page || 1);
+      if (data.stats) {
+        setStats(data.stats);
+      }
     } catch (err: any) {
-      console.error('Error fetching users:');
-      setError(err.data?.message || 'Gagal memuat data user');
+      console.error('Error fetching users:', err);
+      setError(err.message || 'Gagal memuat data user');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusToggle = async (userId: number, currentStatus: 'ACTIVE' | 'INACTIVE') => {
+  const fetchPenyelenggaraList = async () => {
     try {
-      setActionLoading(userId);
-      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      
-      await adminService.updateUserStatus(userId, newStatus);
-      
-      // Update local state
-      setUsers(prev => prev.map(user => 
-        user.id_akun === userId 
-          ? { ...user, status: newStatus }
-          : user
-      ));
-      
+      const response = await fetch('/api/v1/admin/users/penyelenggara-list', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPenyelenggaraList(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching penyelenggara:', err);
+    }
+  };
+
+  const fetchKompetisiList = async () => {
+    try {
+      const response = await fetch('/api/v1/admin/users/kompetisi-list', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setKompetisiList(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching kompetisi:', err);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!createForm.email || !createForm.password || !createForm.nama) {
+      toast.error('Mohon lengkapi semua field');
+      return;
+    }
+
+    if (createForm.role === 'ADMIN' && !createForm.id_penyelenggara) {
+      toast.error('Pilih penyelenggara untuk Admin');
+      return;
+    }
+
+    if (createForm.role === 'ADMIN_KOMPETISI' && !createForm.id_kompetisi) {
+      toast.error('Pilih kompetisi untuk Admin Kompetisi');
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      const response = await fetch('/api/v1/admin/users', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: createForm.email,
+          password: createForm.password,
+          nama: createForm.nama,
+          role: createForm.role,
+          id_penyelenggara: createForm.role === 'ADMIN' ? parseInt(createForm.id_penyelenggara) : undefined,
+          id_kompetisi: createForm.role === 'ADMIN_KOMPETISI' ? parseInt(createForm.id_kompetisi) : undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Gagal membuat user');
+      }
+
+      toast.success('User berhasil dibuat!');
+      setShowCreateModal(false);
+      setCreateForm({ email: '', password: '', nama: '', role: 'ADMIN', id_penyelenggara: '', id_kompetisi: '' });
+      fetchUsers();
     } catch (err: any) {
-      console.error('Error updating user status:');
-      alert(err.data?.message || 'Gagal mengupdate status user');
+      toast.error(err.message || 'Gagal membuat user');
     } finally {
-      setActionLoading(null);
+      setCreateLoading(false);
     }
   };
 
@@ -205,70 +206,64 @@ const AdminUsers: React.FC = () => {
 
     try {
       setActionLoading(userId);
-      await adminService.deleteUser(userId);
-      
-      // Remove from local state
+      const response = await fetch(`/api/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Gagal menghapus user');
+      }
+
+      toast.success('User berhasil dihapus');
       setUsers(prev => prev.filter(user => user.id_akun !== userId));
-      
     } catch (err: any) {
-      console.error('Error deleting user:');
-      alert(err.data?.message || 'Gagal menghapus user');
+      toast.error(err.message || 'Gagal menghapus user');
     } finally {
       setActionLoading(null);
     }
   };
 
   const filteredUsers = users.filter(user => {
-    const userName = user.admin?.nama_admin || user.pelatih?.nama_pelatih || '';
-    const dojangName = user.pelatih?.dojang?.nama_dojang || '';
-    
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         dojangName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      user.nama.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'ALL' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'ALL' || user.status === filterStatus;
-    
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesRole;
   });
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return 'Invalid date';
-    }
-  };
-
   const getRoleBadge = (role: string) => {
-    const styles = {
-      ADMIN: 'bg-purple-100 text-purple-800 border border-purple-200',
-      PELATIH: 'bg-blue-100 text-blue-800 border border-blue-200'
+    const styles: Record<string, string> = {
+      SUPER_ADMIN: 'bg-red-100 text-red-800 border-red-200',
+      ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
+      ADMIN_KOMPETISI: 'bg-blue-100 text-blue-800 border-blue-200',
+      PELATIH: 'bg-green-100 text-green-800 border-green-200'
     };
-    
+
+    const labels: Record<string, string> = {
+      SUPER_ADMIN: 'Super Admin',
+      ADMIN: 'Admin Penyelenggara',
+      ADMIN_KOMPETISI: 'Admin Kompetisi',
+      PELATIH: 'Pelatih'
+    };
+
     return (
-      <span className={`text-xs px-2 py-1 rounded-full font-medium ${styles[role as keyof typeof styles]}`}>
-        {role === 'ADMIN' ? 'Admin' : 'Pelatih'}
+      <span className={`text-xs px-2 py-1 rounded-full font-medium border ${styles[role] || 'bg-gray-100'}`}>
+        {labels[role] || role}
       </span>
     );
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      ACTIVE: 'bg-green-100 text-green-800 border border-green-200',
-      INACTIVE: 'bg-red-100 text-red-800 border border-red-200'
-    };
-    
+  if (!isSuperAdmin) {
     return (
-      <span className={`text-xs px-2 py-1 rounded-full font-medium ${styles[status as keyof typeof styles]}`}>
-        {status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}
-      </span>
+      <div className="p-6 flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <AlertTriangle className="mx-auto mb-4 text-red-500" size={48} />
+          <p className="text-gray-600">Anda tidak memiliki akses ke halaman ini</p>
+        </div>
+      </div>
     );
-  };
+  }
 
   if (loading) {
     return (
@@ -288,7 +283,7 @@ const AdminUsers: React.FC = () => {
           <Users className="text-gray-600" size={24} />
           <h1 className="text-3xl font-bold text-gray-800">Manajemen User</h1>
         </div>
-        <p className="text-gray-600">Kelola semua user sistem</p>
+        <p className="text-gray-600">Kelola semua user (Admin Penyelenggara & Admin Kompetisi)</p>
       </div>
 
       {error && (
@@ -296,60 +291,51 @@ const AdminUsers: React.FC = () => {
           <AlertTriangle size={20} />
           <div>
             <strong>Error:</strong> {error}
-            <button 
-              onClick={fetchUsers}
-              className="ml-4 text-red-800 underline hover:no-underline"
-            >
+            <button onClick={fetchUsers} className="ml-4 text-red-800 underline hover:no-underline">
               Coba lagi
             </button>
           </div>
         </div>
       )}
 
-      {/* Filters and Search */}
+      {/* Filters and Create Button */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div className="relative md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="relative md:col-span-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Cari berdasarkan nama, email, atau dojang..."
+              placeholder="Cari berdasarkan nama atau email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value as any)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Semua Role</option>
-            <option value="ADMIN">Admin</option>
+            <option value="SUPER_ADMIN">Super Admin</option>
+            <option value="ADMIN">Admin Penyelenggara</option>
+            <option value="ADMIN_KOMPETISI">Admin Kompetisi</option>
             <option value="PELATIH">Pelatih</option>
           </select>
-          
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-          >
-            <option value="ALL">Semua Status</option>
-            <option value="ACTIVE">Aktif</option>
-            <option value="INACTIVE">Nonaktif</option>
-          </select>
-        </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <p className="text-gray-600">
-            Menampilkan <span className="font-semibold">{filteredUsers.length}</span> dari <span className="font-semibold">{users.length}</span> user
-          </p>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <UserPlus size={16} />
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-red text-white rounded-lg hover:bg-red/90 transition-colors font-medium"
+          >
+            <UserPlus size={18} />
             Tambah User
           </button>
         </div>
+
+        <p className="text-gray-600">
+          Menampilkan <span className="font-semibold">{filteredUsers.length}</span> dari <span className="font-semibold">{users.length}</span> user
+        </p>
       </div>
 
       {/* Users Table */}
@@ -360,72 +346,45 @@ const AdminUsers: React.FC = () => {
               <tr>
                 <th className="text-left py-4 px-6 font-semibold text-gray-900">User</th>
                 <th className="text-left py-4 px-6 font-semibold text-gray-900">Role</th>
-                <th className="text-left py-4 px-6 font-semibold text-gray-900">Status</th>
-                <th className="text-left py-4 px-6 font-semibold text-gray-900">Dojang</th>
-                <th className="text-left py-4 px-6 font-semibold text-gray-900">Bergabung</th>
+                <th className="text-left py-4 px-6 font-semibold text-gray-900">Organisasi</th>
                 <th className="text-left py-4 px-6 font-semibold text-gray-900">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => {
-                const userName = user.admin?.nama_admin || user.pelatih?.nama_pelatih || 'N/A';
                 const isLoading = actionLoading === user.id_akun;
-                
+                const orgName = user.penyelenggara?.nama_penyelenggara ||
+                  user.kompetisi?.nama_event ||
+                  user.dojang?.nama_dojang ||
+                  '-';
+
                 return (
                   <tr key={user.id_akun} className="border-t border-gray-200 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6">
                       <div>
-                        <p className="font-medium text-gray-900">{userName}</p>
+                        <p className="font-medium text-gray-900">{user.nama}</p>
                         <p className="text-gray-500 text-sm">{user.email}</p>
                       </div>
                     </td>
                     <td className="py-4 px-6">{getRoleBadge(user.role)}</td>
-                    <td className="py-4 px-6">{getStatusBadge(user.status)}</td>
                     <td className="py-4 px-6">
-                      <span className="text-gray-700">
-                        {user.pelatih?.dojang?.nama_dojang || '-'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {user.penyelenggara && <Building2 size={14} className="text-purple-500" />}
+                        {user.kompetisi && <Trophy size={14} className="text-blue-500" />}
+                        <span className="text-gray-700">{orgName}</span>
+                      </div>
                     </td>
-                    <td className="py-4 px-6 text-gray-600">{formatDate(user.created_at)}</td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-1">
-                        <button 
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
-                          title="Lihat Detail"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        
-                        <button 
-                          onClick={() => handleStatusToggle(user.id_akun, user.status)}
+                      {user.role !== 'SUPER_ADMIN' && (
+                        <button
+                          onClick={() => handleDeleteUser(user.id_akun, user.nama)}
                           disabled={isLoading}
-                          className={`p-2 rounded-lg transition-colors ${
-                            user.status === 'ACTIVE' 
-                              ? 'text-orange-600 hover:bg-orange-50' 
-                              : 'text-green-600 hover:bg-green-50'
-                          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          title={user.status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan'}
-                        >
-                          {isLoading ? (
-                            <Loader size={16} className="animate-spin" />
-                          ) : user.status === 'ACTIVE' ? (
-                            <Ban size={16} />
-                          ) : (
-                            <CheckCircle size={16} />
-                          )}
-                        </button>
-                        
-                        <button 
-                          onClick={() => handleDeleteUser(user.id_akun, userName)}
-                          disabled={isLoading}
-                          className={`p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ${
-                            isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
+                          className={`p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Hapus User"
                         >
-                          <Trash2 size={16} />
+                          {isLoading ? <Loader size={16} className="animate-spin" /> : <Trash2 size={16} />}
                         </button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -438,41 +397,187 @@ const AdminUsers: React.FC = () => {
           <div className="text-center py-12">
             <Users size={48} className="mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500 text-lg">Tidak ada user yang ditemukan</p>
-            {searchTerm && (
-              <button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setFilterRole('ALL');
-                  setFilterStatus('ALL');
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages >= 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Baris per halaman:</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
                 }}
-                className="mt-2 text-blue-600 hover:text-blue-700 underline"
+                className="border border-gray-300 rounded-lg text-sm p-1"
               >
-                Bersihkan filter
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              Halaman {page} dari {totalPages} ({total} total user)
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={18} />
               </button>
-            )}
+              <span className="px-3 py-1 text-sm font-medium">{page}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* Stats Footer */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-red-600">{stats.super_admin}</p>
+          <p className="text-sm text-red-700">Super Admin</p>
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-purple-600">{stats.admin_penyelenggara}</p>
+          <p className="text-sm text-purple-700">Admin Penyelenggara</p>
+        </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{users.filter(u => u.role === 'ADMIN').length}</p>
-          <p className="text-sm text-blue-700">Admin</p>
+          <p className="text-2xl font-bold text-blue-600">{stats.admin_kompetisi}</p>
+          <p className="text-sm text-blue-700">Admin Kompetisi</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{users.filter(u => u.role === 'PELATIH').length}</p>
+          <p className="text-2xl font-bold text-green-600">{stats.pelatih}</p>
           <p className="text-sm text-green-700">Pelatih</p>
         </div>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-600">{users.filter(u => u.status === 'ACTIVE').length}</p>
-          <p className="text-sm text-emerald-700">Aktif</p>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{users.filter(u => u.status === 'INACTIVE').length}</p>
-          <p className="text-sm text-red-700">Nonaktif</p>
-        </div>
       </div>
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800">Tambah User Baru</h2>
+              <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm({ ...createForm, role: e.target.value as any })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                >
+                  <option value="ADMIN">Admin Penyelenggara (Master Kompetisi)</option>
+                  <option value="ADMIN_KOMPETISI">Admin Kompetisi (Kompetisi Tunggal)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                <input
+                  type="text"
+                  value={createForm.nama}
+                  onChange={(e) => setCreateForm({ ...createForm, nama: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                  placeholder="Nama lengkap"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                  placeholder="admin@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                  placeholder="Minimal 6 karakter"
+                />
+              </div>
+
+              {createForm.role === 'ADMIN' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Penyelenggara</label>
+                  <select
+                    value={createForm.id_penyelenggara}
+                    onChange={(e) => setCreateForm({ ...createForm, id_penyelenggara: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                  >
+                    <option value="">Pilih Penyelenggara</option>
+                    {penyelenggaraList.map(p => (
+                      <option key={p.id_penyelenggara} value={p.id_penyelenggara}>
+                        {p.nama_penyelenggara}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {createForm.role === 'ADMIN_KOMPETISI' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kompetisi</label>
+                  <select
+                    value={createForm.id_kompetisi}
+                    onChange={(e) => setCreateForm({ ...createForm, id_kompetisi: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
+                  >
+                    <option value="">Pilih Kompetisi</option>
+                    {kompetisiList.map(k => (
+                      <option key={k.id_kompetisi} value={k.id_kompetisi}>
+                        {k.nama_event} {k.penyelenggara ? `(${k.penyelenggara.nama_penyelenggara})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="flex-1 py-3 bg-red text-white rounded-lg hover:bg-red/90 transition-colors font-medium disabled:opacity-50"
+                >
+                  {createLoading ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
