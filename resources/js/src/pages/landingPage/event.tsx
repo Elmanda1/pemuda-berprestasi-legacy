@@ -1,10 +1,18 @@
+import { useEffect } from "react";
 import CompCard from "../../components/compCard";
 import { useKompetisi } from "../../context/KompetisiContext";
+import { Loader2 } from "lucide-react";
 
 const Event = () => {
-  const { kompetisiDetail } = useKompetisi();
+  const { kompetisiDetail, kompetisiList, fetchKompetisiList, loadingKompetisi } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
   const isModern = templateType === 'modern' || templateType === 'template_b' || templateType === 'template_c';
+
+  useEffect(() => {
+    if (kompetisiList.length === 0) {
+      fetchKompetisiList();
+    }
+  }, []);
 
   const theme = {
     bg: isModern ? '#0a0a0a' : '#FFF5F7',
@@ -70,9 +78,18 @@ const Event = () => {
               <div className="absolute -top-4 -left-4 w-6 h-6 rounded-full blur-sm" style={{ backgroundColor: theme.primary + '1A' }}></div>
               <div className="absolute -bottom-4 -right-4 w-4 h-4 rounded-full blur-sm" style={{ backgroundColor: theme.primary + '26' }}></div>
 
-              <div className="flex flex-col gap-6 md:gap-8 lg:gap-10">
-                <CompCard />
-              </div>
+              {loadingKompetisi && kompetisiList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-12 h-12 animate-spin mb-4" style={{ color: theme.primary }} />
+                  <p className="font-plex font-medium" style={{ color: theme.primary }}>Memuat kompetisi...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-6 md:gap-8 lg:gap-10">
+                  {kompetisiList.map((kompetisi) => (
+                    <CompCard key={kompetisi.id_kompetisi} kompetisi={kompetisi} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
