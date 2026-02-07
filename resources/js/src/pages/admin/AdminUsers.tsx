@@ -445,7 +445,6 @@ const AdminUsers: React.FC = () => {
         )}
       </div>
 
-      {/* Stats Footer */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-red-600">{stats.super_admin}</p>

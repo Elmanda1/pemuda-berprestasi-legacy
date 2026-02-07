@@ -128,7 +128,7 @@ const NavbarLanding = ({
   const getDashboardLink = () => {
     if (user?.role === "PELATIH")
       return { to: "/dashboard/dojang", label: "Dashboard", icon: Home };
-    if (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN")
+    if (user?.role === "ADMIN_PENYELENGGARA" || user?.role === "SUPER_ADMIN")
       return { to: "/admin/statistik", label: "Dashboard", icon: Home };
     if (user?.role === "ADMIN_KOMPETISI")
       return { to: "/admin-kompetisi", label: "Dashboard", icon: Home };

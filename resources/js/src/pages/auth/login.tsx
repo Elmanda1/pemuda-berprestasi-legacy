@@ -47,7 +47,7 @@ const Login = () => {
         // Check user role and redirect accordingly
         if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
           navigate("/admin", { replace: true });
-          toast.success(`Login berhasil sebagai ${user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}!`);
+          toast.success(`Login berhasil sebagai ${user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin Penyelenggara'}!`);
         } else if (user.role === 'ADMIN_KOMPETISI') {
           navigate("/admin-kompetisi", { replace: true });
           toast.success("Login berhasil sebagai Admin Kompetisi!");

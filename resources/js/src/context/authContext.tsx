@@ -140,10 +140,14 @@ const authAPI = {
 interface User {
   id_akun: number;
   email: string;
-  role: 'ADMIN' | 'PELATIH' | 'ADMIN_KOMPETISI' | 'SUPER_ADMIN';
+  role: 'ADMIN_PENYELENGGARA' | 'PELATIH' | 'ADMIN_KOMPETISI' | 'SUPER_ADMIN';
   admin?: {
     id_admin: number;
     nama_admin: string;
+  };
+  admin_penyelenggara?: {
+    id_admin_penyelenggara: number;
+    nama: string;
   };
   pelatih?: {
     id_pelatih: number;
@@ -211,8 +215,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const response = await apiRequest('/auth/me', { method: 'GET' });
           if (response.success && response.data) {
             console.log('✅ User data refreshed from server:', response.data);
-            setUser(response.data);
-            tokenManager.saveUserData(response.data);
+            const userData = response.data;
+            if (userData.role === 'ADMIN') userData.role = 'ADMIN_PENYELENGGARA';
+            setUser(userData);
+            tokenManager.saveUserData(userData);
           } else {
             // Fallback to local data if server call fails but token exists
             const savedUserData = tokenManager.getUserData();
@@ -225,6 +231,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Fallback to local data
           const savedUserData = tokenManager.getUserData();
           if (savedUserData) {
+            if (savedUserData.role === 'ADMIN') savedUserData.role = 'ADMIN_PENYELENGGARA';
             setUser(savedUserData);
           }
         }
@@ -348,7 +355,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // ===== COMPUTED VALUES =====
   const isAuthenticated = !!user && !!token;
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
-  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin;
+  const isAdmin = user?.role === 'ADMIN_PENYELENGGARA' || isSuperAdmin;
   const isPelatih = user?.role === 'PELATIH';
   const isAdminKompetisi = user?.role === 'ADMIN_KOMPETISI';
   const userName = user?.admin?.nama_admin || user?.pelatih?.nama_pelatih || user?.admin_kompetisi?.nama || user?.super_admin?.nama || user?.email || 'User';

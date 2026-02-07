@@ -29,6 +29,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import { useKompetisi } from '../../context/KompetisiContext';
+import { useAuth } from '../../context/authContext';
 import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
 
@@ -1027,7 +1028,7 @@ const SettingsPage: React.FC = () => {
             <h3 className="font-bebas text-2xl tracking-wide text-red">Pengaturan Website</h3>
             <p className="text-sm text-gray-500 font-inter">Kelola tampilan, konten, dan informasi website untuk setiap kompetisi.</p>
           </div>
-          {!isAddingKompetisi && (
+          {!isAddingKompetisi && (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN_PENYELENGGARA') && (
             <button
               onClick={() => setIsAddingKompetisi(true)}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all text-sm font-bold"

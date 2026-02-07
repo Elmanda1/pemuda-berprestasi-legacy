@@ -120,7 +120,7 @@ const AdminLayout: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bebas tracking-wide leading-tight" style={{ color: '#050505' }}>
-                  ADMIN PANEL
+                  PANEL PENYELENGGARA
                 </h1>
                 <p className="text-sm font-medium" style={{ color: '#050505', opacity: 0.7 }}>
                   CJV Management System
@@ -214,7 +214,7 @@ const AdminLayout: React.FC = () => {
           <div className="flex items-center gap-2">
             <Shield style={{ color: '#990D35' }} size={20} />
             <h1 className="text-xl font-bold" style={{ color: '#050505' }}>
-              ADMIN
+              ADMIN PENYELENGGARA
             </h1>
           </div>
         </div>
@@ -240,7 +240,7 @@ const AdminLayout: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bebas" style={{ color: '#050505' }}>
-                    ADMIN PANEL
+                    PANEL PENYELENGGARA
                   </h1>
                 </div>
               </div>
@@ -271,7 +271,7 @@ const AdminLayout: React.FC = () => {
                     {displayName}
                   </p>
                   <p className="text-sm font-medium text-red">
-                    Administrator
+                    Admin Penyelenggara
                   </p>
                 </div>
               </div>

@@ -19,7 +19,7 @@ trait HasScopedAccess
             return null;
         }
 
-        if ($user->role === 'ADMIN') {
+        if ($user->role === 'ADMIN_PENYELENGGARA') {
             return optional($user->admin_penyelenggara)->id_penyelenggara;
         }
 
@@ -54,7 +54,7 @@ trait HasScopedAccess
             if ($id) {
                 $query->where($column, $id);
             }
-        } elseif ($user->role === 'ADMIN') {
+        } elseif ($user->role === 'ADMIN_PENYELENGGARA') {
             // Organizer Admin can see all competitions under their organizer
             $orgId = $this->getOrganizerId();
             if ($orgId) {
