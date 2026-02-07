@@ -36,6 +36,10 @@ class KompetisiController extends Controller
             }
         ]);
 
+        if ($request->query('id_penyelenggara')) {
+            $query->where('id_penyelenggara', $request->query('id_penyelenggara'));
+        }
+
         $this->scopeByOrganizer($query);
         $this->scopeByKompetisi($query);
 

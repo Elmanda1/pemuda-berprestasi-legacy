@@ -168,10 +168,11 @@ class PenyelenggaraController extends Controller
     /**
      * Get landing settings for public view
      */
-    public function getLandingSettings()
+    public function getLandingSettings(Request $request)
     {
-        // Try to get the first penyelenggara as the main one for the landing page
-        $penyelenggara = Penyelenggara::first();
+        // Try to get by ID if provided, otherwise get the first one
+        $id = $request->query('id_penyelenggara');
+        $penyelenggara = $id ? Penyelenggara::find($id) : Penyelenggara::first();
         
         return response()->json([
             'success' => true,

@@ -95,7 +95,7 @@ const Hero = () => {
             {/* CTA Buttons - STYLING TERINTEGRASI */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center pt-2">
               <Link
-                to="/event"
+                to="/events"
                 className={`group relative w-auto px-8 py-4 text-xs md:text-lg font-plex font-semibold border-2 bg-transparent transition-all duration-300 rounded-xl backdrop-blur-sm hover:scale-105 hover:shadow-2xl overflow-hidden ${theme.btnPrimary}`}
               >
                 <span className="relative px-4 z-10">Lihat Kompetisi</span>

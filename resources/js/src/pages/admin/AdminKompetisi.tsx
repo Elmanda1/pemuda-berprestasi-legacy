@@ -5,13 +5,17 @@ import {
     ArrowRight, Edit, Trash2, Eye, Filter, MoreVertical,
     Layout, Save, X, Check, Image as ImageIcon, Type,
     Palette, FileText, ArrowLeftRight, Clock, MessageCircle,
-    HelpCircle, Video, Upload, Settings as SettingsIcon, Database
+    HelpCircle, Video, Upload, Settings as SettingsIcon, Database,
+    Globe, Building2
 } from 'lucide-react';
 import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
 
 const AdminKompetisi = () => {
-    const { kompetisiList, loadingKompetisi: isLoading, fetchKompetisiList: refetch } = useKompetisi();
+    const { loadingKompetisi: isLoading, fetchKompetisiList, kompetisiList: allKompetisi } = useKompetisi();
+    const [viewLevel, setViewLevel] = useState<'organizers' | 'competitions'>('organizers');
+    const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null);
+    const [kompetisiList, setKompetisiList] = useState<any[]>([]);
 
     // State for Wizard
     const [isAddingKompetisi, setIsAddingKompetisi] = useState(false);
@@ -136,23 +140,34 @@ const AdminKompetisi = () => {
 
     const [penyelenggaraList, setPenyelenggaraList] = useState<any[]>([]);
 
-    useEffect(() => {
-        const fetchPenyelenggara = async () => {
-            try {
-                const res: any = await apiClient.get('/admin/penyelenggara?limit=100');
-                const data = res.data || res; // Handle potential pagination wrapper
-                // If paginated, data might be data.data
-                const list = Array.isArray(data) ? data : (data.data || []);
-                setPenyelenggaraList(list);
-                if (list.length > 0) {
-                    setNewKompData(prev => ({ ...prev, id_penyelenggara: list[0].id_penyelenggara }));
-                }
-            } catch (err) {
-                console.error("Failed to fetch penyelenggara", err);
+    const fetchPenyelenggara = async () => {
+        try {
+            const res: any = await apiClient.get('/admin/penyelenggara?limit=100');
+            const data = res.data || res;
+            const list = Array.isArray(data) ? data : (data.data || []);
+            setPenyelenggaraList(list);
+            if (list.length > 0 && !newKompData.id_penyelenggara) {
+                setNewKompData(prev => ({ ...prev, id_penyelenggara: list[0].id_penyelenggara }));
             }
-        };
-        if (isAddingKompetisi) fetchPenyelenggara();
-    }, [isAddingKompetisi]);
+        } catch (err) {
+            console.error("Failed to fetch penyelenggara", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchPenyelenggara();
+    }, []);
+
+    const fetchKompetisiByOrganizer = async (orgId: number) => {
+        try {
+            const res: any = await apiClient.get(`/kompetisi?id_penyelenggara=${orgId}&limit=100`);
+            const data = res.data || res;
+            const list = Array.isArray(data) ? data : (data.data || []);
+            setKompetisiList(list);
+        } catch (err) {
+            console.error("Failed to fetch competitions for organizer", err);
+        }
+    };
 
     // --- Functions ---
     const handleAddKompetisi = async () => {
@@ -184,7 +199,7 @@ const AdminKompetisi = () => {
                 toast.success("Kompetisi berhasil dibuat!");
                 setIsAddingKompetisi(false);
                 setAddStep(1);
-                refetch();
+                fetchKompetisiByOrganizer(Number(newKompData.id_penyelenggara));
             } else {
                 throw new Error((response as any).message || "Gagal membuat kompetisi");
             }
@@ -274,7 +289,7 @@ const AdminKompetisi = () => {
             toast.dismiss(toastId);
             toast.success("Tema kompetisi berhasil diperbarui");
             setEditingId(null);
-            refetch();
+            fetchKompetisiByOrganizer(editData.id_penyelenggara);
         } catch (err) {
             toast.dismiss(toastId);
             toast.error("Gagal memperbarui tema");
@@ -286,24 +301,49 @@ const AdminKompetisi = () => {
     const handleUpdateTutorial = async () => { /* ... */ };
     const handleDeleteTutorial = async (tutId: number) => { /* ... */ };
 
+    const handleOpenLanding = async (org: any) => {
+        const toastId = toast.loading('Memuat pengaturan landing page...');
+        try {
+            const res: any = await apiClient.get(`/landing-settings?id_penyelenggara=${org.id_penyelenggara}`);
+            if (res.success) {
+                setLandingData({
+                    title: res.data.title || '',
+                    subtitle: res.data.subtitle || '',
+                    about_title: res.data.about_title || '',
+                    about_content: res.data.about_content || '',
+                    features_title: res.data.features_title || '',
+                    feature_1_title: res.data.feature_1_title || '',
+                    feature_1_desc: res.data.feature_1_desc || '',
+                    feature_2_title: res.data.feature_2_title || '',
+                    feature_2_desc: res.data.feature_2_desc || '',
+                    feature_3_title: res.data.feature_3_title || '',
+                    feature_3_desc: res.data.feature_3_desc || '',
+                    id_penyelenggara: org.id_penyelenggara
+                });
+                setIsEditingLanding(true);
+            }
+            toast.dismiss(toastId);
+        } catch (err) {
+            toast.dismiss(toastId);
+            toast.error("Gagal memuat pengaturan landing page");
+        }
+    };
+
+    const handleViewCompetitions = (org: any) => {
+        setSelectedOrganizer(org);
+        setViewLevel('competitions');
+        fetchKompetisiByOrganizer(org.id_penyelenggara);
+    };
+
     const handleSaveLanding = async () => {
         const toastId = toast.loading('Menyimpan perubahan landing page...');
         try {
-            // Since we target Penyelenggara with ID 1 for landing page
-            const id = landingData.id_penyelenggara || 1;
-            
-            // We need to fetch the existing penyelenggara data first or just send what we have
-            // The API expects nama_penyelenggara and email which are required
-            const pRes: any = await apiClient.get(`/admin/penyelenggara?limit=100`);
-            const pList = Array.isArray(pRes) ? pRes : (pRes.data || []);
-            const currentP = pList.find((p: any) => p.id_penyelenggara === id);
-
-            if (!currentP) {
-                throw new Error("Penyelenggara utama tidak ditemukan");
-            }
+            const id = landingData.id_penyelenggara;
+            if (!id) throw new Error("ID Penyelenggara tidak valid");
 
             await apiClient.put(`/admin/penyelenggara/${id}`, {
-                ...currentP,
+                nama_penyelenggara: selectedOrganizer?.nama_penyelenggara || penyelenggaraList.find(p => p.id_penyelenggara === id)?.nama_penyelenggara,
+                email: selectedOrganizer?.email || penyelenggaraList.find(p => p.id_penyelenggara === id)?.email,
                 landing_title: landingData.title,
                 landing_subtitle: landingData.subtitle,
                 landing_about_title: landingData.about_title,
@@ -330,25 +370,36 @@ const AdminKompetisi = () => {
         <div className="p-6 md:p-8 space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="font-bebas text-4xl tracking-wide text-gray-900">Manajemen Kompetisi</h1>
-                    <p className="text-gray-500 mt-2 font-inter">Kelola event, branding, dan informasi kompetisi.</p>
+                    <h1 className="font-bebas text-4xl tracking-wide text-gray-900">
+                        {viewLevel === 'organizers' ? 'Manajemen Website' : `Kompetisi: ${selectedOrganizer?.nama_penyelenggara}`}
+                    </h1>
+                    <p className="text-gray-500 mt-2 font-inter">
+                        {viewLevel === 'organizers' 
+                            ? 'Kelola halaman utama dan kompetisi untuk setiap penyelenggara.' 
+                            : 'Kelola event, branding, dan informasi kompetisi di bawah penyelenggara ini.'}
+                    </p>
                 </div>
-                {!isAddingKompetisi && (
-                    <div className="flex gap-3">
+                <div className="flex gap-3">
+                    {viewLevel === 'competitions' && (
                         <button
-                            onClick={() => setIsEditingLanding(true)}
-                            className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-red text-red hover:bg-red/5 transition-all font-bold"
+                            onClick={() => {
+                                setViewLevel('organizers');
+                                setSelectedOrganizer(null);
+                            }}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-all font-bold"
                         >
-                            <Layout size={20} /> Atur Landing Page
+                            <ArrowLeftRight size={20} /> Kembali ke Daftar Website
                         </button>
+                    )}
+                    {!isAddingKompetisi && viewLevel === 'competitions' && (
                         <button
                             onClick={() => setIsAddingKompetisi(true)}
                             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold"
                         >
                             <Plus size={20} /> Buat Kompetisi Baru
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Modal for Landing Page Settings */}
@@ -681,74 +732,142 @@ const AdminKompetisi = () => {
             ) : (
                 /* List & Edit UI */
                 <div className="grid grid-cols-1 gap-6">
-                    {isLoading ? <p>Loading...</p> : kompetisiList.map((komp: any) => (
-                        <div key={komp.id_kompetisi} className={`rounded-2xl border bg-white overflow-hidden transition-all ${editingId === komp.id_kompetisi ? 'border-red ring-1 ring-red' : 'border-gray-200'}`}>
-                            <div className="p-5 flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">{komp.logo_url ? <img src={komp.logo_url} className="w-8 h-8 object-contain" /> : <Trophy size={20} />}</div>
-                                    <div><h4 className="font-bold text-lg">{komp.nama_event}</h4><p className="text-sm text-gray-500">{komp.lokasi}</p></div>
-                                </div>
-                                {editingId !== komp.id_kompetisi && <button onClick={() => handleEdit(komp)} className="px-4 py-2 border rounded-xl hover:bg-gray-50 flex items-center gap-2"><Palette size={16} /> Atur Tema</button>}
-                            </div>
-
-                            {editingId === komp.id_kompetisi && (
-                                <div className="border-t bg-gray-50 p-6">
-                                    {/* Tabs */}
-                                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                                        {['tampilan', 'konten', 'kontak', 'informasi', 'fitur'].map(tab => (
-                                            <button key={tab} onClick={() => setActiveThemeTab(tab)} className={`px-4 py-2 rounded-lg capitalize ${activeThemeTab === tab ? 'bg-white text-red border shadow-sm' : 'text-gray-500 hover:bg-white'}`}>{tab}</button>
-                                        ))}
+                    {viewLevel === 'organizers' ? (
+                        /* Organizers List */
+                        penyelenggaraList.map((org: any) => (
+                            <div key={org.id_penyelenggara} className="rounded-2xl border border-gray-200 bg-white overflow-hidden p-6 hover:shadow-md transition-all">
+                                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-16 h-16 bg-red/5 rounded-2xl flex items-center justify-center border border-red/10">
+                                            <Building2 size={32} className="text-red" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bebas text-2xl tracking-wide text-gray-900">{org.nama_penyelenggara}</h4>
+                                            <div className="flex items-center gap-3 text-sm text-gray-500 mt-1 font-inter">
+                                                <span>{org.email}</span>
+                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                <span>{org.no_telp || 'No Phone'}</span>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    {/* Tampilan Content */}
-                                    {activeThemeTab === 'tampilan' && (
-                                        <div className="space-y-6">
-                                            <div className="bg-white p-4 rounded-xl border">
-                                                <h6 className="font-bold mb-4">Template</h6>
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    {['default', 'modern', 'template_c'].map(t => (
-                                                        <div key={t} onClick={() => setEditData({ ...editData, template_type: t })} className={`p-4 border rounded-xl cursor-pointer ${editData.template_type === t ? 'border-red bg-red/5' : 'border-gray-200'}`}>{t}</div>
-                                                    ))}
+                                    <div className="flex items-center gap-3 w-full md:w-auto">
+                                        <button 
+                                            onClick={() => handleOpenLanding(org)}
+                                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-red text-red hover:bg-red/5 transition-all font-bold"
+                                        >
+                                            <Globe size={18} /> Atur Website
+                                        </button>
+                                        <button 
+                                            onClick={() => handleViewCompetitions(org)}
+                                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold"
+                                        >
+                                            <Trophy size={18} /> Lihat Kompetisi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        /* Competitions List */
+                        isLoading ? <p className="text-center py-12 text-gray-500">Memuat data kompetisi...</p> : (
+                            kompetisiList.length === 0 ? (
+                                <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+                                    <Trophy size={48} className="mx-auto text-gray-300 mb-4" />
+                                    <h5 className="font-bold text-gray-900">Belum Ada Kompetisi</h5>
+                                    <p className="text-gray-500">Penyelenggara ini belum memiliki kompetisi aktif.</p>
+                                </div>
+                            ) : (
+                                kompetisiList.map((komp: any) => (
+                                    <div key={komp.id_kompetisi} className={`rounded-2xl border bg-white overflow-hidden transition-all ${editingId === komp.id_kompetisi ? 'border-red ring-1 ring-red' : 'border-gray-200 hover:shadow-sm'}`}>
+                                        <div className="p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100">
+                                                    {komp.logo_url ? <img src={komp.logo_url} className="w-8 h-8 object-contain" /> : <Trophy size={20} className="text-gray-400" />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-lg text-gray-900">{komp.nama_event}</h4>
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                        <MapPin size={14} />
+                                                        <span>{komp.lokasi}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="bg-white p-4 rounded-xl border grid grid-cols-2 gap-4">
-                                                <div><label className="text-xs font-bold uppercase">Primary Color</label><input type="color" value={editData.primary_color} onChange={e => setEditData({ ...editData, primary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
-                                                <div><label className="text-xs font-bold uppercase">Secondary Color</label><input type="color" value={editData.secondary_color} onChange={e => setEditData({ ...editData, secondary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
-                                            </div>
+                                            {editingId !== komp.id_kompetisi && (
+                                                <div className="flex gap-2">
+                                                     <button 
+                                                        onClick={() => window.open(`/${komp.slug}`, '_blank')}
+                                                        className="p-2.5 text-gray-400 hover:text-red hover:bg-red/5 rounded-xl transition-all"
+                                                        title="Lihat Landing Page"
+                                                    >
+                                                        <Eye size={20} />
+                                                    </button>
+                                                    <button onClick={() => handleEdit(komp)} className="px-4 py-2 border rounded-xl hover:bg-gray-50 flex items-center gap-2 font-bold text-gray-700">
+                                                        <Palette size={16} className="text-red" /> Atur Tema
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                        {editingId === komp.id_kompetisi && (
+                                                <div className="border-t bg-gray-50 p-6">
+                                                    {/* Tabs */}
+                                                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                                                        {['tampilan', 'konten', 'kontak', 'informasi', 'fitur'].map(tab => (
+                                                            <button key={tab} onClick={() => setActiveThemeTab(tab)} className={`px-4 py-2 rounded-lg capitalize ${activeThemeTab === tab ? 'bg-white text-red border shadow-sm' : 'text-gray-500 hover:bg-white'}`}>{tab}</button>
+                                                        ))}
+                                                    </div>
 
-                                    {/* Konten Content */}
-                                    {activeThemeTab === 'konten' && (
-                                        <div className="space-y-6">
-                                            <div className="bg-white p-4 rounded-xl border">
-                                                <h6 className="font-bold mb-2">Hero Section</h6>
-                                                <input type="text" value={editData.hero_title} onChange={e => setEditData({ ...editData, hero_title: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Judul Event" />
-                                                <textarea value={editData.hero_description} onChange={e => setEditData({ ...editData, hero_description: e.target.value })} className="w-full border p-2 rounded h-20" placeholder="Deskripsi" />
-                                            </div>
-                                            <div className="bg-white p-4 rounded-xl border">
-                                                <h6 className="font-bold mb-2">Sambutan</h6>
-                                                <input type="text" value={editData.about_director_name} onChange={e => setEditData({ ...editData, about_director_name: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Nama Ketua" />
-                                                <textarea value={editData.about_description} onChange={e => setEditData({ ...editData, about_description: e.target.value })} className="w-full border p-2 rounded h-32" placeholder="Isi Sambutan" />
-                                            </div>
-                                        </div>
-                                    )}
+                                                    {/* Tampilan Content */}
+                                                    {activeThemeTab === 'tampilan' && (
+                                                        <div className="space-y-6">
+                                                            <div className="bg-white p-4 rounded-xl border">
+                                                                <h6 className="font-bold mb-4">Template</h6>
+                                                                <div className="grid grid-cols-3 gap-4">
+                                                                    {['default', 'modern', 'template_c'].map(t => (
+                                                                        <div key={t} onClick={() => setEditData({ ...editData, template_type: t })} className={`p-4 border rounded-xl cursor-pointer ${editData.template_type === t ? 'border-red bg-red/5' : 'border-gray-200'}`}>{t}</div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div className="bg-white p-4 rounded-xl border grid grid-cols-2 gap-4">
+                                                                <div><label className="text-xs font-bold uppercase">Primary Color</label><input type="color" value={editData.primary_color} onChange={e => setEditData({ ...editData, primary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
+                                                                <div><label className="text-xs font-bold uppercase">Secondary Color</label><input type="color" value={editData.secondary_color} onChange={e => setEditData({ ...editData, secondary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
+                                                            </div>
+                                                        </div>
+                                                    )}
 
-                                    {/* Kontak, Informasi, Fitur (abbreviated for brevity) */}
-                                    {['kontak', 'informasi', 'fitur'].includes(activeThemeTab) && (
-                                        <div className="bg-white p-6 rounded-xl border text-center text-gray-500">
-                                            <p>Pengaturan {activeThemeTab} dapat dikonfigurasi di sini (Sama seperti wizard).</p>
-                                        </div>
-                                    )}
+                                                    {/* Konten Content */}
+                                                    {activeThemeTab === 'konten' && (
+                                                        <div className="space-y-6">
+                                                            <div className="bg-white p-4 rounded-xl border">
+                                                                <h6 className="font-bold mb-2">Hero Section</h6>
+                                                                <input type="text" value={editData.hero_title} onChange={e => setEditData({ ...editData, hero_title: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Judul Event" />
+                                                                <textarea value={editData.hero_description} onChange={e => setEditData({ ...editData, hero_description: e.target.value })} className="w-full border p-2 rounded h-20" placeholder="Deskripsi" />
+                                                            </div>
+                                                            <div className="bg-white p-4 rounded-xl border">
+                                                                <h6 className="font-bold mb-2">Sambutan</h6>
+                                                                <input type="text" value={editData.about_director_name} onChange={e => setEditData({ ...editData, about_director_name: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Nama Ketua" />
+                                                                <textarea value={editData.about_description} onChange={e => setEditData({ ...editData, about_description: e.target.value })} className="w-full border p-2 rounded h-32" placeholder="Isi Sambutan" />
+                                                            </div>
+                                                        </div>
+                                                    )}
 
-                                    <div className="mt-6 flex justify-end gap-2">
-                                        <button onClick={() => setEditingId(null)} className="px-4 py-2 text-gray-500">Batal</button>
-                                        <button onClick={() => handleSaveTheme(komp.id_kompetisi)} className="px-6 py-2 bg-red text-white rounded-xl font-bold">Simpan Perubahan</button>
+                                                    {/* Kontak, Informasi, Fitur (abbreviated for brevity) */}
+                                                    {['kontak', 'informasi', 'fitur'].includes(activeThemeTab) && (
+                                                        <div className="bg-white p-6 rounded-xl border text-center text-gray-500">
+                                                            <p>Pengaturan {activeThemeTab} dapat dikonfigurasi di sini (Sama seperti wizard).</p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mt-6 flex justify-end gap-2">
+                                                        <button onClick={() => setEditingId(null)} className="px-4 py-2 text-gray-500">Batal</button>
+                                                        <button onClick={() => handleSaveTheme(komp.id_kompetisi)} className="px-6 py-2 bg-red text-white rounded-xl font-bold">Simpan Perubahan</button>
+                                                    </div>
+                                                </div>
+                                            )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                ))
+                            )
+                        )
+                    )}
                 </div>
             )}
         </div>

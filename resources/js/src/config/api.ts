@@ -1,18 +1,6 @@
 // API Client dengan error handling yang diperbaiki
 // Detect base path dynamically (untuk hosting di subdirectory seperti /pemudaberprestasi/)
-const getBasePath = (): string => {
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname;
-    // Check if we're in a subdirectory (e.g., /pemudaberprestasi/...)
-    const match = pathname.match(/^(\/[^\/]+)(?:\/|$)/);
-    if (match && match[1] !== '/api') {
-      return match[1];
-    }
-  }
-  return '';
-};
-
-const API_BASE_URL = process.env.MIX_API_URL || `${getBasePath()}/api/v1`;
+const API_BASE_URL = (typeof process !== 'undefined' && process.env.MIX_API_URL) || '/api/v1';
 
 interface ApiResponse<T = any> {
   data: T;

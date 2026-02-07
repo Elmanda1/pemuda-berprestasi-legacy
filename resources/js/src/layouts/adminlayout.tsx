@@ -13,7 +13,8 @@ import {
   CreditCard,
   Settings,
   Home,
-  Building2
+  Building2,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
@@ -60,8 +61,8 @@ const AdminLayout: React.FC = () => {
         section: 'super'
       },
       {
-        icon: Trophy,
-        label: 'Manajemen Kompetisi',
+        icon: Globe,
+        label: 'Manajemen Website',
         path: '/admin/kompetisi',
         active: location.pathname === '/admin/kompetisi',
         section: 'super'
