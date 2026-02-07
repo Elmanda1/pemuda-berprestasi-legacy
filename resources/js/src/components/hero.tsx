@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Video, X, ExternalLink } from 'lucide-react';
 import hero from '../assets/photos/hero.png'
 import { useKompetisi } from "../context/KompetisiContext";
+import { apiClient } from "../config/api";
 
 const Hero = () => {
   const { kompetisiDetail } = useKompetisi();
@@ -35,6 +36,24 @@ const Hero = () => {
 
   const primaryStreamUrl = streamingData.length === 1 ? streamingData[0].url : (legacyLink || '#');
 
+  const [landingSettings, setLandingSettings] = useState<{ title: string; subtitle: string } | null>(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res: any = await apiClient.get('/landing-settings');
+        if (res.success) setLandingSettings(res.data);
+      } catch (err) {
+        console.error("Failed to fetch landing settings", err);
+      }
+    };
+    // Only fetch if we're on the main landing page (no kompetisiDetail)
+    if (!kompetisiDetail) fetchSettings();
+  }, [kompetisiDetail]);
+
+  const displayTitle = landingSettings?.title;
+  const displaySubtitle = landingSettings?.subtitle;
+
   const theme = {
     overlayGradient: isModern ? "from-black/90 via-black/70 to-black/40" : "from-red/90 via-red/70 to-red/40",
     textHighlight: isModern ? "from-white via-gray-200 to-gray-400" : "from-white to-white/80",
@@ -63,17 +82,13 @@ const Hero = () => {
 
             {/* Main Heading */}
             <div className="space-y-2 lg:space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bebas text-white leading-[0.9] tracking-wide drop-shadow-2xl">
-                Welcome to the
-                <span className={`block bg-gradient-to-r ${theme.textHighlight} bg-clip-text text-transparent`}>
-                  Arena
-                </span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bebas text-white leading-[0.9] tracking-wide drop-shadow-2xl whitespace-pre-line">
+                {displayTitle}
               </h1>
 
               {/* Subtitle */}
               <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-plex font-medium text-white/95 max-w-3xl mx-auto md:mx-0 leading-relaxed drop-shadow-lg">
-                Tempat di mana semangat kompetisi bertemu dengan prestasi luar biasa.
-                Bergabunglah dalam pertandingan taekwondo dengan standar internasional.
+                {displaySubtitle}
               </p>
             </div>
 

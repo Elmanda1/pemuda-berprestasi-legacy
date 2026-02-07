@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             // Run additional seeders
             $this->call(TutorialSeeder::class);
             $this->call(CustomRolesSeeder::class);
+            $this->call(LandingPageSeeder::class);
         } else {
             $this->command->error('SQL Dump file not found at: ' . $path);
         }

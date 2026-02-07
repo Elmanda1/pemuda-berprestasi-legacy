@@ -1,10 +1,29 @@
+import React, { useState } from "react";
 import belt from '../assets/photos/belt.jpg'
 import { useKompetisi } from "../context/KompetisiContext";
+import { apiClient } from "../config/api";
 
 const About = () => {
   const { kompetisiDetail } = useKompetisi();
   const templateType = kompetisiDetail?.template_type || 'default';
   const isModern = templateType === 'modern' || templateType === 'template_b';
+
+  const [landingSettings, setLandingSettings] = useState<{ about_title: string; about_content: string } | null>(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res: any = await apiClient.get('/landing-settings');
+        if (res.success) setLandingSettings(res.data);
+      } catch (err) {
+        console.error("Failed to fetch landing settings", err);
+      }
+    };
+    if (!kompetisiDetail) fetchSettings();
+  }, [kompetisiDetail]);
+
+  const displayAboutTitle = landingSettings?.about_title;
+  const displayAboutContent = landingSettings?.about_content;
 
   const theme = {
     bg: isModern ? "bg-black" : "bg-gradient-to-br from-white via-red/[0.02] to-white",
@@ -46,13 +65,8 @@ const About = () => {
 
             {/* Main Heading with Gradient Text */}
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bebas leading-[0.85] tracking-wide">
-                <span className={`bg-gradient-to-r bg-clip-text text-transparent ${theme.gradientText1}`}>
-                  Embrace the Spirit
-                </span>
-                <span className={`block bg-gradient-to-r bg-clip-text text-transparent ${theme.gradientText2}`}>
-                  of Competition
-                </span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bebas leading-[0.85] tracking-wide whitespace-pre-line bg-gradient-to-r bg-clip-text text-transparent from-red via-red/90 to-red/80">
+                {displayAboutTitle}
               </h2>
               {/* Subtle underline accent */}
               <div className={`absolute -bottom-2 left-0 w-16 md:w-24 h-1 bg-gradient-to-r rounded-full ${isModern ? "from-white to-gray-500" : "from-red to-red/60"}`}></div>
@@ -60,53 +74,9 @@ const About = () => {
 
             {/* Enhanced Description */}
             <div className="space-y-4 md:space-y-6 max-w-2xl">
-              <p className="text-base md:text-lg lg:text-xl xl:text-2xl font-plex text-black/85 leading-relaxed font-light">
-                Platform terdepan untuk kompetisi taekwondo internasional yang menghubungkan
-                atlet berprestasi dari seluruh dunia dalam satu arena digital.
+              <p className="text-base md:text-lg lg:text-xl xl:text-2xl font-plex text-black/85 leading-relaxed font-light whitespace-pre-line">
+                {displayAboutContent}
               </p>
-              <p className="text-sm md:text-base lg:text-lg font-plex text-black/70 leading-relaxed">
-                Kami menghadirkan pengalaman kompetisi yang fair, transparan, dan berkualitas
-                tinggi dengan sistem penilaian yang modern dan terstandarisasi internasional.
-              </p>
-            </div>
-
-            {/* Enhanced Features Grid */}
-            <div className="hidden lg:grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 lg:gap-8 pt-6 md:pt-8">
-              <div className={`group space-y-3 md:space-y-4 p-4 md:p-6 rounded-xl md:rounded-2xl transition-all duration-500 hover:shadow-lg ${theme.cardHover}`}>
-                <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br ${theme.iconBg} rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110`}>
-                  <div className={`w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br ${theme.iconInner} rounded-lg shadow-sm`}></div>
-                </div>
-                <h3 className={`text-base md:text-lg font-plex font-semibold transition-colors ${theme.accentText}`}>
-                  Standar Internasional
-                </h3>
-                <p className={`text-xs md:text-sm font-plex leading-relaxed ${theme.textSec}`}>
-                  Mengikuti aturan kompetisi taekwondo dunia dengan presisi tinggi
-                </p>
-              </div>
-
-              <div className={`group space-y-3 md:space-y-4 p-4 md:p-6 rounded-xl md:rounded-2xl transition-all duration-500 hover:shadow-lg ${theme.cardHover}`}>
-                <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br ${theme.iconBg} rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110`}>
-                  <div className={`w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br ${theme.iconInner} rounded-lg shadow-sm`}></div>
-                </div>
-                <h3 className={`text-base md:text-lg font-plex font-semibold transition-colors ${theme.accentText}`}>
-                  Teknologi Modern
-                </h3>
-                <p className={`text-xs md:text-sm font-plex leading-relaxed ${theme.textSec}`}>
-                  Platform digital canggih dengan interface yang intuitif dan responsif
-                </p>
-              </div>
-
-              <div className={`group space-y-3 md:space-y-4 p-4 md:p-6 rounded-xl md:rounded-2xl transition-all duration-500 hover:shadow-lg ${theme.cardHover} sm:col-span-3 md:col-span-1`}>
-                <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br ${theme.iconBg} rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110`}>
-                  <div className={`w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br ${theme.iconInner} rounded-lg shadow-sm`}></div>
-                </div>
-                <h3 className={`text-base md:text-lg font-plex font-semibold transition-colors ${theme.accentText}`}>
-                  Komunitas Global
-                </h3>
-                <p className={`text-xs md:text-sm font-plex leading-relaxed ${theme.textSec}`}>
-                  Menghubungkan atlet dan pelatih dari berbagai belahan dunia
-                </p>
-              </div>
             </div>
           </div>
 

@@ -64,20 +64,26 @@ class UserController extends Controller
 
         // Transform for frontend
         $transformed = $users->getCollection()->map(function ($u) {
-            $name = $u->super_admin->nama ??
-                $u->admin_penyelenggara->nama ??
-                $u->admin_kompetisi->nama ??
-                $u->pelatih->nama_pelatih ??
-                $u->email;
+            $name = $u->email;
+            
+            if ($u->super_admin) {
+                $name = $u->super_admin->nama;
+            } elseif ($u->admin_penyelenggara) {
+                $name = $u->admin_penyelenggara->nama;
+            } elseif ($u->admin_kompetisi) {
+                $name = $u->admin_kompetisi->nama;
+            } elseif ($u->pelatih) {
+                $name = $u->pelatih->nama_pelatih;
+            }
 
             return [
                 'id_akun' => $u->id_akun,
                 'email' => $u->email,
                 'role' => $u->role,
                 'nama' => $name,
-                'penyelenggara' => $u->admin_penyelenggara->penyelenggara ?? null,
-                'kompetisi' => $u->admin_kompetisi->kompetisi ?? null,
-                'dojang' => $u->pelatih->dojang ?? null,
+                'penyelenggara' => ($u->admin_penyelenggara && $u->admin_penyelenggara->penyelenggara) ? $u->admin_penyelenggara->penyelenggara : null,
+                'kompetisi' => ($u->admin_kompetisi && $u->admin_kompetisi->kompetisi) ? $u->admin_kompetisi->kompetisi : null,
+                'dojang' => ($u->pelatih && $u->pelatih->dojang) ? $u->pelatih->dojang : null,
             ];
         });
 
@@ -85,7 +91,7 @@ class UserController extends Controller
         $stats = [
             'total_users' => User::count(),
             'super_admin' => User::where('role', 'SUPER_ADMIN')->count(),
-            'admin_penyelenggara' => User::where('role', 'ADMIN')->count(),
+            'admin_penyelenggara' => User::where('role', 'ADMIN_PENYELENGGARA')->count(),
             'admin_kompetisi' => User::where('role', 'ADMIN_KOMPETISI')->count(),
             'pelatih' => User::where('role', 'PELATIH')->count(),
         ];
@@ -116,8 +122,8 @@ class UserController extends Controller
             'email' => 'required|email|unique:tb_akun,email',
             'password' => 'required|string|min:6',
             'nama' => 'required|string|max:150',
-            'role' => 'required|in:ADMIN,ADMIN_KOMPETISI',
-            'id_penyelenggara' => 'required_if:role,ADMIN|exists:tb_penyelenggara,id_penyelenggara',
+            'role' => 'required|in:ADMIN_PENYELENGGARA,ADMIN_KOMPETISI',
+            'id_penyelenggara' => 'required_if:role,ADMIN_PENYELENGGARA|exists:tb_penyelenggara,id_penyelenggara',
             'id_kompetisi' => 'required_if:role,ADMIN_KOMPETISI|exists:tb_kompetisi,id_kompetisi',
         ]);
 
@@ -136,7 +142,7 @@ class UserController extends Controller
             ]);
 
             // Create role-specific record
-            if ($request->role === 'ADMIN') {
+            if ($request->role === 'ADMIN_PENYELENGGARA') {
                 AdminPenyelenggara::create([
                     'id_akun' => $newUser->id_akun,
                     'nama' => $request->nama,

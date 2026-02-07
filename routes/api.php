@@ -102,6 +102,9 @@ Route::prefix('v1')->group(function () {
         Route::get('{id}/medal-tally', 'KompetisiController@getMedalTally'); // For BracketList
         Route::get('tutorials/{id?}', 'KompetisiController@getTutorials'); // Public tutorials
     });
+
+    // Public Landing Settings
+    Route::get('landing-settings', 'PenyelenggaraController@getLandingSettings');
     // Add public alias for legacy support
     Route::get('public/kompetisi/{id}/medal-tally', 'KompetisiController@getMedalTally');
     Route::get('public/kompetisi/{id}/brackets/{kelasId?}', 'KompetisiController@getBrackets');

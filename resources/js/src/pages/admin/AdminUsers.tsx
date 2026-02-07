@@ -7,7 +7,7 @@ import { useAuth } from '../../context/authContext';
 interface User {
   id_akun: number;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'ADMIN_KOMPETISI' | 'PELATIH';
+  role: 'SUPER_ADMIN' | 'ADMIN_PENYELENGGARA' | 'ADMIN_KOMPETISI' | 'PELATIH';
   nama: string;
   penyelenggara?: {
     id_penyelenggara: number;
@@ -43,7 +43,7 @@ const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState<'ALL' | 'SUPER_ADMIN' | 'ADMIN' | 'ADMIN_KOMPETISI' | 'PELATIH'>('ALL');
+  const [filterRole, setFilterRole] = useState<'ALL' | 'SUPER_ADMIN' | 'ADMIN_PENYELENGGARA' | 'ADMIN_KOMPETISI' | 'PELATIH'>('ALL');
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [stats, setStats] = useState({
@@ -61,7 +61,7 @@ const AdminUsers: React.FC = () => {
     email: '',
     password: '',
     nama: '',
-    role: 'ADMIN' as 'ADMIN' | 'ADMIN_KOMPETISI',
+    role: 'ADMIN_PENYELENGGARA' as 'ADMIN_PENYELENGGARA' | 'ADMIN_KOMPETISI',
     id_penyelenggara: '',
     id_kompetisi: ''
   });
@@ -154,7 +154,7 @@ const AdminUsers: React.FC = () => {
       return;
     }
 
-    if (createForm.role === 'ADMIN' && !createForm.id_penyelenggara) {
+    if (createForm.role === 'ADMIN_PENYELENGGARA' && !createForm.id_penyelenggara) {
       toast.error('Pilih penyelenggara untuk Admin');
       return;
     }
@@ -177,7 +177,7 @@ const AdminUsers: React.FC = () => {
           password: createForm.password,
           nama: createForm.nama,
           role: createForm.role,
-          id_penyelenggara: createForm.role === 'ADMIN' ? parseInt(createForm.id_penyelenggara) : undefined,
+          id_penyelenggara: createForm.role === 'ADMIN_PENYELENGGARA' ? parseInt(createForm.id_penyelenggara) : undefined,
           id_kompetisi: createForm.role === 'ADMIN_KOMPETISI' ? parseInt(createForm.id_kompetisi) : undefined
         })
       });
@@ -190,7 +190,7 @@ const AdminUsers: React.FC = () => {
 
       toast.success('User berhasil dibuat!');
       setShowCreateModal(false);
-      setCreateForm({ email: '', password: '', nama: '', role: 'ADMIN', id_penyelenggara: '', id_kompetisi: '' });
+      setCreateForm({ email: '', password: '', nama: '', role: 'ADMIN_PENYELENGGARA', id_penyelenggara: '', id_kompetisi: '' });
       fetchUsers();
     } catch (err: any) {
       toast.error(err.message || 'Gagal membuat user');
@@ -235,14 +235,14 @@ const AdminUsers: React.FC = () => {
   const getRoleBadge = (role: string) => {
     const styles: Record<string, string> = {
       SUPER_ADMIN: 'bg-red-100 text-red-800 border-red-200',
-      ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
+      ADMIN_PENYELENGGARA: 'bg-purple-100 text-purple-800 border-purple-200',
       ADMIN_KOMPETISI: 'bg-blue-100 text-blue-800 border-blue-200',
       PELATIH: 'bg-green-100 text-green-800 border-green-200'
     };
 
     const labels: Record<string, string> = {
       SUPER_ADMIN: 'Super Admin',
-      ADMIN: 'Admin Penyelenggara',
+      ADMIN_PENYELENGGARA: 'Admin Penyelenggara',
       ADMIN_KOMPETISI: 'Admin Kompetisi',
       PELATIH: 'Pelatih'
     };
@@ -319,7 +319,7 @@ const AdminUsers: React.FC = () => {
           >
             <option value="ALL">Semua Role</option>
             <option value="SUPER_ADMIN">Super Admin</option>
-            <option value="ADMIN">Admin Penyelenggara</option>
+            <option value="ADMIN_PENYELENGGARA">Admin Penyelenggara</option>
             <option value="ADMIN_KOMPETISI">Admin Kompetisi</option>
             <option value="PELATIH">Pelatih</option>
           </select>
@@ -483,7 +483,7 @@ const AdminUsers: React.FC = () => {
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value as any })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red/50"
                 >
-                  <option value="ADMIN">Admin Penyelenggara (Master Kompetisi)</option>
+                  <option value="ADMIN_PENYELENGGARA">Admin Penyelenggara (Master Kompetisi)</option>
                   <option value="ADMIN_KOMPETISI">Admin Kompetisi (Kompetisi Tunggal)</option>
                 </select>
               </div>
@@ -521,7 +521,7 @@ const AdminUsers: React.FC = () => {
                 />
               </div>
 
-              {createForm.role === 'ADMIN' && (
+              {createForm.role === 'ADMIN_PENYELENGGARA' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Penyelenggara</label>
                   <select

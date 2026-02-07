@@ -13,6 +13,17 @@ class Penyelenggara extends Model
     protected $fillable = [
         'nama_penyelenggara',
         'email',
-        'no_telp'
+        'no_telp',
+        'landing_title',
+        'landing_subtitle',
+        'landing_about_title',
+        'landing_about_content',
+        'landing_features_title',
+        'landing_feature_1_title',
+        'landing_feature_1_desc',
+        'landing_feature_2_title',
+        'landing_feature_2_desc',
+        'landing_feature_3_title',
+        'landing_feature_3_desc'
     ];
 }

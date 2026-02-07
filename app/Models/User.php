@@ -33,11 +33,7 @@ class User extends Authenticatable
      */
     public function getRoleAttribute($value)
     {
-        $role = strtoupper($value);
-        if ($role === 'ADMIN') {
-            return 'ADMIN_PENYELENGGARA';
-        }
-        return $role;
+        return strtoupper($value);
     }
 
     /**

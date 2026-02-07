@@ -79,6 +79,50 @@ const AdminKompetisi = () => {
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [heroFile, setHeroFile] = useState<File | null>(null);
 
+    // Landing Page Customization State
+    const [isEditingLanding, setIsEditingLanding] = useState(false);
+    const [landingData, setLandingData] = useState({ 
+        title: '', 
+        subtitle: '', 
+        about_title: '', 
+        about_content: '', 
+        features_title: '',
+        feature_1_title: '',
+        feature_1_desc: '',
+        feature_2_title: '',
+        feature_2_desc: '',
+        feature_3_title: '',
+        feature_3_desc: '',
+        id_penyelenggara: 1 
+    });
+
+    useEffect(() => {
+        const fetchLandingSettings = async () => {
+            try {
+                const res: any = await apiClient.get('/landing-settings');
+                if (res.success) {
+                    setLandingData({
+                        title: res.data.title || '',
+                        subtitle: res.data.subtitle || '',
+                        about_title: res.data.about_title || '',
+                        about_content: res.data.about_content || '',
+                        features_title: res.data.features_title || '',
+                        feature_1_title: res.data.feature_1_title || '',
+                        feature_1_desc: res.data.feature_1_desc || '',
+                        feature_2_title: res.data.feature_2_title || '',
+                        feature_2_desc: res.data.feature_2_desc || '',
+                        feature_3_title: res.data.feature_3_title || '',
+                        feature_3_desc: res.data.feature_3_desc || '',
+                        id_penyelenggara: res.data.id_penyelenggara || 1
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch landing settings", err);
+            }
+        };
+        fetchLandingSettings();
+    }, []);
+
     // Tutorials State
     const [tutorials, setTutorials] = useState<any[]>([]);
     const [isAddingTutorial, setIsAddingTutorial] = useState(false);
@@ -242,6 +286,46 @@ const AdminKompetisi = () => {
     const handleUpdateTutorial = async () => { /* ... */ };
     const handleDeleteTutorial = async (tutId: number) => { /* ... */ };
 
+    const handleSaveLanding = async () => {
+        const toastId = toast.loading('Menyimpan perubahan landing page...');
+        try {
+            // Since we target Penyelenggara with ID 1 for landing page
+            const id = landingData.id_penyelenggara || 1;
+            
+            // We need to fetch the existing penyelenggara data first or just send what we have
+            // The API expects nama_penyelenggara and email which are required
+            const pRes: any = await apiClient.get(`/admin/penyelenggara?limit=100`);
+            const pList = Array.isArray(pRes) ? pRes : (pRes.data || []);
+            const currentP = pList.find((p: any) => p.id_penyelenggara === id);
+
+            if (!currentP) {
+                throw new Error("Penyelenggara utama tidak ditemukan");
+            }
+
+            await apiClient.put(`/admin/penyelenggara/${id}`, {
+                ...currentP,
+                landing_title: landingData.title,
+                landing_subtitle: landingData.subtitle,
+                landing_about_title: landingData.about_title,
+                landing_about_content: landingData.about_content,
+                landing_features_title: landingData.features_title,
+                landing_feature_1_title: landingData.feature_1_title,
+                landing_feature_1_desc: landingData.feature_1_desc,
+                landing_feature_2_title: landingData.feature_2_title,
+                landing_feature_2_desc: landingData.feature_2_desc,
+                landing_feature_3_title: landingData.feature_3_title,
+                landing_feature_3_desc: landingData.feature_3_desc,
+            });
+
+            toast.dismiss(toastId);
+            toast.success("Landing page berhasil diperbarui!");
+            setIsEditingLanding(false);
+        } catch (err: any) {
+            toast.dismiss(toastId);
+            toast.error(err.message || "Gagal memperbarui landing page");
+        }
+    };
+
     return (
         <div className="p-6 md:p-8 space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -250,11 +334,195 @@ const AdminKompetisi = () => {
                     <p className="text-gray-500 mt-2 font-inter">Kelola event, branding, dan informasi kompetisi.</p>
                 </div>
                 {!isAddingKompetisi && (
-                    <button onClick={() => setIsAddingKompetisi(true)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold">
-                        <Plus size={20} /> Buat Kompetisi Baru
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setIsEditingLanding(true)}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-red text-red hover:bg-red/5 transition-all font-bold"
+                        >
+                            <Layout size={20} /> Atur Landing Page
+                        </button>
+                        <button
+                            onClick={() => setIsAddingKompetisi(true)}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold"
+                        >
+                            <Plus size={20} /> Buat Kompetisi Baru
+                        </button>
+                    </div>
                 )}
             </div>
+
+            {/* Modal for Landing Page Settings */}
+            {isEditingLanding && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="font-bebas text-2xl text-gray-900 tracking-wide uppercase">Pengaturan Landing Page</h3>
+                            <button onClick={() => setIsEditingLanding(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                            <div className="bg-red/5 p-4 rounded-xl border border-red/10">
+                                <p className="text-sm text-red-700 font-medium">
+                                    Pengaturan ini akan mengubah tampilan teks di halaman utama website (Root).
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Headline (Hero Title)</label>
+                                    <textarea
+                                        value={landingData.title}
+                                        onChange={(e) => setLandingData({ ...landingData, title: e.target.value })}
+                                        className="w-full px-4 text-3xl font-bebas py-3 border rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-24"
+                                        placeholder="Contoh: Welcome to the Arena"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Tips: Anda dapat menggunakan Enter untuk baris baru.</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Sub-headline (Hero Description)</label>
+                                    <textarea
+                                        value={landingData.subtitle}
+                                        onChange={(e) => setLandingData({ ...landingData, subtitle: e.target.value })}
+                                        className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-32"
+                                        placeholder="Masukkan deskripsi singkat tentang kompetisi..."
+                                    />
+                                </div>
+
+                                <div className="border-t pt-6 mt-6">
+                                    <h4 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-xs">Section: Tentang Kami</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Judul (About Title)</label>
+                                            <textarea
+                                                value={landingData.about_title}
+                                                onChange={(e) => setLandingData({ ...landingData, about_title: e.target.value })}
+                                                className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-20"
+                                                placeholder="Contoh: Embrace the Spirit of Competition"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Konten (About Content)</label>
+                                            <textarea
+                                                value={landingData.about_content}
+                                                onChange={(e) => setLandingData({ ...landingData, about_content: e.target.value })}
+                                                className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-40"
+                                                placeholder="Masukkan deskripsi detail tentang platform..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-6 mt-6">
+                                    <h4 className="font-bold text-gray-900 mb-4 uppercase tracking-wider text-xs">Section: Keunggulan (Features)</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Judul Utama (Features Title)</label>
+                                            <input
+                                                type="text"
+                                                value={landingData.features_title}
+                                                onChange={(e) => setLandingData({ ...landingData, features_title: e.target.value })}
+                                                className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                                placeholder="Contoh: Keunggulan Platform Kami"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <div className="md:col-span-2">
+                                                <h5 className="text-[10px] font-bold text-red uppercase">Kartu 1 (Standard)</h5>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Judul</label>
+                                                <input
+                                                    type="text"
+                                                    value={landingData.feature_1_title}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_1_title: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                                    placeholder="Contoh: Standar Internasional"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Deskripsi</label>
+                                                <textarea
+                                                    value={landingData.feature_1_desc}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_1_desc: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-20"
+                                                    placeholder="Masukkan deskripsi kartu..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <div className="md:col-span-2">
+                                                <h5 className="text-[10px] font-bold text-red uppercase">Kartu 2 (Modern)</h5>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Judul</label>
+                                                <input
+                                                    type="text"
+                                                    value={landingData.feature_2_title}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_2_title: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                                    placeholder="Contoh: Teknologi Modern"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Deskripsi</label>
+                                                <textarea
+                                                    value={landingData.feature_2_desc}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_2_desc: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-20"
+                                                    placeholder="Masukkan deskripsi kartu..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                            <div className="md:col-span-2">
+                                                <h5 className="text-[10px] font-bold text-red uppercase">Kartu 3 (Global)</h5>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Judul</label>
+                                                <input
+                                                    type="text"
+                                                    value={landingData.feature_3_title}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_3_title: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                                    placeholder="Contoh: Komunitas Global"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Deskripsi</label>
+                                                <textarea
+                                                    value={landingData.feature_3_desc}
+                                                    onChange={(e) => setLandingData({ ...landingData, feature_3_desc: e.target.value })}
+                                                    className="w-full px-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red focus:border-red outline-none transition-all h-20"
+                                                    placeholder="Masukkan deskripsi kartu..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsEditingLanding(false)}
+                                className="px-6 py-2 text-gray-500 font-bold"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleSaveLanding}
+                                className="flex items-center gap-2 px-8 py-2 bg-red text-white rounded-xl shadow-lg shadow-red/20 font-bold hover:scale-105 transition-all"
+                            >
+                                <Save size={18} /> Simpan Perubahan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {isAddingKompetisi ? (
                 <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-4 duration-500">

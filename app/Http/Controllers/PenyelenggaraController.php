@@ -73,6 +73,17 @@ class PenyelenggaraController extends Controller
                 'email' => $request->email,
                 'no_telp' => $request->no_telp,
                 'alamat' => $request->alamat,
+                'landing_title' => $request->landing_title,
+                'landing_subtitle' => $request->landing_subtitle,
+                'landing_about_title' => $request->landing_about_title,
+                'landing_about_content' => $request->landing_about_content,
+                'landing_features_title' => $request->landing_features_title,
+                'landing_feature_1_title' => $request->landing_feature_1_title,
+                'landing_feature_1_desc' => $request->landing_feature_1_desc,
+                'landing_feature_2_title' => $request->landing_feature_2_title,
+                'landing_feature_2_desc' => $request->landing_feature_2_desc,
+                'landing_feature_3_title' => $request->landing_feature_3_title,
+                'landing_feature_3_desc' => $request->landing_feature_3_desc,
             ]);
 
             return response()->json([
@@ -107,6 +118,17 @@ class PenyelenggaraController extends Controller
             'email' => 'required|email|unique:tb_penyelenggara,email,' . $id . ',id_penyelenggara',
             'no_telp' => 'nullable|string|max:20',
             'alamat' => 'nullable|string|max:500',
+            'landing_title' => 'nullable|string|max:255',
+            'landing_subtitle' => 'nullable|string',
+            'landing_about_title' => 'nullable|string|max:255',
+            'landing_about_content' => 'nullable|string',
+            'landing_features_title' => 'nullable|string|max:255',
+            'landing_feature_1_title' => 'nullable|string|max:255',
+            'landing_feature_1_desc' => 'nullable|string',
+            'landing_feature_2_title' => 'nullable|string|max:255',
+            'landing_feature_2_desc' => 'nullable|string',
+            'landing_feature_3_title' => 'nullable|string|max:255',
+            'landing_feature_3_desc' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -119,6 +141,17 @@ class PenyelenggaraController extends Controller
                 'email' => $request->email,
                 'no_telp' => $request->no_telp,
                 'alamat' => $request->alamat,
+                'landing_title' => $request->landing_title,
+                'landing_subtitle' => $request->landing_subtitle,
+                'landing_about_title' => $request->landing_about_title,
+                'landing_about_content' => $request->landing_about_content,
+                'landing_features_title' => $request->landing_features_title,
+                'landing_feature_1_title' => $request->landing_feature_1_title,
+                'landing_feature_1_desc' => $request->landing_feature_1_desc,
+                'landing_feature_2_title' => $request->landing_feature_2_title,
+                'landing_feature_2_desc' => $request->landing_feature_2_desc,
+                'landing_feature_3_title' => $request->landing_feature_3_title,
+                'landing_feature_3_desc' => $request->landing_feature_3_desc,
             ]);
 
             return response()->json([
@@ -130,6 +163,33 @@ class PenyelenggaraController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
+    }
+
+    /**
+     * Get landing settings for public view
+     */
+    public function getLandingSettings()
+    {
+        // Try to get the first penyelenggara as the main one for the landing page
+        $penyelenggara = Penyelenggara::first();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'title' => $penyelenggara ? $penyelenggara->landing_title : null,
+                'subtitle' => $penyelenggara ? $penyelenggara->landing_subtitle : null,
+                'about_title' => $penyelenggara ? $penyelenggara->landing_about_title : null,
+                'about_content' => $penyelenggara ? $penyelenggara->landing_about_content : null,
+                'features_title' => $penyelenggara ? $penyelenggara->landing_features_title : null,
+                'feature_1_title' => $penyelenggara ? $penyelenggara->landing_feature_1_title : null,
+                'feature_1_desc' => $penyelenggara ? $penyelenggara->landing_feature_1_desc : null,
+                'feature_2_title' => $penyelenggara ? $penyelenggara->landing_feature_2_title : null,
+                'feature_2_desc' => $penyelenggara ? $penyelenggara->landing_feature_2_desc : null,
+                'feature_3_title' => $penyelenggara ? $penyelenggara->landing_feature_3_title : null,
+                'feature_3_desc' => $penyelenggara ? $penyelenggara->landing_feature_3_desc : null,
+                'id_penyelenggara' => $penyelenggara ? $penyelenggara->id_penyelenggara : null,
+            ]
+        ]);
     }
 
     /**
