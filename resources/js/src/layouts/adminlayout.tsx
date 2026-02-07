@@ -62,6 +62,14 @@ const AdminLayout: React.FC = () => {
         section: 'super'
       },
     ] : []),
+    // Shared Menu Items (Super Admin & Admin Penyelenggara)
+    {
+        icon: Globe,
+        label: 'Manajemen Website',
+        path: '/admin/kompetisi',
+        active: location.pathname === '/admin/kompetisi',
+        // Show for both SUPER_ADMIN (as per original) and ADMIN_PENYELENGGARA
+    },
     // Common Admin Items
     {
       icon: Trophy,

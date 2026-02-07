@@ -17,6 +17,7 @@ class Kompetisi extends Model
         'nama_event',
         'lokasi',
         'status',
+        'tipe_kompetisi',
         'deskripsi',
         'poster_image',
         'website_url',

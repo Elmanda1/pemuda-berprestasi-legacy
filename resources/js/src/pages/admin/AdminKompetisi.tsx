@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useKompetisi } from '../../context/KompetisiContext';
+import { useAuth } from '../../context/authContext';
 import {
     Trophy, Plus, Search, Calendar, MapPin, Users,
     ArrowRight, Edit, Trash2, Eye, Filter, MoreVertical,
@@ -12,6 +13,7 @@ import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
 
 const AdminKompetisi = () => {
+    const { user, isSuperAdmin } = useAuth();
     const { loadingKompetisi: isLoading, fetchKompetisiList, kompetisiList: allKompetisi } = useKompetisi();
     const [viewLevel, setViewLevel] = useState<'organizers' | 'competitions'>('organizers');
     const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null);
@@ -19,7 +21,7 @@ const AdminKompetisi = () => {
 
     // State for Wizard
     const [isAddingKompetisi, setIsAddingKompetisi] = useState(false);
-    const [addStep, setAddStep] = useState(1);
+    const [activeTab, setActiveTab] = useState('umum');
     const [newKompData, setNewKompData] = useState({
         nama_event: '',
         lokasi: '',
@@ -78,10 +80,6 @@ const AdminKompetisi = () => {
 
     // State for Editing
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editData, setEditData] = useState<any>({});
-    const [activeThemeTab, setActiveThemeTab] = useState('tampilan');
-    const [logoFile, setLogoFile] = useState<File | null>(null);
-    const [heroFile, setHeroFile] = useState<File | null>(null);
 
     // Landing Page Customization State
     const [isEditingLanding, setIsEditingLanding] = useState(false);
@@ -146,9 +144,8 @@ const AdminKompetisi = () => {
             const data = res.data || res;
             const list = Array.isArray(data) ? data : (data.data || []);
             setPenyelenggaraList(list);
-            if (list.length > 0 && !newKompData.id_penyelenggara) {
-                setNewKompData(prev => ({ ...prev, id_penyelenggara: list[0].id_penyelenggara }));
-            }
+            
+            
         } catch (err) {
             console.error("Failed to fetch penyelenggara", err);
         }
@@ -157,6 +154,29 @@ const AdminKompetisi = () => {
     useEffect(() => {
         fetchPenyelenggara();
     }, []);
+
+    // Effect for Auto-selection (Runs when user and list are ready)
+    useEffect(() => {
+        if (user?.role === 'ADMIN_PENYELENGGARA' && user?.admin_penyelenggara?.id_penyelenggara) {
+            const myOrgId = user.admin_penyelenggara.id_penyelenggara;
+            // Try to find in list, but if list is empty or not yet loaded, we can still set the ID
+            // Ideally we wait for list, but for critical path we can just set it.
+            // If list is loaded, we can get the name.
+            const myOrg = penyelenggaraList.find((o: any) => o.id_penyelenggara === myOrgId) || { 
+                id_penyelenggara: myOrgId, 
+                nama_penyelenggara: user.admin_penyelenggara.nama || 'My Organization' 
+            };
+            
+            console.log("Auto-selecting organization for ADMIN_PENYELENGGARA:", myOrg);
+            setSelectedOrganizer(myOrg);
+            setViewLevel('competitions');
+            fetchKompetisiByOrganizer(myOrgId);
+            setNewKompData(prev => ({ ...prev, id_penyelenggara: String(myOrgId) }));
+        } else if (penyelenggaraList.length > 0 && !newKompData.id_penyelenggara && !isSuperAdmin) {
+            // Only auto-select first if not super admin (though logic above handles admin_penyelenggara)
+            // Actually super admin doesn't need auto select.
+        }
+    }, [user, penyelenggaraList]);
 
     const fetchKompetisiByOrganizer = async (orgId: number) => {
         try {
@@ -170,91 +190,156 @@ const AdminKompetisi = () => {
     };
 
     // --- Functions ---
+    // --- Functions ---
     const handleAddKompetisi = async () => {
         if (!newKompData.nama_event || !newKompData.tanggal_mulai || !newKompData.tanggal_selesai || !newKompData.id_penyelenggara) {
             toast.error("Mohon lengkapi data wajib (Nama, Tanggal, Penyelenggara)");
             return;
         }
         if (!newKompData.admin_email || !newKompData.admin_password) {
-            toast.error("Mohon lengkapi akun admin untuk kompetisi ini");
-            return;
+            // Check if editing, password might not be needed if not changing
+            if (!editingId) {
+                toast.error("Mohon lengkapi akun admin untuk kompetisi ini");
+                return;
+            }
         }
 
-        const toastId = toast.loading("Membuat kompetisi...");
+        const isEdit = !!editingId;
+        const toastId = toast.loading(isEdit ? "Menyimpan perubahan..." : "Membuat kompetisi...");
+        
         try {
             const formData = new FormData();
             Object.entries(newKompData).forEach(([key, value]) => {
                 if (['modules_enabled', 'faq_data', 'timeline_data', 'registration_steps'].includes(key)) {
                     formData.append(key, JSON.stringify(value));
                 } else {
-                    formData.append(key, value as string);
+                     // If editing and password is empty, don't send it (or handle in backend)
+                    if (key === 'admin_password' && isEdit && !value) {
+                        return;
+                    }
+                    if (value !== null && value !== undefined) {
+                         formData.append(key, value as string);
+                    }
                 }
             });
+            
             if (newLogoFile) formData.append('logo', newLogoFile);
             if (newHeroFile) formData.append('hero', newHeroFile);
 
-            const response = await apiClient.post('/kompetisi', formData);
+            // For updates, use POST with _method=PUT (Laravel method spoofing)
+            if (isEdit) {
+                formData.append('_method', 'PUT');
+            }
+
+            const url = isEdit ? `/kompetisi/${editingId}` : '/kompetisi';
+            const response = await apiClient.postFormData(url, formData);
+
             if ((response as any).data?.success || (response as any).success) {
                 toast.dismiss(toastId);
-                toast.success("Kompetisi berhasil dibuat!");
+                toast.success(isEdit ? "Kompetisi berhasil diperbarui!" : "Kompetisi berhasil dibuat!");
                 setIsAddingKompetisi(false);
-                setAddStep(1);
+                setEditingId(null);
+                setActiveTab('umum');
                 fetchKompetisiByOrganizer(Number(newKompData.id_penyelenggara));
             } else {
-                throw new Error((response as any).message || "Gagal membuat kompetisi");
+                throw new Error((response as any).message || "Gagal menyimpan kompetisi");
             }
         } catch (error: any) {
             toast.dismiss(toastId);
-            toast.error(error.response?.data?.message || "Terjadik kesalahan saat membuat kompetisi");
+            toast.error(error.response?.data?.message || "Terjadik kesalahan saat menyimpan kompetisi");
         }
     };
 
     const handleEdit = (komp: any) => {
-        if (editingId === komp.id_kompetisi) {
-            setEditingId(null);
-            return;
-        }
-        setEditingId(komp.id_kompetisi);
+        console.log("Editing Kompetisi:", komp); // Debugging
+        // Prepare data for Wizard
         const parseJSON = (str: any, fallback: any) => {
             if (!str) return fallback;
             if (typeof str === 'object') return str;
             try { return JSON.parse(str); } catch { return fallback; }
         };
 
-        setEditData({
-            ...komp,
+        const existingModules = parseJSON(komp.modules_enabled, { hero: true, about: true, registration: true, contact: true, faq: true, timeline: true, hide_console: false });
+        
+        // Populate state
+        setNewKompData({
+            nama_event: komp.nama_event || '',
+            lokasi: komp.lokasi || '',
+            logo_url: komp.logo_url || '',
+            poster_image: komp.poster_image || '',
+            tanggal_mulai: komp.tanggal_mulai ? String(komp.tanggal_mulai).split(' ')[0] : '',
+            tanggal_selesai: komp.tanggal_selesai ? String(komp.tanggal_selesai).split(' ')[0] : '',
+            id_penyelenggara: String(komp.id_penyelenggara),
+            status: komp.status || 'PENDAFTARAN',
+            tipe_kompetisi: komp.tipe_kompetisi || 'TUNGGAL',
             primary_color: komp.primary_color || '#990D35',
             secondary_color: komp.secondary_color || '#F5B700',
-            logo_url: komp.logo_url || '',
-            show_antrian: komp.show_antrian === 1 || komp.show_antrian === true,
-            show_navbar: komp.show_navbar === 1 || komp.show_navbar === true,
+            template_type: komp.template_type || 'default',
+            admin_email: komp.user?.email || '', // We might not have this if not eager loaded, handled below
+            admin_password: '', // Leave empty to keep unchanged
             hero_title: komp.hero_title || '',
             hero_description: komp.hero_description || '',
-            link_streaming: komp.link_streaming || '',
-            streaming_data: parseJSON(komp.streaming_data, []),
+            event_year: komp.event_year || new Date().getFullYear().toString(),
+            show_antrian: komp.show_antrian === 1 || komp.show_antrian === true,
+            show_navbar: komp.show_navbar === 1 || komp.show_navbar === true,
             about_description: komp.about_description || '',
             about_director_name: komp.about_director_name || '',
             about_director_title: komp.about_director_title || '',
-            contact_description: komp.contact_description || '',
-            contact_venue_name: komp.contact_venue_name || '',
-            contact_phone_1: komp.contact_phone_1 || '',
-            contact_phone_2: komp.contact_phone_2 || '',
-            contact_instagram: komp.contact_instagram || '',
-            contact_gmaps_url: komp.contact_gmaps_url || '',
-            contact_person_name_1: komp.contact_person_name_1 || '',
-            contact_person_name_2: komp.contact_person_name_2 || '',
-            event_year: komp.event_year || '2025',
             about_director_slogan: komp.about_director_slogan || '',
             registration_description: komp.registration_description || '',
-            registration_steps: parseJSON(komp.registration_steps, []),
-            faq_data: parseJSON(komp.faq_data, []),
-            timeline_data: parseJSON(komp.timeline_data, []),
-            template_type: komp.template_type || 'default',
-            modules_enabled: parseJSON(komp.modules_enabled, { hero: true, about: true, registration: true, contact: true, faq: true, timeline: true, hide_console: false })
+            registration_steps: parseJSON(komp.registration_steps, [
+                { title: 'Buat Akun', desc: 'Daftar akun tim atau atlet.' },
+                { title: 'Pilih Kategori', desc: 'Tentukan kelas pertandingan.' },
+                { title: 'Pembayaran', desc: 'Upload bukti transfer.' },
+                { title: 'Verifikasi', desc: 'Tunggu validasi admin.' }
+            ]).map((step: any) => ({
+                title: step.title || step.judul || step.name || '',
+                desc: step.desc || step.description || step.keterangan || step.deskripsi || ''
+            })),
+            faq_data: (() => {
+                const parsed = parseJSON(komp.faq_data, []);
+                // Check if it's the categorized structure (has 'questions' arrow)
+                if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].questions) {
+                     return parsed.flatMap((cat: any) => 
+                         (cat.questions || []).map((q: any) => ({
+                             q: q.question || q.tanya || '',
+                             a: q.answer || q.jawab || ''
+                         }))
+                     );
+                }
+                // Fallback for flat structure
+                return parsed.map((item: any) => ({
+                    q: item.q || item.question || item.pertanyaan || item.tanya || '',
+                    a: item.a || item.answer || item.jawaban || item.jawab || ''
+                }));
+            })(),
+            timeline_data: parseJSON(komp.timeline_data, []).map((item: any) => ({
+                title: item.title || item.event || item.judul || item.activity || item.kegiatan || '',
+                date: item.date || item.time || item.tanggal || item.waktu || '',
+                desc: item.desc || item.month || item.description || item.keterangan || item.isi || item.side || ''
+            })),
+            contact_venue_name: komp.contact_venue_name || '',
+            contact_description: komp.contact_description || '',
+            contact_phone_1: komp.contact_phone_1 || '',
+            contact_phone_2: komp.contact_phone_2 || '',
+            contact_person_name_1: komp.contact_person_name_1 || '',
+            contact_person_name_2: komp.contact_person_name_2 || '',
+            contact_instagram: komp.contact_instagram || '',
+            contact_gmaps_url: komp.contact_gmaps_url || '',
+            modules_enabled: existingModules
         });
-        setLogoFile(null);
-        setHeroFile(null);
-        fetchTutorials(komp.id_kompetisi);
+
+        // If admin data isn't directly in komp, we might need to fetch it or just display what we have.
+        // Usually komp.user is not joined in 'get all' query unless specified.
+        // For now we assume email is there or user can re-enter if needed, but optimally we should fetch detail.
+        // If the backend 'get all' includes user relation, fine.
+        
+        setEditingId(komp.id_kompetisi);
+        setNewLogoFile(null);
+        setNewHeroFile(null);
+        setIsAddingKompetisi(true);
+
+        setActiveTab('umum');
     };
 
     const fetchTutorials = async (kompId: number) => {
@@ -266,35 +351,7 @@ const AdminKompetisi = () => {
         }
     };
 
-    const handleSaveTheme = async (id: number) => {
-        const toastId = toast.loading('Menyimpan perubahan...');
-        try {
-            const formData = new FormData();
-            Object.entries(editData).forEach(([key, value]) => {
-                if (['streaming_data', 'registration_steps', 'faq_data', 'timeline_data', 'modules_enabled'].includes(key)) {
-                    formData.append(key, JSON.stringify(value));
-                } else if (!['logo_url', 'poster_image'].includes(key)) {
-                    if (key === 'show_antrian' || key === 'show_navbar') {
-                        formData.append(key, value ? '1' : '0');
-                    } else {
-                        formData.append(key, value as string);
-                    }
-                }
-            });
 
-            if (logoFile) formData.append('logo', logoFile);
-            if (heroFile) formData.append('hero', heroFile);
-
-            await apiClient.post(`/kompetisi/${id}/update_theme`, formData);
-            toast.dismiss(toastId);
-            toast.success("Tema kompetisi berhasil diperbarui");
-            setEditingId(null);
-            fetchKompetisiByOrganizer(editData.id_penyelenggara);
-        } catch (err) {
-            toast.dismiss(toastId);
-            toast.error("Gagal memperbarui tema");
-        }
-    };
 
     // Tutorial logic
     const handleAddTutorial = async () => { /* ... implemented in previous step, abbreviated here for saving space if needed */ };
@@ -379,8 +436,8 @@ const AdminKompetisi = () => {
                             : 'Kelola event, branding, dan informasi kompetisi di bawah penyelenggara ini.'}
                     </p>
                 </div>
-                <div className="flex gap-3">
-                    {viewLevel === 'competitions' && (
+                    <div className="flex gap-3">
+                    {viewLevel === 'competitions' && isSuperAdmin && (
                         <button
                             onClick={() => {
                                 setViewLevel('organizers');
@@ -576,157 +633,404 @@ const AdminKompetisi = () => {
             )}
 
             {isAddingKompetisi ? (
-                <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-4 duration-500">
-                    <div className="p-6 border-b border-gray-100 bg-white">
-                        {/* Header Wizard */}
-                        <div className="flex items-center justify-between mb-8">
-                            <h4 className="font-inter font-bold text-gray-900 text-lg">Buat Kompetisi Baru</h4>
-                            <button onClick={() => setIsAddingKompetisi(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><X size={20} className="text-gray-400" /></button>
-                        </div>
-                        {/* Stepper */}
-                        <div className="flex items-center justify-between max-w-2xl mx-auto relative mb-12">
-                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
-                            <div className="absolute top-1/2 left-0 h-0.5 bg-red -translate-y-1/2 z-0 transition-all duration-500" style={{ width: `${((addStep - 1) / 4) * 100}%` }}></div>
-                            {[1, 2, 3, 4, 5].map((step) => (
-                                <div key={step} className="relative z-10 flex flex-col items-center">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${addStep >= step ? 'bg-red text-white scale-110 shadow-lg shadow-red/20' : 'bg-white border-2 border-gray-200 text-gray-400'}`}>{addStep > step ? '✓' : step}</div>
-                                    <span className={`absolute -bottom-7 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${addStep >= step ? 'text-red' : 'text-gray-400'}`}>{['Template', 'Branding', 'Modules', 'Konten', 'Final'][step - 1]}</span>
-                                </div>
-                            ))}
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-500 shadow-xl">
+                    <div className="flex border-b border-gray-200 bg-gray-50/50">
+                        {['umum', 'tampilan', 'modul', 'konten', 'pengaturan'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-6 py-4 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${activeTab === tab ? 'border-red text-red bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                            >
+                                {tab === 'umum' && 'Informasi Umum'}
+                                {tab === 'tampilan' && 'Tampilan & Branding'}
+                                {tab === 'modul' && 'Modul & Fitur'}
+                                {tab === 'konten' && 'Konten Website'}
+                                {tab === 'pengaturan' && 'Pengaturan Akun'}
+                            </button>
+                        ))}
+                        <div className="flex-1 flex justify-end items-center px-4">
+                             <button onClick={() => { setIsAddingKompetisi(false); setEditingId(null); }} className="p-2 hover:bg-gray-200 rounded-lg text-gray-400"><X size={20} /></button>
                         </div>
                     </div>
 
-                    <div className="p-8">
-                        {addStep === 1 && ( /* Template & Type & Basic Info */
-                            <div className="space-y-6 animate-in fade-in duration-500">
-                                <div className="max-w-xl mx-auto text-center mb-8"><h5 className="font-inter font-bold text-xl text-gray-900 mb-2">Pilih Tipe Kompetisi</h5></div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                                    <div onClick={() => setNewKompData({ ...newKompData, tipe_kompetisi: 'MASTER' })} className={`cursor-pointer group relative rounded-2xl border-4 p-6 transition-all hover:-translate-y-2 ${newKompData.tipe_kompetisi === 'MASTER' ? 'border-red ring-4 ring-red/10 bg-red/5' : 'border-white hover:border-red/30 bg-white'}`}>
-                                        <div className="flex items-center gap-4 mb-4"><div className={`p-3 rounded-xl ${newKompData.tipe_kompetisi === 'MASTER' ? 'bg-red text-white' : 'bg-gray-100 text-gray-500'}`}><Database size={24} /></div><div><h6 className="font-bold text-lg text-gray-900">Master Kompetisi</h6><span className="text-xs font-semibold text-gray-500">Landing Page Only</span></div></div>
-                                        <p className="text-sm text-gray-600 leading-relaxed">Pilihan ini hanya membuat Landing Page informasi tanpa fitur manajemen pertandingan.</p>
-                                    </div>
-                                    <div onClick={() => setNewKompData({ ...newKompData, tipe_kompetisi: 'TUNGGAL' })} className={`cursor-pointer group relative rounded-2xl border-4 p-6 transition-all hover:-translate-y-2 ${newKompData.tipe_kompetisi === 'TUNGGAL' ? 'border-red ring-4 ring-red/10 bg-red/5' : 'border-white hover:border-red/30 bg-white'}`}>
-                                        <div className="flex items-center gap-4 mb-4"><div className={`p-3 rounded-xl ${newKompData.tipe_kompetisi === 'TUNGGAL' ? 'bg-red text-white' : 'bg-gray-100 text-gray-500'}`}><Trophy size={24} /></div><div><h6 className="font-bold text-lg text-gray-900">Kompetisi Tunggal</h6><span className="text-xs font-semibold text-gray-500">Full Features</span></div></div>
-                                        <p className="text-sm text-gray-600 leading-relaxed">Kompetisi standar dengan fitur lengkap: Pendaftaran Atlet, Drawing, dll.</p>
-                                    </div>
-                                </div>
-                                {/* Templates Grid - Simplified for brevity but functional */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {[
-                                        { id: 'default', title: 'Classic Light', desc: 'Formal & bersih' },
-                                        { id: 'modern', title: 'Modern Dark', desc: 'Premium & Gelap' },
-                                        { id: 'template_c', title: 'Minimalist', desc: 'Cepat & efisien' }
-                                    ].map(t => (
-                                        <div key={t.id} onClick={() => setNewKompData({ ...newKompData, template_type: t.id })} className={`cursor-pointer p-4 border-2 rounded-xl ${newKompData.template_type === t.id ? 'border-red ring-2 ring-red/10' : 'border-gray-200'}`}>
-                                            <h6 className="font-bold">{t.title}</h6>
-                                            <p className="text-xs text-gray-500">{t.desc}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                                {/* Inputs */}
-                                <div className="space-y-4">
+                    <div className="p-8 h-[70vh] overflow-y-auto">
+                        {activeTab === 'umum' && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Informasi Dasar</h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-bold mb-1">Penyelenggara</label>
-                                        <select
-                                            value={newKompData.id_penyelenggara}
-                                            onChange={e => setNewKompData({ ...newKompData, id_penyelenggara: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-red"
-                                        >
-                                            <option value="">Pilih Penyelenggara</option>
-                                            {penyelenggaraList.map((p: any) => (
-                                                <option key={p.id_penyelenggara} value={p.id_penyelenggara}>{p.nama_penyelenggara}</option>
-                                            ))}
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Nama Event</label>
+                                        <input type="text" value={newKompData.nama_event} onChange={e => setNewKompData({ ...newKompData, nama_event: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red focus:ring-2 focus:ring-red/20 outline-none transition-all" placeholder="Contoh: Kejuaraan Pemuda 2024" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Lokasi</label>
+                                        <input type="text" value={newKompData.lokasi} onChange={e => setNewKompData({ ...newKompData, lokasi: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red focus:ring-2 focus:ring-red/20 outline-none transition-all" placeholder="Contoh: GOR Popki Cibubur" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Tanggal Mulai</label>
+                                        <input type="date" value={newKompData.tanggal_mulai} onChange={e => setNewKompData({ ...newKompData, tanggal_mulai: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Tanggal Selesai</label>
+                                        <input type="date" value={newKompData.tanggal_selesai} onChange={e => setNewKompData({ ...newKompData, tanggal_selesai: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Tahun Event</label>
+                                        <input type="number" value={newKompData.event_year} onChange={e => setNewKompData({ ...newKompData, event_year: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all" />
+                                    </div>
+                                     <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
+                                        <select value={newKompData.status} onChange={e => setNewKompData({ ...newKompData, status: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all">
+                                            <option value="PENDAFTARAN">PENDAFTARAN</option>
+                                            <option value="SEDANG_DIMULAI">SEDANG DIMULAI</option>
+                                            <option value="SELESAI">SELESAI</option>
+                                            <option value="DIBATALKAN">DIBATALKAN</option>
                                         </select>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <input type="text" placeholder="Nama Event" value={newKompData.nama_event} onChange={e => setNewKompData({ ...newKompData, nama_event: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-red" />
-                                        <input type="text" placeholder="Lokasi" value={newKompData.lokasi} onChange={e => setNewKompData({ ...newKompData, lokasi: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-red" />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'tampilan' && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Branding & Tampilan</h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label className="font-bold text-gray-700">Warna Identitas</label>
+                                        <div className="flex gap-4 items-center">
+                                            <input type="color" value={newKompData.primary_color} onChange={e => setNewKompData({ ...newKompData, primary_color: e.target.value })} className="w-16 h-16 rounded-xl cursor-pointer border-4 border-white shadow-md" title="Primary Color" />
+                                            <div className="flex-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Primary Color</span>
+                                                <input type="text" value={newKompData.primary_color} onChange={e => setNewKompData({ ...newKompData, primary_color: e.target.value })} className="w-full px-3 py-2 border rounded-lg font-mono text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 items-center">
+                                            <input type="color" value={newKompData.secondary_color} onChange={e => setNewKompData({ ...newKompData, secondary_color: e.target.value })} className="w-16 h-16 rounded-xl cursor-pointer border-4 border-white shadow-md" title="Secondary Color" />
+                                            <div className="flex-1">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">Secondary Color</span>
+                                                <input type="text" value={newKompData.secondary_color} onChange={e => setNewKompData({ ...newKompData, secondary_color: e.target.value })} className="w-full px-3 py-2 border rounded-lg font-mono text-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="font-bold text-gray-700">Logo & Poster</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 cursor-pointer transition-all hover:border-red group relative" onClick={() => document.getElementById('logoInput')?.click()}>
+                                                {(newLogoFile || newKompData.logo_url) ? (
+                                                     <div className="flex flex-col items-center">
+                                                        {newLogoFile ? <span className="text-sm font-bold text-green-600">New File Selected</span> : <img src={newKompData.logo_url} className="h-16 w-auto object-contain mb-2" />}
+                                                        <span className="text-xs text-gray-400">Ganti Logo</span>
+                                                     </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center text-gray-400 group-hover:text-red">
+                                                        <ImageIcon size={32} className="mb-2" />
+                                                        <span className="text-sm font-bold">Upload Logo</span>
+                                                    </div>
+                                                )}
+                                                <input id="logoInput" type="file" className="hidden" onChange={e => setNewLogoFile(e.target.files?.[0] || null)} />
+                                            </div>
+                                            
+                                            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 cursor-pointer transition-all hover:border-red group relative" onClick={() => document.getElementById('heroInput')?.click()}>
+                                                {(newHeroFile || newKompData.poster_image) ? (
+                                                     <div className="flex flex-col items-center">
+                                                        {newHeroFile ? <span className="text-sm font-bold text-green-600">New File Selected</span> : <img src={newKompData.poster_image} className="h-16 w-auto object-cover rounded mb-2" />}
+                                                        <span className="text-xs text-gray-400">Ganti Poster</span>
+                                                     </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center text-gray-400 group-hover:text-red">
+                                                        <ImageIcon size={32} className="mb-2" />
+                                                        <span className="text-sm font-bold">Upload Poster</span>
+                                                    </div>
+                                                )}
+                                                <input id="heroInput" type="file" className="hidden" onChange={e => setNewHeroFile(e.target.files?.[0] || null)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="col-span-1 md:col-span-2 space-y-4">
+                                        <label className="font-bold text-gray-700">Template Style</label>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {[{id: 'default', name: 'Classic Light'}, {id: 'modern', name: 'Modern Dark'}, {id: 'minimalist', name: 'Minimalist'}].map(t => (
+                                                <div key={t.id} onClick={() => setNewKompData({ ...newKompData, template_type: t.id })}
+                                                    className={`p-4 border rounded-xl cursor-pointer text-center transition-all ${newKompData.template_type === t.id ? 'bg-red text-white border-red' : 'bg-white border-gray-200 hover:border-red/50'}`}>
+                                                    <span className="font-bold text-sm">{t.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {addStep === 2 && ( /* Branding */
-                            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                                    <div className="space-y-4">
-                                        <h6 className="font-bold">Warna Tema</h6>
-                                        <div className="flex gap-4 items-center">
-                                            <input type="color" value={newKompData.primary_color} onChange={e => setNewKompData({ ...newKompData, primary_color: e.target.value })} className="w-12 h-12 rounded-lg cursor-pointer" />
-                                            <input type="text" value={newKompData.primary_color} onChange={e => setNewKompData({ ...newKompData, primary_color: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                                        </div>
-                                        <div className="flex gap-4 items-center">
-                                            <input type="color" value={newKompData.secondary_color} onChange={e => setNewKompData({ ...newKompData, secondary_color: e.target.value })} className="w-12 h-12 rounded-lg cursor-pointer" />
-                                            <input type="text" value={newKompData.secondary_color} onChange={e => setNewKompData({ ...newKompData, secondary_color: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <h6 className="font-bold">Assets</h6>
-                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-red" onClick={() => document.getElementById('newLogoInput')?.click()}>
-                                            {newLogoFile ? <p className="text-sm text-green-600">Logo Selected</p> : <p className="text-sm text-gray-500">Upload Logo</p>}
-                                            <input id="newLogoInput" type="file" className="hidden" onChange={e => setNewLogoFile(e.target.files?.[0] || null)} />
-                                        </div>
-                                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-red" onClick={() => document.getElementById('newHeroInput')?.click()}>
-                                            {newHeroFile ? <p className="text-sm text-green-600">Banner Selected</p> : <p className="text-sm text-gray-500">Upload Banner</p>}
-                                            <input id="newHeroInput" type="file" className="hidden" onChange={e => setNewHeroFile(e.target.files?.[0] || null)} />
-                                        </div>
-                                    </div>
+                        {activeTab === 'modul' && (
+                             <div className="space-y-6 animate-in fade-in">
+                                <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Manajemen Modul</h5>
+                                <p className="text-gray-500 text-sm">Pilih fitur dan section yang ingin ditampilkan di halaman kompetisi.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Object.entries(newKompData.modules_enabled).map(([key, isEnabled]: [string, any]) => (
+                                        key !== 'hide_console' && (
+                                            <div key={key} 
+                                                onClick={() => setNewKompData({ ...newKompData, modules_enabled: { ...newKompData.modules_enabled, [key]: !isEnabled } })}
+                                                className={`flex items-center justify-between p-5 rounded-xl border-2 cursor-pointer transition-all ${isEnabled ? 'border-red bg-red/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900 capitalize text-lg">{key.replace('_', ' ')}</span>
+                                                    <span className="text-xs text-gray-500 mt-1">{isEnabled ? 'Aktif' : 'Tidak Aktif'}</span>
+                                                </div>
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isEnabled ? 'bg-red border-red' : 'bg-transparent border-gray-300'}`}>
+                                                    {isEnabled && <Check size={14} className="text-white" />}
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
                                 </div>
-                            </div>
+                             </div>
                         )}
 
-                        {addStep === 3 && ( /* Modules using map from log 444 */
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {['hero', 'about', 'registration', 'timeline', 'contact', 'faq'].map(key => (
-                                    <div key={key} onClick={() => setNewKompData({ ...newKompData, modules_enabled: { ...newKompData.modules_enabled, [key]: !(newKompData.modules_enabled as any)[key] } })}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer flex justify-between items-center ${(newKompData.modules_enabled as any)[key] ? 'border-red bg-white' : 'border-gray-100 bg-gray-50 grayscale'}`}>
-                                        <span className="font-bold capitalize">{key}</span>
-                                        {(newKompData.modules_enabled as any)[key] && <Check size={16} className="text-red" />}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {addStep === 4 && ( /* Content Customization */
-                            <div className="space-y-6">
-                                <h5 className="font-bold">Kustomisasi Konten</h5>
-                                {newKompData.modules_enabled.about && (
-                                    <div className="border p-4 rounded-xl space-y-4">
-                                        <h6 className="font-bold text-red">Section: Sambutan</h6>
-                                        <input type="text" placeholder="Nama Ketua" value={newKompData.about_director_name} onChange={e => setNewKompData({ ...newKompData, about_director_name: e.target.value })} className="w-full border p-2 rounded" />
-                                        <textarea placeholder="Isi Sambutan" value={newKompData.about_description} onChange={e => setNewKompData({ ...newKompData, about_description: e.target.value })} className="w-full border p-2 rounded h-24" />
+                        {activeTab === 'konten' && (
+                             <div className="space-y-8 animate-in fade-in">
+                                {/* Hero Content */}
+                                {newKompData.modules_enabled.hero && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <Layout className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">Hero Section</h6>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Hero Title</label>
+                                            <input type="text" value={newKompData.hero_title} onChange={e => setNewKompData({...newKompData, hero_title: e.target.value})} className="w-full px-4 py-2 border rounded-xl" placeholder="Judul besar di halaman utama" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Hero Description</label>
+                                            <textarea value={newKompData.hero_description} onChange={e => setNewKompData({...newKompData, hero_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Deskripsi singkat di bawah judul" />
+                                        </div>
                                     </div>
                                 )}
-                            </div>
+
+                                {/* About Content */}
+                                {newKompData.modules_enabled.about && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <Users className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">Sambutan / About</h6>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Direktur/Ketua</label>
+                                                <input type="text" value={newKompData.about_director_name} onChange={e => setNewKompData({...newKompData, about_director_name: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Jabatan</label>
+                                                <input type="text" value={newKompData.about_director_title} onChange={e => setNewKompData({...newKompData, about_director_title: e.target.value})} className="w-full px-4 py-2 border rounded-xl" placeholder="Ketua Panitia" />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Isi Sambutan</label>
+                                                <textarea value={newKompData.about_description} onChange={e => setNewKompData({...newKompData, about_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-32" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Contact Content */}
+                                {newKompData.modules_enabled.contact && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <MessageCircle className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">Kontak & Lokasi</h6>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                             <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Venue</label>
+                                                <input type="text" value={newKompData.contact_venue_name} onChange={e => setNewKompData({...newKompData, contact_venue_name: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Instagram (@)</label>
+                                                <input type="text" value={newKompData.contact_instagram} onChange={e => setNewKompData({...newKompData, contact_instagram: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">WhatsApp 1</label>
+                                                <input type="text" value={newKompData.contact_phone_1} onChange={e => setNewKompData({...newKompData, contact_phone_1: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Person 1</label>
+                                                <input type="text" value={newKompData.contact_person_name_1} onChange={e => setNewKompData({...newKompData, contact_person_name_1: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                            </div>
+                                             <div className="md:col-span-2">
+                                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Google Maps Embed URL</label>
+                                                <input type="text" value={newKompData.contact_gmaps_url} onChange={e => setNewKompData({...newKompData, contact_gmaps_url: e.target.value})} className="w-full px-4 py-2 border rounded-xl text-xs font-mono" placeholder="https://www.google.com/maps/embed?..." />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Registration Content */}
+                                {newKompData.modules_enabled.registration && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <Trophy className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">Pendaftaran & Alur</h6>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Deskripsi Pendaftaran</label>
+                                            <textarea value={newKompData.registration_description} onChange={e => setNewKompData({...newKompData, registration_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Penjelasan singkat alur pendaftaran..." />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase text-gray-500 mb-3">Langkah-Langkah (Registration Steps)</label>
+                                            <div className="space-y-3">
+                                                {(newKompData.registration_steps || []).map((step: any, idx: number) => (
+                                                    <div key={idx} className="flex gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                                        <div className="w-8 h-8 flex items-center justify-center bg-red/10 text-red font-bold rounded-lg shrink-0">{idx + 1}</div>
+                                                        <div className="flex-1 space-y-2">
+                                                            <input type="text" placeholder="Judul Langkah" value={step.title} onChange={e => {
+                                                                const newSteps: any = [...newKompData.registration_steps];
+                                                                newSteps[idx].title = e.target.value;
+                                                                setNewKompData({...newKompData, registration_steps: newSteps});
+                                                            }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
+                                                            <input type="text" placeholder="Deskripsi" value={step.desc} onChange={e => {
+                                                                const newSteps: any = [...newKompData.registration_steps];
+                                                                newSteps[idx].desc = e.target.value;
+                                                                setNewKompData({...newKompData, registration_steps: newSteps});
+                                                            }} className="w-full px-3 py-1.5 border rounded-lg text-sm" />
+                                                        </div>
+                                                        <button onClick={() => {
+                                                            const newSteps = newKompData.registration_steps.filter((_, i) => i !== idx);
+                                                            setNewKompData({...newKompData, registration_steps: newSteps});
+                                                        }} className="p-2 text-gray-400 hover:text-red transition-colors"><Trash2 size={16} /></button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={() => setNewKompData({...newKompData, registration_steps: [...(newKompData.registration_steps || []), {title: '', desc: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                                    <Plus size={16} /> Tambah Langkah
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Timeline Content */}
+                                {newKompData.modules_enabled.timeline && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <Calendar className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">Jadwal & Timeline</h6>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {(newKompData.timeline_data || []).map((item: any, idx: number) => (
+                                                <div key={idx} className="flex flex-wrap md:flex-nowrap gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 items-start">
+                                                    <div className="w-full md:w-auto md:flex-1 space-y-2">
+                                                        <input type="text" placeholder="Judul Kegiatan" value={item.title} onChange={e => {
+                                                            const newData: any = [...newKompData.timeline_data];
+                                                            newData[idx].title = e.target.value;
+                                                            setNewKompData({...newKompData, timeline_data: newData});
+                                                        }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
+                                                        <div className="flex gap-2">
+                                                            <input type="text" placeholder="Tanggal (Contoh: 12 Jan 2024)" value={item.date} onChange={e => {
+                                                                const newData: any = [...newKompData.timeline_data];
+                                                                newData[idx].date = e.target.value;
+                                                                setNewKompData({...newKompData, timeline_data: newData});
+                                                            }} className="w-1/2 px-3 py-1.5 border rounded-lg text-sm" />
+                                                            <input type="text" placeholder="Keterangan" value={item.desc} onChange={e => {
+                                                                const newData: any = [...newKompData.timeline_data];
+                                                                newData[idx].desc = e.target.value;
+                                                                setNewKompData({...newKompData, timeline_data: newData});
+                                                            }} className="w-1/2 px-3 py-1.5 border rounded-lg text-sm" />
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => {
+                                                        const newData = newKompData.timeline_data.filter((_, i) => i !== idx);
+                                                        setNewKompData({...newKompData, timeline_data: newData});
+                                                    }} className="p-2 text-gray-400 hover:text-red transition-colors self-center"><Trash2 size={16} /></button>
+                                                </div>
+                                            ))}
+                                            <button onClick={() => setNewKompData({...newKompData, timeline_data: [...(newKompData.timeline_data || []), {title: '', date: '', desc: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                                <Plus size={16} /> Tambah Jadwal
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* FAQ Content */}
+                                {newKompData.modules_enabled.faq && (
+                                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 border-b pb-3 mb-2">
+                                            <HelpCircle className="text-red" size={20} />
+                                            <h6 className="font-bold text-lg text-gray-900">FAQ (Tanya Jawab)</h6>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {(newKompData.faq_data || []).map((item: any, idx: number) => (
+                                                <div key={idx} className="flex gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                                    <div className="flex-1 space-y-2">
+                                                        <input type="text" placeholder="Pertanyaan (Q)" value={item.q} onChange={e => {
+                                                            const newData: any = [...newKompData.faq_data];
+                                                            newData[idx].q = e.target.value;
+                                                            setNewKompData({...newKompData, faq_data: newData});
+                                                        }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
+                                                        <textarea placeholder="Jawaban (A)" value={item.a} onChange={e => {
+                                                            const newData: any = [...newKompData.faq_data];
+                                                            newData[idx].a = e.target.value;
+                                                            setNewKompData({...newKompData, faq_data: newData});
+                                                        }} className="w-full px-3 py-1.5 border rounded-lg text-sm h-16" />
+                                                    </div>
+                                                    <button onClick={() => {
+                                                        const newData = newKompData.faq_data.filter((_, i) => i !== idx);
+                                                        setNewKompData({...newKompData, faq_data: newData});
+                                                    }} className="p-2 text-gray-400 hover:text-red transition-colors"><Trash2 size={16} /></button>
+                                                </div>
+                                            ))}
+                                            <button onClick={() => setNewKompData({...newKompData, faq_data: [...(newKompData.faq_data || []), {q: '', a: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                                <Plus size={16} /> Tambah FAQ
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                             </div>
                         )}
 
-                        {addStep === 5 && ( /* Final & Admin Account */
-                            <div className="space-y-6">
-                                <div className="bg-red/5 p-6 rounded-2xl border border-red/10 text-center">
-                                    <h5 className="font-bebas text-2xl text-red">Final Step</h5>
-                                    <p className="text-sm text-gray-500">Lengkapi akun admin kompetisi.</p>
+                        {activeTab === 'pengaturan' && (
+                             <div className="space-y-6 animate-in fade-in">
+                                <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Pengaturan Lanjutan</h5>
+                                
+                                <div className="p-6 bg-red/5 rounded-2xl border border-red/10">
+                                    <h6 className="font-bold text-red mb-4 flex items-center gap-2"><SettingsIcon size={18} /> Akun Admin Kompetisi</h6>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Email Login</label>
+                                            <input type="email" value={newKompData.admin_email} onChange={e => setNewKompData({ ...newKompData, admin_email: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-600 mb-1">Password {editingId && '(Biarkan kosong jika tetap)'}</label>
+                                            <input type="password" value={newKompData.admin_password} onChange={e => setNewKompData({ ...newKompData, admin_password: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <input type="date" value={newKompData.tanggal_mulai} onChange={e => setNewKompData({ ...newKompData, tanggal_mulai: e.target.value })} className="border p-3 rounded-xl w-full" />
-                                    <input type="date" value={newKompData.tanggal_selesai} onChange={e => setNewKompData({ ...newKompData, tanggal_selesai: e.target.value })} className="border p-3 rounded-xl w-full" />
-                                    <input type="email" placeholder="Email Admin" value={newKompData.admin_email} onChange={e => setNewKompData({ ...newKompData, admin_email: e.target.value })} className="border p-3 rounded-xl w-full" />
-                                    <input type="password" placeholder="Password Admin" value={newKompData.admin_password} onChange={e => setNewKompData({ ...newKompData, admin_password: e.target.value })} className="border p-3 rounded-xl w-full" />
-                                </div>
-                            </div>
-                        )}
 
+                                <div className="space-y-4">
+                                    <h6 className="font-bold text-gray-900">Fitur & Visibilitas</h6>
+                                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                                        <div>
+                                            <span className="font-bold block">Tampilkan Menu Navigasi</span>
+                                            <span className="text-xs text-gray-500">Menampilkan navbar di halaman landing page kompetisi</span>
+                                        </div>
+                                        <input type="checkbox" checked={newKompData.show_navbar} onChange={e => setNewKompData({ ...newKompData, show_navbar: e.target.checked })} className="w-6 h-6 rounded text-red focus:ring-red" />
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                                        <div>
+                                            <span className="font-bold block">Tampilkan Antrian</span>
+                                            <span className="text-xs text-gray-500">Fitur publik untuk melihat antrian pemanggilan atlet</span>
+                                        </div>
+                                        <input type="checkbox" checked={newKompData.show_antrian} onChange={e => setNewKompData({ ...newKompData, show_antrian: e.target.checked })} className="w-6 h-6 rounded text-red focus:ring-red" />
+                                    </div>
+                                </div>
+                             </div>
+                        )}
                     </div>
-                    {/* Footer Buttons */}
-                    <div className="p-6 border-t border-gray-100 bg-white flex justify-between">
-                        <button disabled={addStep === 1} onClick={() => setAddStep(addStep - 1)} className="px-4 py-2 text-gray-500">Kembali</button>
-                        <div className="flex gap-2">
-                            <button onClick={() => setIsAddingKompetisi(false)} className="px-4 py-2 text-gray-500">Batal</button>
-                            {addStep < 5 ? (
-                                <button onClick={() => setAddStep(addStep + 1)} className="px-6 py-2 bg-red text-white rounded-xl font-bold">Lanjut</button>
-                            ) : (
-                                <button onClick={handleAddKompetisi} className="px-6 py-2 bg-red text-white rounded-xl font-bold">Simpan & Publikasikan</button>
-                            )}
-                        </div>
+                    
+                    <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+                        <button onClick={() => { setIsAddingKompetisi(false); setEditingId(null); }} className="px-6 py-3 font-bold text-gray-500 hover:text-gray-700">
+                            Batal
+                        </button>
+                        <button onClick={handleAddKompetisi} className="px-8 py-3 bg-red text-white rounded-xl font-bold shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                             <Save size={18} /> {editingId ? 'Simpan Perubahan' : 'Buat Kompetisi'}
+                        </button>
                     </div>
                 </div>
             ) : (
@@ -778,7 +1082,7 @@ const AdminKompetisi = () => {
                                 </div>
                             ) : (
                                 kompetisiList.map((komp: any) => (
-                                    <div key={komp.id_kompetisi} className={`rounded-2xl border bg-white overflow-hidden transition-all ${editingId === komp.id_kompetisi ? 'border-red ring-1 ring-red' : 'border-gray-200 hover:shadow-sm'}`}>
+                                    <div key={komp.id_kompetisi} className={`rounded-2xl border bg-white overflow-hidden transition-all border-gray-200 hover:shadow-sm`}>
                                         <div className="p-5 flex flex-col md:flex-row justify-between items-center gap-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100">
@@ -792,7 +1096,7 @@ const AdminKompetisi = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {editingId !== komp.id_kompetisi && (
+                                            
                                                 <div className="flex gap-2">
                                                      <button 
                                                         onClick={() => window.open(`/${komp.slug}`, '_blank')}
@@ -802,67 +1106,11 @@ const AdminKompetisi = () => {
                                                         <Eye size={20} />
                                                     </button>
                                                     <button onClick={() => handleEdit(komp)} className="px-4 py-2 border rounded-xl hover:bg-gray-50 flex items-center gap-2 font-bold text-gray-700">
-                                                        <Palette size={16} className="text-red" /> Atur Tema
+                                                        <Globe size={16} className="text-red" /> Atur Website
                                                     </button>
                                                 </div>
-                                            )}
+                                            
                                         </div>
-                                        {editingId === komp.id_kompetisi && (
-                                                <div className="border-t bg-gray-50 p-6">
-                                                    {/* Tabs */}
-                                                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                                                        {['tampilan', 'konten', 'kontak', 'informasi', 'fitur'].map(tab => (
-                                                            <button key={tab} onClick={() => setActiveThemeTab(tab)} className={`px-4 py-2 rounded-lg capitalize ${activeThemeTab === tab ? 'bg-white text-red border shadow-sm' : 'text-gray-500 hover:bg-white'}`}>{tab}</button>
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Tampilan Content */}
-                                                    {activeThemeTab === 'tampilan' && (
-                                                        <div className="space-y-6">
-                                                            <div className="bg-white p-4 rounded-xl border">
-                                                                <h6 className="font-bold mb-4">Template</h6>
-                                                                <div className="grid grid-cols-3 gap-4">
-                                                                    {['default', 'modern', 'template_c'].map(t => (
-                                                                        <div key={t} onClick={() => setEditData({ ...editData, template_type: t })} className={`p-4 border rounded-xl cursor-pointer ${editData.template_type === t ? 'border-red bg-red/5' : 'border-gray-200'}`}>{t}</div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                            <div className="bg-white p-4 rounded-xl border grid grid-cols-2 gap-4">
-                                                                <div><label className="text-xs font-bold uppercase">Primary Color</label><input type="color" value={editData.primary_color} onChange={e => setEditData({ ...editData, primary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
-                                                                <div><label className="text-xs font-bold uppercase">Secondary Color</label><input type="color" value={editData.secondary_color} onChange={e => setEditData({ ...editData, secondary_color: e.target.value })} className="w-full h-10 mt-2" /></div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Konten Content */}
-                                                    {activeThemeTab === 'konten' && (
-                                                        <div className="space-y-6">
-                                                            <div className="bg-white p-4 rounded-xl border">
-                                                                <h6 className="font-bold mb-2">Hero Section</h6>
-                                                                <input type="text" value={editData.hero_title} onChange={e => setEditData({ ...editData, hero_title: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Judul Event" />
-                                                                <textarea value={editData.hero_description} onChange={e => setEditData({ ...editData, hero_description: e.target.value })} className="w-full border p-2 rounded h-20" placeholder="Deskripsi" />
-                                                            </div>
-                                                            <div className="bg-white p-4 rounded-xl border">
-                                                                <h6 className="font-bold mb-2">Sambutan</h6>
-                                                                <input type="text" value={editData.about_director_name} onChange={e => setEditData({ ...editData, about_director_name: e.target.value })} className="w-full border p-2 rounded mb-2" placeholder="Nama Ketua" />
-                                                                <textarea value={editData.about_description} onChange={e => setEditData({ ...editData, about_description: e.target.value })} className="w-full border p-2 rounded h-32" placeholder="Isi Sambutan" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Kontak, Informasi, Fitur (abbreviated for brevity) */}
-                                                    {['kontak', 'informasi', 'fitur'].includes(activeThemeTab) && (
-                                                        <div className="bg-white p-6 rounded-xl border text-center text-gray-500">
-                                                            <p>Pengaturan {activeThemeTab} dapat dikonfigurasi di sini (Sama seperti wizard).</p>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="mt-6 flex justify-end gap-2">
-                                                        <button onClick={() => setEditingId(null)} className="px-4 py-2 text-gray-500">Batal</button>
-                                                        <button onClick={() => handleSaveTheme(komp.id_kompetisi)} className="px-6 py-2 bg-red text-white rounded-xl font-bold">Simpan Perubahan</button>
-                                                    </div>
-                                                </div>
-                                            )}
                                     </div>
                                 ))
                             )

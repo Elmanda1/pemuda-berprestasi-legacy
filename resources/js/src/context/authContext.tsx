@@ -148,6 +148,7 @@ interface User {
   admin_penyelenggara?: {
     id_admin_penyelenggara: number;
     nama: string;
+    id_penyelenggara: number;
   };
   pelatih?: {
     id_pelatih: number;

@@ -138,6 +138,16 @@ class KompetisiController extends Controller
             if (isset($data['show_navbar'])) {
                 $data['show_navbar'] = ($data['show_navbar'] === 'true' || $data['show_navbar'] === '1' || $data['show_navbar'] === true) ? 1 : 0;
             }
+            
+            // Decode JSON fields if they are strings (from FormData)
+            foreach (['modules_enabled', 'faq_data', 'timeline_data', 'registration_steps'] as $jsonField) {
+                if (isset($data[$jsonField]) && is_string($data[$jsonField])) {
+                    $decoded = json_decode($data[$jsonField], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $data[$jsonField] = $decoded;
+                    }
+                }
+            }
 
             // Create preliminary record or handle files first? 
             // Better create first to get ID for filename if choosing that pattern, 
@@ -229,7 +239,30 @@ class KompetisiController extends Controller
             $data['show_navbar'] = ($data['show_navbar'] === 'true' || $data['show_navbar'] === '1' || $data['show_navbar'] === true) ? 1 : 0;
         }
 
+        // Decode JSON fields if they are strings (from FormData)
+        foreach (['modules_enabled', 'faq_data', 'timeline_data', 'registration_steps'] as $jsonField) {
+            if (isset($data[$jsonField]) && is_string($data[$jsonField])) {
+                $decoded = json_decode($data[$jsonField], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $data[$jsonField] = $decoded;
+                }
+            }
+        }
+
+        // Debug: Log the data being saved
+        \Log::info('Kompetisi Update Data:', [
+            'id' => $id,
+            'data_keys' => array_keys($data),
+            'faq_data' => isset($data['faq_data']) ? $data['faq_data'] : 'NOT SET',
+            'timeline_data' => isset($data['timeline_data']) ? $data['timeline_data'] : 'NOT SET',
+            'registration_steps' => isset($data['registration_steps']) ? $data['registration_steps'] : 'NOT SET',
+        ]);
+
         $kompetisi->update($data);
+        
+        // Refresh to get the updated data
+        $kompetisi->refresh();
+        
         return response()->json(['success' => true, 'data' => $kompetisi]);
     }
 
