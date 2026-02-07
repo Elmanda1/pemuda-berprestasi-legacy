@@ -46,13 +46,7 @@ const AdminLayout: React.FC = () => {
   const menuItems = [
     // Super Admin Only Section
     ...(isSuperAdmin ? [
-      {
-        icon: Building2,
-        label: 'Penyelenggara',
-        path: '/admin/penyelenggara',
-        active: location.pathname === '/admin/penyelenggara',
-        section: 'super'
-      },
+
       {
         icon: Users,
         label: 'Manajemen User',
