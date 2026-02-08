@@ -300,7 +300,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     tokenManager.removeToken();
+    tokenManager.removeToken();
     tokenManager.clearUserData();
+    localStorage.removeItem('currentKompetisiId'); // Clear competition context
 
     // Optional: Call backend logout endpoint
     authAPI.logout().then(() => {

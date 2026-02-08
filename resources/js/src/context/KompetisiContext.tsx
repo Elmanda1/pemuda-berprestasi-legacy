@@ -1,7 +1,8 @@
 // src/context/kompetisiContext.tsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { apiClient } from "../config/api";
+import { useAuth } from "./authContext";
 
 export interface Atlet {
   id_atlet: number;
@@ -61,6 +62,7 @@ export interface Kompetisi {
   link_streaming?: string;
   streaming_data?: any[] | string; // JSON Array of { title, url, description }
   tipe_kompetisi?: 'MASTER' | 'TUNGGAL';
+  id_penyelenggara?: number;
 }
 
 export interface KelasKejuaraan {
@@ -297,6 +299,19 @@ export const KompetisiProvider = ({ children }: { children: ReactNode }) => {
   const [errorKelasKejuaraan, setErrorKelasKejuaraan] = useState<string | null>(
     null
   );
+
+  const { user } = useAuth(); // Access user from AuthContext
+
+  // Clear sensitive state on logout
+  useEffect(() => {
+    if (!user) {
+      console.log("🔒 User logged out, clearing competition context state.");
+      setKompetisiList([]);
+      setPesertaList([]);
+      setAllPesertaList([]);
+      setKompetisiDetail(null);
+    }
+  }, [user]);
 
   const fetchKompetisiList = async () => {
     setLoadingKompetisi(true);
