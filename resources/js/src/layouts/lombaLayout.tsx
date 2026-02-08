@@ -10,33 +10,33 @@ import { useAuth } from "../context/authContext";
 export default function LombaLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth(); // ⬅️ ambil logout dari AuthContext
+  const { logout } = useAuth();
 
   const handleConfirmLogout = () => {
     setIsOpen(false);
-    logout(); // ⬅️ pakai context logout
-    navigate("/event/home"); // ⬅️ redirect ke halaman utama
+    logout();
+    navigate("/event/home");
   };
 
   useEffect(() => {
-      if (isOpen) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "";
-      }
-      return () => {
-        document.body.style.overflow = "";
-      };
-    }, [isOpen]);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   console.log('lombalayout dipakai')
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
-      <NavbarLomba onLogoutRequest={() => setIsOpen(true)}/>
+      <NavbarLomba onLogoutRequest={() => setIsOpen(true)} />
       <main>
         <Outlet />
       </main>
-      <FooterLomba/>
+      <FooterLomba />
 
       <AlertModal
         isOpen={isOpen}

@@ -18,6 +18,7 @@ import {
   Home,
 } from "lucide-react";
 import { useAuth } from "../context/authContext";
+import { useKompetisi } from "../context/KompetisiContext";
 import path from "path";
 
 const AdminKompetisiLayout: React.FC = () => {
@@ -25,6 +26,7 @@ const AdminKompetisiLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { kompetisiDetail } = useKompetisi();
 
   useEffect(() => {
     const onResize = () => {
@@ -190,7 +192,7 @@ const AdminKompetisiLayout: React.FC = () => {
           {/* Settings & Logout */}
           <div className="absolute bottom-6 left-6 right-6 space-y-2">
             <a
-              href={user?.admin_kompetisi?.id_kompetisi ? `/event/home?id_kompetisi=${user.admin_kompetisi.id_kompetisi}` : "/event/home"}
+              href={kompetisiDetail?.slug ? `/${kompetisiDetail.slug}/home` : "/event/home"}
               target="_blank"
               className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm"
             >
@@ -384,7 +386,7 @@ const AdminKompetisiLayout: React.FC = () => {
 
 
               <a
-                href="/event/home"
+                href={kompetisiDetail?.slug ? `/${kompetisiDetail.slug}/home` : "/event/home"}
                 target="_blank"
                 className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm"
               >

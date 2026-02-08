@@ -17,12 +17,15 @@ import {
     Globe,
 } from "lucide-react";
 import { useAuth } from "../context/authContext";
+import { useKompetisi } from "../context/KompetisiContext";
 
 const AdminLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [landingPageUrl, setLandingPageUrl] = useState("/event/home");
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout, isAdmin, isSuperAdmin } = useAuth();
+    const { kompetisiList, fetchKompetisiList } = useKompetisi();
 
     useEffect(() => {
         if (!isAdmin) {
@@ -38,6 +41,48 @@ const AdminLayout: React.FC = () => {
         return () => window.removeEventListener("resize", onResize);
     }, []);
 
+    // Fetch kompetisi list and set landing page URL
+    useEffect(() => {
+        const loadLandingUrl = async () => {
+            if (user?.role === 'ADMIN_PENYELENGGARA' && user.admin_penyelenggara) {
+                console.log('🔍 AdminLayout: Loading landing URL for penyelenggara:', user.admin_penyelenggara.id_penyelenggara);
+                console.log('🔍 AdminLayout: Current kompetisiList length:', kompetisiList.length);
+
+                // Fetch kompetisi list if not already loaded
+                if (kompetisiList.length === 0) {
+                    console.log('🔍 AdminLayout: Fetching kompetisi list...');
+                    await fetchKompetisiList();
+                }
+
+                console.log('🔍 AdminLayout: After fetch, kompetisiList:', kompetisiList);
+                console.log('🔍 AdminLayout: kompetisiList details:', kompetisiList.map(k => ({
+                    id: k.id_kompetisi,
+                    nama: k.nama_event,
+                    id_penyelenggara: k.id_penyelenggara,
+                    slug: k.slug
+                })));
+
+                // Find penyelenggara's competition
+                const myComp = kompetisiList.find(k => {
+                    console.log(`🔍 Checking kompetisi ${k.id_kompetisi}: id_penyelenggara=${k.id_penyelenggara} vs user=${user.admin_penyelenggara?.id_penyelenggara}`);
+                    return k.id_penyelenggara === user.admin_penyelenggara?.id_penyelenggara;
+                });
+
+                console.log('🔍 AdminLayout: Found my competition:', myComp);
+
+                if (myComp?.slug) {
+                    const newUrl = `/${myComp.slug}/home`;
+                    console.log('✅ AdminLayout: Setting landing URL to:', newUrl);
+                    setLandingPageUrl(newUrl);
+                } else {
+                    console.warn('⚠️ AdminLayout: No competition found or no slug, using fallback');
+                }
+            }
+        };
+
+        loadLandingUrl();
+    }, [user, kompetisiList, fetchKompetisiList]);
+
     const handleLogout = () => {
         logout();
         navigate("/auth/login");
@@ -47,14 +92,14 @@ const AdminLayout: React.FC = () => {
         // Super Admin Only Section
         ...(isSuperAdmin
             ? [
-                  {
-                      icon: Users,
-                      label: "Manajemen User",
-                      path: "/admin/users",
-                      active: location.pathname === "/admin/users",
-                      section: "super",
-                  },
-              ]
+                {
+                    icon: Users,
+                    label: "Manajemen User",
+                    path: "/admin/users",
+                    active: location.pathname === "/admin/users",
+                    section: "super",
+                },
+            ]
             : []),
         // Shared Menu Items (Super Admin & Admin Penyelenggara)
         {
@@ -156,11 +201,10 @@ const AdminLayout: React.FC = () => {
                                 )}
                                 <button
                                     onClick={() => navigate(item.path)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${
-                                        item.active
-                                            ? "bg-red text-white shadow-md"
-                                            : "hover:bg-red/10 hover:text-red hover:shadow-sm"
-                                    }`}
+                                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 group ${item.active
+                                        ? "bg-red text-white shadow-md"
+                                        : "hover:bg-red/10 hover:text-red hover:shadow-sm"
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <item.icon
@@ -180,18 +224,21 @@ const AdminLayout: React.FC = () => {
                         ))}
                     </nav>
 
-                    {/* Back to Homepage Button */}
-                    <div className="absolute bottom-28 left-6 right-6">
-                        <a
-                            href="/"
-                            className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
-                        >
-                            <Home size={20} className="text-red" />
-                            <span className="font-medium text-base">
-                                Landing Page
-                            </span>
-                        </a>
-                    </div>
+                    {/* Back to Homepage Button - Hide for Super Admin */}
+                    {!isSuperAdmin && (
+                        <div className="absolute bottom-28 left-6 right-6">
+                            <a
+                                href={landingPageUrl}
+                                target="_blank"
+                                className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
+                            >
+                                <Home size={20} className="text-red" />
+                                <span className="font-medium text-base">
+                                    Landing Page
+                                </span>
+                            </a>
+                        </div>
+                    )}
 
                     {/* Logout Button */}
                     <div className="absolute bottom-6 left-6 right-6">
@@ -335,11 +382,10 @@ const AdminLayout: React.FC = () => {
                                         navigate(item.path);
                                         setSidebarOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
-                                        item.active
-                                            ? "shadow-md"
-                                            : "hover:shadow-sm"
-                                    }`}
+                                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${item.active
+                                        ? "shadow-md"
+                                        : "hover:shadow-sm"
+                                        }`}
                                     style={{
                                         backgroundColor: item.active
                                             ? "#990D35"
@@ -383,21 +429,23 @@ const AdminLayout: React.FC = () => {
                             ))}
                         </nav>
 
-                        {/* Back to Homepage Button */}
-                        <div className="absolute bottom-28 left-6 right-6">
-                            <a
-                                href="/"
-                                className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
-                            >
-                                <Home size={20} style={{ color: "#990D35" }} />
-                                <span
-                                    className="font-medium text-base"
-                                    style={{ color: "#050505" }}
+                        {/* Back to Homepage Button - Hide for Super Admin */}
+                        {!isSuperAdmin && (
+                            <div className="absolute bottom-28 left-6 right-6">
+                                <a
+                                    href="/"
+                                    className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 border border-black/10 text-black hover:bg-black/5 hover:shadow-sm"
                                 >
-                                    Landing Page
-                                </span>
-                            </a>
-                        </div>
+                                    <Home size={20} style={{ color: "#990D35" }} />
+                                    <span
+                                        className="font-medium text-base"
+                                        style={{ color: "#050505" }}
+                                    >
+                                        Landing Page
+                                    </span>
+                                </a>
+                            </div>
+                        )}
 
                         <div className="absolute bottom-6 left-6 right-6">
                             <button
