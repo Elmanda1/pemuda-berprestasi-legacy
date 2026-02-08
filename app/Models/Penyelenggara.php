@@ -26,4 +26,9 @@ class Penyelenggara extends Model
         'landing_feature_3_title',
         'landing_feature_3_desc'
     ];
+
+    public function admin_penyelenggara()
+    {
+        return $this->hasMany(AdminPenyelenggara::class, 'id_penyelenggara', 'id_penyelenggara');
+    }
 }

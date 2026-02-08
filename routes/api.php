@@ -179,6 +179,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/', 'PenyelenggaraController@store');
             Route::put('{id}', 'PenyelenggaraController@update');
             Route::delete('{id}', 'PenyelenggaraController@destroy');
+
+            // Credential Management
+            Route::put('{id}/credential', 'PenyelenggaraController@updateCredential');
+            Route::post('{id}/credential', 'PenyelenggaraController@storeCredential');
         });
 
         // Admin Stats

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Penyelenggara;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class PenyelenggaraController extends Controller
 {
@@ -33,7 +34,9 @@ class PenyelenggaraController extends Controller
             });
         }
 
-        $penyelenggara = $query->orderBy('id_penyelenggara', 'desc')->paginate($limit);
+        $penyelenggara = $query->with(['admin_penyelenggara.user'])
+            ->orderBy('id_penyelenggara', 'desc')
+            ->paginate($limit);
 
         return response()->json([
             'success' => true,
@@ -173,7 +176,7 @@ class PenyelenggaraController extends Controller
         // Try to get by ID if provided, otherwise get the first one
         $id = $request->query('id_penyelenggara');
         $penyelenggara = $id ? Penyelenggara::find($id) : Penyelenggara::first();
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -214,6 +217,114 @@ class PenyelenggaraController extends Controller
             return response()->json(['success' => true, 'message' => 'Penyelenggara berhasil dihapus']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Gagal menghapus: ' . $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Update organizer admin credentials
+     */
+    public function updateCredential(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'SUPER_ADMIN') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id_akun' => 'required|exists:tb_akun,id_akun',
+            'email' => 'required|email|unique:tb_akun,email,' . $request->id_akun . ',id_akun',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $targetUser = \App\Models\User::find($request->id_akun);
+
+            // Verify this user actually belongs to the penyelenggara
+            $adminPenyelenggara = \App\Models\AdminPenyelenggara::where('id_akun', $targetUser->id_akun)
+                ->where('id_penyelenggara', $id)
+                ->first();
+
+            if (!$adminPenyelenggara) {
+                return response()->json(['message' => 'User ini bukan admin dari penyelenggara tersebut'], 400);
+            }
+
+            $updateData = ['email' => $request->email];
+            if ($request->password) {
+                $updateData['password_hash'] = \Illuminate\Support\Facades\Hash::make($request->password);
+            }
+
+            $targetUser->update($updateData);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Kredensial berhasil diperbarui']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Create new admin credential for organizer
+     */
+    public function storeCredential(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'SUPER_ADMIN') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:tb_akun,email',
+            'password' => 'required|string|min:6',
+            'nama' => 'required|string|max:150',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 400);
+        }
+
+        $penyelenggara = Penyelenggara::find($id);
+        if (!$penyelenggara) {
+            return response()->json(['message' => 'Penyelenggara tidak ditemukan'], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Create user account
+            $newUser = \App\Models\User::create([
+                'email' => $request->email,
+                'password_hash' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'role' => 'ADMIN_PENYELENGGARA',
+            ]);
+
+            // Create role-specific record
+            \App\Models\AdminPenyelenggara::create([
+                'id_akun' => $newUser->id_akun,
+                'nama' => $request->nama,
+                'id_penyelenggara' => $id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin credential berhasil dibuat',
+                'data' => $newUser
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 }
