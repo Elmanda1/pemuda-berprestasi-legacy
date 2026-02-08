@@ -83,11 +83,11 @@ const AdminKompetisi = () => {
 
     // Landing Page Customization State
     const [isEditingLanding, setIsEditingLanding] = useState(false);
-    const [landingData, setLandingData] = useState({ 
-        title: '', 
-        subtitle: '', 
-        about_title: '', 
-        about_content: '', 
+    const [landingData, setLandingData] = useState({
+        title: '',
+        subtitle: '',
+        about_title: '',
+        about_content: '',
         features_title: '',
         feature_1_title: '',
         feature_1_desc: '',
@@ -95,7 +95,7 @@ const AdminKompetisi = () => {
         feature_2_desc: '',
         feature_3_title: '',
         feature_3_desc: '',
-        id_penyelenggara: 1 
+        id_penyelenggara: 1
     });
 
     useEffect(() => {
@@ -138,22 +138,122 @@ const AdminKompetisi = () => {
 
     const [penyelenggaraList, setPenyelenggaraList] = useState<any[]>([]);
 
+    // Credential Modal State
+    const [showCredentialModal, setShowCredentialModal] = useState(false);
+    const [credentialData, setCredentialData] = useState({
+        id_penyelenggara: 0,
+        nama_penyelenggara: '',
+        id_akun: 0,
+        email: '',
+        password: '',
+        nama: '', // Added for new user creation
+        loading: false
+    });
+
+    const handleOpenCredential = (org: any) => {
+        // Find the admin user for this organization
+        const adminRel = org.admin_penyelenggara?.[0];
+        const user = adminRel?.user;
+
+        if (!user) {
+            // New logic: Allow creating credential if not found
+            setCredentialData({
+                id_penyelenggara: org.id_penyelenggara,
+                nama_penyelenggara: org.nama_penyelenggara,
+                id_akun: 0, // 0 indicates new user
+                email: '',
+                password: '',
+                nama: '',
+                loading: false
+            });
+            setShowCredentialModal(true);
+            return;
+        }
+
+        setCredentialData({
+            id_penyelenggara: org.id_penyelenggara,
+            nama_penyelenggara: org.nama_penyelenggara,
+            id_akun: user.id_akun,
+            email: user.email,
+            password: '',
+            nama: user.nama || '',
+            loading: false
+        });
+        setShowCredentialModal(true);
+    };
+
+    const handleSaveCredential = async () => {
+        if (!credentialData.email) {
+            toast.error("Email tidak boleh kosong");
+            return;
+        }
+
+        // Validation for new user
+        if (credentialData.id_akun === 0) {
+            if (!credentialData.password) {
+                toast.error("Password wajib diisi untuk akun baru");
+                return;
+            }
+            if (!credentialData.nama) {
+                toast.error("Nama lengkap wajib diisi");
+                return;
+            }
+        }
+
+        setCredentialData(prev => ({ ...prev, loading: true }));
+        try {
+            if (credentialData.id_akun === 0) {
+                // Create new
+                await apiClient.post(`/admin/penyelenggara/${credentialData.id_penyelenggara}/credential`, {
+                    email: credentialData.email,
+                    password: credentialData.password,
+                    nama: credentialData.nama
+                });
+                toast.success("Akun admin berhasil dibuat");
+            } else {
+                // Update existing
+                await apiClient.put(`/admin/penyelenggara/${credentialData.id_penyelenggara}/credential`, {
+                    id_akun: credentialData.id_akun,
+                    email: credentialData.email,
+                    password: credentialData.password || undefined // Only send if not empty
+                });
+                toast.success("Kredensial berhasil diperbarui");
+            }
+
+            setShowCredentialModal(false);
+            fetchPenyelenggara(); // Refresh list to get updated email if needed
+        } catch (err: any) {
+            toast.error(err.message || "Gagal menyimpan kredensial");
+        } finally {
+            setCredentialData(prev => ({ ...prev, loading: false }));
+        }
+    };
+
     const fetchPenyelenggara = async () => {
         try {
             const res: any = await apiClient.get('/admin/penyelenggara?limit=100');
             const data = res.data || res;
             const list = Array.isArray(data) ? data : (data.data || []);
             setPenyelenggaraList(list);
-            
-            
+
+
         } catch (err) {
             console.error("Failed to fetch penyelenggara", err);
         }
     };
 
     useEffect(() => {
-        fetchPenyelenggara();
-    }, []);
+        if (isSuperAdmin) {
+            fetchPenyelenggara();
+        } else if (user?.role === 'ADMIN_PENYELENGGARA' && user?.admin_penyelenggara) {
+            // Pre-fill for Admin Penyelenggara
+            const myOrg = {
+                id_penyelenggara: user.admin_penyelenggara.id_penyelenggara,
+                nama_penyelenggara: user.admin_penyelenggara.nama || 'My Organization'
+            };
+            setPenyelenggaraList([myOrg]);
+        }
+    }, [isSuperAdmin, user]);
 
     // Effect for Auto-selection (Runs when user and list are ready)
     useEffect(() => {
@@ -162,11 +262,11 @@ const AdminKompetisi = () => {
             // Try to find in list, but if list is empty or not yet loaded, we can still set the ID
             // Ideally we wait for list, but for critical path we can just set it.
             // If list is loaded, we can get the name.
-            const myOrg = penyelenggaraList.find((o: any) => o.id_penyelenggara === myOrgId) || { 
-                id_penyelenggara: myOrgId, 
-                nama_penyelenggara: user.admin_penyelenggara.nama || 'My Organization' 
+            const myOrg = penyelenggaraList.find((o: any) => o.id_penyelenggara === myOrgId) || {
+                id_penyelenggara: myOrgId,
+                nama_penyelenggara: user.admin_penyelenggara.nama || 'My Organization'
             };
-            
+
             console.log("Auto-selecting organization for ADMIN_PENYELENGGARA:", myOrg);
             setSelectedOrganizer(myOrg);
             setViewLevel('competitions');
@@ -206,23 +306,23 @@ const AdminKompetisi = () => {
 
         const isEdit = !!editingId;
         const toastId = toast.loading(isEdit ? "Menyimpan perubahan..." : "Membuat kompetisi...");
-        
+
         try {
             const formData = new FormData();
             Object.entries(newKompData).forEach(([key, value]) => {
                 if (['modules_enabled', 'faq_data', 'timeline_data', 'registration_steps'].includes(key)) {
                     formData.append(key, JSON.stringify(value));
                 } else {
-                     // If editing and password is empty, don't send it (or handle in backend)
+                    // If editing and password is empty, don't send it (or handle in backend)
                     if (key === 'admin_password' && isEdit && !value) {
                         return;
                     }
                     if (value !== null && value !== undefined) {
-                         formData.append(key, value as string);
+                        formData.append(key, value as string);
                     }
                 }
             });
-            
+
             if (newLogoFile) formData.append('logo', newLogoFile);
             if (newHeroFile) formData.append('hero', newHeroFile);
 
@@ -260,7 +360,7 @@ const AdminKompetisi = () => {
         };
 
         const existingModules = parseJSON(komp.modules_enabled, { hero: true, about: true, registration: true, contact: true, faq: true, timeline: true, hide_console: false });
-        
+
         // Populate state
         setNewKompData({
             nama_event: komp.nama_event || '',
@@ -300,12 +400,12 @@ const AdminKompetisi = () => {
                 const parsed = parseJSON(komp.faq_data, []);
                 // Check if it's the categorized structure (has 'questions' arrow)
                 if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].questions) {
-                     return parsed.flatMap((cat: any) => 
-                         (cat.questions || []).map((q: any) => ({
-                             q: q.question || q.tanya || '',
-                             a: q.answer || q.jawab || ''
-                         }))
-                     );
+                    return parsed.flatMap((cat: any) =>
+                        (cat.questions || []).map((q: any) => ({
+                            q: q.question || q.tanya || '',
+                            a: q.answer || q.jawab || ''
+                        }))
+                    );
                 }
                 // Fallback for flat structure
                 return parsed.map((item: any) => ({
@@ -333,7 +433,7 @@ const AdminKompetisi = () => {
         // Usually komp.user is not joined in 'get all' query unless specified.
         // For now we assume email is there or user can re-enter if needed, but optimally we should fetch detail.
         // If the backend 'get all' includes user relation, fine.
-        
+
         setEditingId(komp.id_kompetisi);
         setNewLogoFile(null);
         setNewHeroFile(null);
@@ -431,12 +531,12 @@ const AdminKompetisi = () => {
                         {viewLevel === 'organizers' ? 'Manajemen Website' : `Kompetisi: ${selectedOrganizer?.nama_penyelenggara}`}
                     </h1>
                     <p className="text-gray-500 mt-2 font-inter">
-                        {viewLevel === 'organizers' 
-                            ? 'Kelola halaman utama dan kompetisi untuk setiap penyelenggara.' 
+                        {viewLevel === 'organizers'
+                            ? 'Kelola halaman utama dan kompetisi untuk setiap penyelenggara.'
                             : 'Kelola event, branding, dan informasi kompetisi di bawah penyelenggara ini.'}
                     </p>
                 </div>
-                    <div className="flex gap-3">
+                <div className="flex gap-3">
                     {viewLevel === 'competitions' && isSuperAdmin && (
                         <button
                             onClick={() => {
@@ -649,7 +749,7 @@ const AdminKompetisi = () => {
                             </button>
                         ))}
                         <div className="flex-1 flex justify-end items-center px-4">
-                             <button onClick={() => { setIsAddingKompetisi(false); setEditingId(null); }} className="p-2 hover:bg-gray-200 rounded-lg text-gray-400"><X size={20} /></button>
+                            <button onClick={() => { setIsAddingKompetisi(false); setEditingId(null); }} className="p-2 hover:bg-gray-200 rounded-lg text-gray-400"><X size={20} /></button>
                         </div>
                     </div>
 
@@ -678,7 +778,7 @@ const AdminKompetisi = () => {
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Tahun Event</label>
                                         <input type="number" value={newKompData.event_year} onChange={e => setNewKompData({ ...newKompData, event_year: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all" />
                                     </div>
-                                     <div>
+                                    <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
                                         <select value={newKompData.status} onChange={e => setNewKompData({ ...newKompData, status: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-red outline-none transition-all">
                                             <option value="PENDAFTARAN">PENDAFTARAN</option>
@@ -717,10 +817,10 @@ const AdminKompetisi = () => {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 cursor-pointer transition-all hover:border-red group relative" onClick={() => document.getElementById('logoInput')?.click()}>
                                                 {(newLogoFile || newKompData.logo_url) ? (
-                                                     <div className="flex flex-col items-center">
+                                                    <div className="flex flex-col items-center">
                                                         {newLogoFile ? <span className="text-sm font-bold text-green-600">New File Selected</span> : <img src={newKompData.logo_url} className="h-16 w-auto object-contain mb-2" />}
                                                         <span className="text-xs text-gray-400">Ganti Logo</span>
-                                                     </div>
+                                                    </div>
                                                 ) : (
                                                     <div className="flex flex-col items-center text-gray-400 group-hover:text-red">
                                                         <ImageIcon size={32} className="mb-2" />
@@ -729,13 +829,13 @@ const AdminKompetisi = () => {
                                                 )}
                                                 <input id="logoInput" type="file" className="hidden" onChange={e => setNewLogoFile(e.target.files?.[0] || null)} />
                                             </div>
-                                            
+
                                             <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 cursor-pointer transition-all hover:border-red group relative" onClick={() => document.getElementById('heroInput')?.click()}>
                                                 {(newHeroFile || newKompData.poster_image) ? (
-                                                     <div className="flex flex-col items-center">
+                                                    <div className="flex flex-col items-center">
                                                         {newHeroFile ? <span className="text-sm font-bold text-green-600">New File Selected</span> : <img src={newKompData.poster_image} className="h-16 w-auto object-cover rounded mb-2" />}
                                                         <span className="text-xs text-gray-400">Ganti Poster</span>
-                                                     </div>
+                                                    </div>
                                                 ) : (
                                                     <div className="flex flex-col items-center text-gray-400 group-hover:text-red">
                                                         <ImageIcon size={32} className="mb-2" />
@@ -746,11 +846,11 @@ const AdminKompetisi = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="col-span-1 md:col-span-2 space-y-4">
                                         <label className="font-bold text-gray-700">Template Style</label>
                                         <div className="grid grid-cols-3 gap-4">
-                                            {[{id: 'default', name: 'Classic Light'}, {id: 'modern', name: 'Modern Dark'}, {id: 'minimalist', name: 'Minimalist'}].map(t => (
+                                            {[{ id: 'default', name: 'Classic Light' }, { id: 'modern', name: 'Modern Dark' }, { id: 'minimalist', name: 'Minimalist' }].map(t => (
                                                 <div key={t.id} onClick={() => setNewKompData({ ...newKompData, template_type: t.id })}
                                                     className={`p-4 border rounded-xl cursor-pointer text-center transition-all ${newKompData.template_type === t.id ? 'bg-red text-white border-red' : 'bg-white border-gray-200 hover:border-red/50'}`}>
                                                     <span className="font-bold text-sm">{t.name}</span>
@@ -763,13 +863,13 @@ const AdminKompetisi = () => {
                         )}
 
                         {activeTab === 'modul' && (
-                             <div className="space-y-6 animate-in fade-in">
+                            <div className="space-y-6 animate-in fade-in">
                                 <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Manajemen Modul</h5>
                                 <p className="text-gray-500 text-sm">Pilih fitur dan section yang ingin ditampilkan di halaman kompetisi.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {Object.entries(newKompData.modules_enabled).map(([key, isEnabled]: [string, any]) => (
                                         key !== 'hide_console' && (
-                                            <div key={key} 
+                                            <div key={key}
                                                 onClick={() => setNewKompData({ ...newKompData, modules_enabled: { ...newKompData.modules_enabled, [key]: !isEnabled } })}
                                                 className={`flex items-center justify-between p-5 rounded-xl border-2 cursor-pointer transition-all ${isEnabled ? 'border-red bg-red/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                                             >
@@ -784,11 +884,11 @@ const AdminKompetisi = () => {
                                         )
                                     ))}
                                 </div>
-                             </div>
+                            </div>
                         )}
 
                         {activeTab === 'konten' && (
-                             <div className="space-y-8 animate-in fade-in">
+                            <div className="space-y-8 animate-in fade-in">
                                 {/* Hero Content */}
                                 {newKompData.modules_enabled.hero && (
                                     <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -798,11 +898,11 @@ const AdminKompetisi = () => {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Hero Title</label>
-                                            <input type="text" value={newKompData.hero_title} onChange={e => setNewKompData({...newKompData, hero_title: e.target.value})} className="w-full px-4 py-2 border rounded-xl" placeholder="Judul besar di halaman utama" />
+                                            <input type="text" value={newKompData.hero_title} onChange={e => setNewKompData({ ...newKompData, hero_title: e.target.value })} className="w-full px-4 py-2 border rounded-xl" placeholder="Judul besar di halaman utama" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Hero Description</label>
-                                            <textarea value={newKompData.hero_description} onChange={e => setNewKompData({...newKompData, hero_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Deskripsi singkat di bawah judul" />
+                                            <textarea value={newKompData.hero_description} onChange={e => setNewKompData({ ...newKompData, hero_description: e.target.value })} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Deskripsi singkat di bawah judul" />
                                         </div>
                                     </div>
                                 )}
@@ -817,20 +917,20 @@ const AdminKompetisi = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Direktur/Ketua</label>
-                                                <input type="text" value={newKompData.about_director_name} onChange={e => setNewKompData({...newKompData, about_director_name: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                                <input type="text" value={newKompData.about_director_name} onChange={e => setNewKompData({ ...newKompData, about_director_name: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Jabatan</label>
-                                                <input type="text" value={newKompData.about_director_title} onChange={e => setNewKompData({...newKompData, about_director_title: e.target.value})} className="w-full px-4 py-2 border rounded-xl" placeholder="Ketua Panitia" />
+                                                <input type="text" value={newKompData.about_director_title} onChange={e => setNewKompData({ ...newKompData, about_director_title: e.target.value })} className="w-full px-4 py-2 border rounded-xl" placeholder="Ketua Panitia" />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Isi Sambutan</label>
-                                                <textarea value={newKompData.about_description} onChange={e => setNewKompData({...newKompData, about_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-32" />
+                                                <textarea value={newKompData.about_description} onChange={e => setNewKompData({ ...newKompData, about_description: e.target.value })} className="w-full px-4 py-2 border rounded-xl h-32" />
                                             </div>
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Contact Content */}
                                 {newKompData.modules_enabled.contact && (
                                     <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -839,25 +939,25 @@ const AdminKompetisi = () => {
                                             <h6 className="font-bold text-lg text-gray-900">Kontak & Lokasi</h6>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                             <div>
+                                            <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Venue</label>
-                                                <input type="text" value={newKompData.contact_venue_name} onChange={e => setNewKompData({...newKompData, contact_venue_name: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                                <input type="text" value={newKompData.contact_venue_name} onChange={e => setNewKompData({ ...newKompData, contact_venue_name: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Instagram (@)</label>
-                                                <input type="text" value={newKompData.contact_instagram} onChange={e => setNewKompData({...newKompData, contact_instagram: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                                <input type="text" value={newKompData.contact_instagram} onChange={e => setNewKompData({ ...newKompData, contact_instagram: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">WhatsApp 1</label>
-                                                <input type="text" value={newKompData.contact_phone_1} onChange={e => setNewKompData({...newKompData, contact_phone_1: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                                <input type="text" value={newKompData.contact_phone_1} onChange={e => setNewKompData({ ...newKompData, contact_phone_1: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Contact Person 1</label>
-                                                <input type="text" value={newKompData.contact_person_name_1} onChange={e => setNewKompData({...newKompData, contact_person_name_1: e.target.value})} className="w-full px-4 py-2 border rounded-xl" />
+                                                <input type="text" value={newKompData.contact_person_name_1} onChange={e => setNewKompData({ ...newKompData, contact_person_name_1: e.target.value })} className="w-full px-4 py-2 border rounded-xl" />
                                             </div>
-                                             <div className="md:col-span-2">
+                                            <div className="md:col-span-2">
                                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Google Maps Embed URL</label>
-                                                <input type="text" value={newKompData.contact_gmaps_url} onChange={e => setNewKompData({...newKompData, contact_gmaps_url: e.target.value})} className="w-full px-4 py-2 border rounded-xl text-xs font-mono" placeholder="https://www.google.com/maps/embed?..." />
+                                                <input type="text" value={newKompData.contact_gmaps_url} onChange={e => setNewKompData({ ...newKompData, contact_gmaps_url: e.target.value })} className="w-full px-4 py-2 border rounded-xl text-xs font-mono" placeholder="https://www.google.com/maps/embed?..." />
                                             </div>
                                         </div>
                                     </div>
@@ -872,7 +972,7 @@ const AdminKompetisi = () => {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Deskripsi Pendaftaran</label>
-                                            <textarea value={newKompData.registration_description} onChange={e => setNewKompData({...newKompData, registration_description: e.target.value})} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Penjelasan singkat alur pendaftaran..." />
+                                            <textarea value={newKompData.registration_description} onChange={e => setNewKompData({ ...newKompData, registration_description: e.target.value })} className="w-full px-4 py-2 border rounded-xl h-24" placeholder="Penjelasan singkat alur pendaftaran..." />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold uppercase text-gray-500 mb-3">Langkah-Langkah (Registration Steps)</label>
@@ -884,21 +984,21 @@ const AdminKompetisi = () => {
                                                             <input type="text" placeholder="Judul Langkah" value={step.title} onChange={e => {
                                                                 const newSteps: any = [...newKompData.registration_steps];
                                                                 newSteps[idx].title = e.target.value;
-                                                                setNewKompData({...newKompData, registration_steps: newSteps});
+                                                                setNewKompData({ ...newKompData, registration_steps: newSteps });
                                                             }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
                                                             <input type="text" placeholder="Deskripsi" value={step.desc} onChange={e => {
                                                                 const newSteps: any = [...newKompData.registration_steps];
                                                                 newSteps[idx].desc = e.target.value;
-                                                                setNewKompData({...newKompData, registration_steps: newSteps});
+                                                                setNewKompData({ ...newKompData, registration_steps: newSteps });
                                                             }} className="w-full px-3 py-1.5 border rounded-lg text-sm" />
                                                         </div>
                                                         <button onClick={() => {
                                                             const newSteps = newKompData.registration_steps.filter((_, i) => i !== idx);
-                                                            setNewKompData({...newKompData, registration_steps: newSteps});
+                                                            setNewKompData({ ...newKompData, registration_steps: newSteps });
                                                         }} className="p-2 text-gray-400 hover:text-red transition-colors"><Trash2 size={16} /></button>
                                                     </div>
                                                 ))}
-                                                <button onClick={() => setNewKompData({...newKompData, registration_steps: [...(newKompData.registration_steps || []), {title: '', desc: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                                <button onClick={() => setNewKompData({ ...newKompData, registration_steps: [...(newKompData.registration_steps || []), { title: '', desc: '' }] })} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
                                                     <Plus size={16} /> Tambah Langkah
                                                 </button>
                                             </div>
@@ -920,28 +1020,28 @@ const AdminKompetisi = () => {
                                                         <input type="text" placeholder="Judul Kegiatan" value={item.title} onChange={e => {
                                                             const newData: any = [...newKompData.timeline_data];
                                                             newData[idx].title = e.target.value;
-                                                            setNewKompData({...newKompData, timeline_data: newData});
+                                                            setNewKompData({ ...newKompData, timeline_data: newData });
                                                         }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
                                                         <div className="flex gap-2">
                                                             <input type="text" placeholder="Tanggal (Contoh: 12 Jan 2024)" value={item.date} onChange={e => {
                                                                 const newData: any = [...newKompData.timeline_data];
                                                                 newData[idx].date = e.target.value;
-                                                                setNewKompData({...newKompData, timeline_data: newData});
+                                                                setNewKompData({ ...newKompData, timeline_data: newData });
                                                             }} className="w-1/2 px-3 py-1.5 border rounded-lg text-sm" />
                                                             <input type="text" placeholder="Keterangan" value={item.desc} onChange={e => {
                                                                 const newData: any = [...newKompData.timeline_data];
                                                                 newData[idx].desc = e.target.value;
-                                                                setNewKompData({...newKompData, timeline_data: newData});
+                                                                setNewKompData({ ...newKompData, timeline_data: newData });
                                                             }} className="w-1/2 px-3 py-1.5 border rounded-lg text-sm" />
                                                         </div>
                                                     </div>
                                                     <button onClick={() => {
                                                         const newData = newKompData.timeline_data.filter((_, i) => i !== idx);
-                                                        setNewKompData({...newKompData, timeline_data: newData});
+                                                        setNewKompData({ ...newKompData, timeline_data: newData });
                                                     }} className="p-2 text-gray-400 hover:text-red transition-colors self-center"><Trash2 size={16} /></button>
                                                 </div>
                                             ))}
-                                            <button onClick={() => setNewKompData({...newKompData, timeline_data: [...(newKompData.timeline_data || []), {title: '', date: '', desc: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                            <button onClick={() => setNewKompData({ ...newKompData, timeline_data: [...(newKompData.timeline_data || []), { title: '', date: '', desc: '' }] })} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
                                                 <Plus size={16} /> Tambah Jadwal
                                             </button>
                                         </div>
@@ -962,33 +1062,33 @@ const AdminKompetisi = () => {
                                                         <input type="text" placeholder="Pertanyaan (Q)" value={item.q} onChange={e => {
                                                             const newData: any = [...newKompData.faq_data];
                                                             newData[idx].q = e.target.value;
-                                                            setNewKompData({...newKompData, faq_data: newData});
+                                                            setNewKompData({ ...newKompData, faq_data: newData });
                                                         }} className="w-full px-3 py-1.5 border rounded-lg text-sm font-bold" />
                                                         <textarea placeholder="Jawaban (A)" value={item.a} onChange={e => {
                                                             const newData: any = [...newKompData.faq_data];
                                                             newData[idx].a = e.target.value;
-                                                            setNewKompData({...newKompData, faq_data: newData});
+                                                            setNewKompData({ ...newKompData, faq_data: newData });
                                                         }} className="w-full px-3 py-1.5 border rounded-lg text-sm h-16" />
                                                     </div>
                                                     <button onClick={() => {
                                                         const newData = newKompData.faq_data.filter((_, i) => i !== idx);
-                                                        setNewKompData({...newKompData, faq_data: newData});
+                                                        setNewKompData({ ...newKompData, faq_data: newData });
                                                     }} className="p-2 text-gray-400 hover:text-red transition-colors"><Trash2 size={16} /></button>
                                                 </div>
                                             ))}
-                                            <button onClick={() => setNewKompData({...newKompData, faq_data: [...(newKompData.faq_data || []), {q: '', a: ''}]})} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
+                                            <button onClick={() => setNewKompData({ ...newKompData, faq_data: [...(newKompData.faq_data || []), { q: '', a: '' }] })} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-bold hover:border-red hover:text-red transition-all flex items-center justify-center gap-2">
                                                 <Plus size={16} /> Tambah FAQ
                                             </button>
                                         </div>
                                     </div>
                                 )}
-                             </div>
+                            </div>
                         )}
 
                         {activeTab === 'pengaturan' && (
-                             <div className="space-y-6 animate-in fade-in">
+                            <div className="space-y-6 animate-in fade-in">
                                 <h5 className="font-bebas text-2xl text-gray-900 border-b pb-2">Pengaturan Lanjutan</h5>
-                                
+
                                 <div className="p-6 bg-red/5 rounded-2xl border border-red/10">
                                     <h6 className="font-bold text-red mb-4 flex items-center gap-2"><SettingsIcon size={18} /> Akun Admin Kompetisi</h6>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1020,16 +1120,16 @@ const AdminKompetisi = () => {
                                         <input type="checkbox" checked={newKompData.show_antrian} onChange={e => setNewKompData({ ...newKompData, show_antrian: e.target.checked })} className="w-6 h-6 rounded text-red focus:ring-red" />
                                     </div>
                                 </div>
-                             </div>
+                            </div>
                         )}
                     </div>
-                    
+
                     <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
                         <button onClick={() => { setIsAddingKompetisi(false); setEditingId(null); }} className="px-6 py-3 font-bold text-gray-500 hover:text-gray-700">
                             Batal
                         </button>
                         <button onClick={handleAddKompetisi} className="px-8 py-3 bg-red text-white rounded-xl font-bold shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                             <Save size={18} /> {editingId ? 'Simpan Perubahan' : 'Buat Kompetisi'}
+                            <Save size={18} /> {editingId ? 'Simpan Perubahan' : 'Buat Kompetisi'}
                         </button>
                     </div>
                 </div>
@@ -1055,13 +1155,20 @@ const AdminKompetisi = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 w-full md:w-auto">
-                                        <button 
+                                        <button
+                                            onClick={() => handleOpenCredential(org)}
+                                            className="hidden md:flex items-center justify-center w-12 h-12 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-red hover:text-red hover:bg-red/5 transition-all group relative"
+                                            title="Atur Kredensial Login"
+                                        >
+                                            <SettingsIcon size={20} />
+                                        </button>
+                                        <button
                                             onClick={() => handleOpenLanding(org)}
                                             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-red text-red hover:bg-red/5 transition-all font-bold"
                                         >
                                             <Globe size={18} /> Atur Website
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => handleViewCompetitions(org)}
                                             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold"
                                         >
@@ -1096,26 +1203,103 @@ const AdminKompetisi = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                                <div className="flex gap-2">
-                                                     <button 
-                                                        onClick={() => window.open(`/${komp.slug}`, '_blank')}
-                                                        className="p-2.5 text-gray-400 hover:text-red hover:bg-red/5 rounded-xl transition-all"
-                                                        title="Lihat Landing Page"
-                                                    >
-                                                        <Eye size={20} />
-                                                    </button>
-                                                    <button onClick={() => handleEdit(komp)} className="px-4 py-2 border rounded-xl hover:bg-gray-50 flex items-center gap-2 font-bold text-gray-700">
-                                                        <Globe size={16} className="text-red" /> Atur Website
-                                                    </button>
-                                                </div>
-                                            
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => window.open(`/${komp.slug}`, '_blank')}
+                                                    className="p-2.5 text-gray-400 hover:text-red hover:bg-red/5 rounded-xl transition-all"
+                                                    title="Lihat Landing Page"
+                                                >
+                                                    <Eye size={20} />
+                                                </button>
+                                                <button onClick={() => handleEdit(komp)} className="px-4 py-2 border rounded-xl hover:bg-gray-50 flex items-center gap-2 font-bold text-gray-700">
+                                                    <Globe size={16} className="text-red" /> Atur Website
+                                                </button>
+                                            </div>
+
                                         </div>
                                     </div>
                                 ))
                             )
                         )
                     )}
+                </div>
+            )}
+
+            {/* Credential Modal */}
+            {showCredentialModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="font-bebas text-2xl text-gray-900 tracking-wide uppercase">
+                                {credentialData.id_akun === 0 ? 'Buat Akun Admin' : 'Atur Kredensial'}
+                            </h3>
+                            <button onClick={() => setShowCredentialModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className={`p-4 rounded-xl border ${credentialData.id_akun === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow/10 border-yellow/20'}`}>
+                                <p className={`text-sm font-medium ${credentialData.id_akun === 0 ? 'text-green-800' : 'text-yellow-800'}`}>
+                                    {credentialData.id_akun === 0
+                                        ? <span>Membuat akun admin baru untuk: <span className="font-bold block text-black mt-1">{credentialData.nama_penyelenggara}</span></span>
+                                        : <span>Mengubah kredensial untuk admin: <span className="font-bold block text-black mt-1">{credentialData.nama_penyelenggara}</span></span>
+                                    }
+                                </p>
+                            </div>
+
+                            {credentialData.id_akun === 0 && (
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap Admin</label>
+                                    <input
+                                        type="text"
+                                        value={credentialData.nama}
+                                        onChange={(e) => setCredentialData({ ...credentialData, nama: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                        placeholder="Nama Admin"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Email Login</label>
+                                <input
+                                    type="email"
+                                    value={credentialData.email}
+                                    onChange={(e) => setCredentialData({ ...credentialData, email: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                    placeholder="email@example.com"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Password {credentialData.id_akun === 0 && <span className="text-red">*</span>}</label>
+                                <input
+                                    type="password"
+                                    value={credentialData.password}
+                                    onChange={(e) => setCredentialData({ ...credentialData, password: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
+                                    placeholder={credentialData.id_akun === 0 ? "Masukkan password aman" : "Biarkan kosong jika tidak diubah"}
+                                />
+                                <p className="text-xs text-gray-500 mt-2">Minimal 6 karakter</p>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowCredentialModal(false)}
+                                className="px-6 py-2 text-gray-500 font-bold hover:bg-gray-200 rounded-xl transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleSaveCredential}
+                                disabled={credentialData.loading}
+                                className="flex items-center gap-2 px-6 py-2 bg-red text-white rounded-xl shadow-lg shadow-red/20 font-bold hover:bg-red/90 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {credentialData.loading ? 'Menyimpan...' : 'Simpan Perubahan'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

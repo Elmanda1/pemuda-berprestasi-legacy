@@ -277,45 +277,85 @@ const AdminUsers: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="text-gray-600" size={24} />
-          <h1 className="text-3xl font-bold text-gray-800">Manajemen User</h1>
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-bebas text-4xl tracking-wide text-gray-900">Manajemen User</h1>
+          <p className="text-gray-500 mt-2 font-inter">Kelola semua user, hak akses, dan peran dalam sistem.</p>
         </div>
-        <p className="text-gray-600">Kelola semua user (Admin Penyelenggara & Admin Kompetisi)</p>
+        <div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red text-white shadow-lg shadow-red/20 hover:scale-105 active:scale-95 transition-all font-bold"
+          >
+            <UserPlus size={20} />
+            Tambah User Baru
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2">
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-2 animate-in fade-in">
           <AlertTriangle size={20} />
           <div>
             <strong>Error:</strong> {error}
-            <button onClick={fetchUsers} className="ml-4 text-red-800 underline hover:no-underline">
+            <button onClick={fetchUsers} className="ml-4 text-red-800 underline hover:no-underline font-bold">
               Coba lagi
             </button>
           </div>
         </div>
       )}
 
-      {/* Filters and Create Button */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="relative md:col-span-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-500 text-sm font-bold uppercase">Super Admin</span>
+            <Users size={16} className="text-red" />
+          </div>
+          <p className="text-3xl font-bebas text-gray-900">{stats.super_admin}</p>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-500 text-sm font-bold uppercase">Admin Peserta</span>
+            <Users size={16} className="text-purple-500" />
+          </div>
+          <p className="text-3xl font-bebas text-gray-900">{stats.admin_penyelenggara}</p>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-500 text-sm font-bold uppercase">Admin Kompetisi</span>
+            <Users size={16} className="text-blue-500" />
+          </div>
+          <p className="text-3xl font-bebas text-gray-900">{stats.admin_kompetisi}</p>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-500 text-sm font-bold uppercase">Pelatih</span>
+            <Users size={16} className="text-green-500" />
+          </div>
+          <p className="text-3xl font-bebas text-gray-900">{stats.pelatih}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Cari berdasarkan nama atau email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
             />
           </div>
 
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value as any)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red focus:border-red outline-none transition-all"
           >
             <option value="ALL">Semua Role</option>
             <option value="SUPER_ADMIN">Super Admin</option>
@@ -323,23 +363,11 @@ const AdminUsers: React.FC = () => {
             <option value="ADMIN_KOMPETISI">Admin Kompetisi</option>
             <option value="PELATIH">Pelatih</option>
           </select>
-
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-red text-white rounded-lg hover:bg-red/90 transition-colors font-medium"
-          >
-            <UserPlus size={18} />
-            Tambah User
-          </button>
         </div>
-
-        <p className="text-gray-600">
-          Menampilkan <span className="font-semibold">{filteredUsers.length}</span> dari <span className="font-semibold">{users.length}</span> user
-        </p>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -445,24 +473,7 @@ const AdminUsers: React.FC = () => {
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{stats.super_admin}</p>
-          <p className="text-sm text-red-700">Super Admin</p>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">{stats.admin_penyelenggara}</p>
-          <p className="text-sm text-purple-700">Admin Penyelenggara</p>
-        </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{stats.admin_kompetisi}</p>
-          <p className="text-sm text-blue-700">Admin Kompetisi</p>
-        </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{stats.pelatih}</p>
-          <p className="text-sm text-green-700">Pelatih</p>
-        </div>
-      </div>
+
 
       {/* Create User Modal */}
       {showCreateModal && (

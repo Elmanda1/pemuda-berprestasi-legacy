@@ -15,8 +15,8 @@ const AllAtlets: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
   const navigate = useNavigate();
-  const [filterAgeCategory, setFilterAgeCategory] = useState<"ALL" | "Super Pra-cadet" | "Pracadet" | "Cadet" | "Junior" | "Senior" >("ALL");
-  
+  const [filterAgeCategory, setFilterAgeCategory] = useState<"ALL" | "Super Pra-cadet" | "Pracadet" | "Cadet" | "Junior" | "Senior">("ALL");
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(100);
@@ -112,7 +112,7 @@ const AllAtlets: React.FC = () => {
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
@@ -140,7 +140,7 @@ const AllAtlets: React.FC = () => {
         pageNumbers.push(totalPages);
       }
     }
-    
+
     return pageNumbers;
   };
 
@@ -156,418 +156,325 @@ const AllAtlets: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F5FBEF' }}>
-      {/* CONTAINER UTAMA - Padding responsif yang sama dengan ValidasiPeserta */}
-      <div className="px-4 py-6 sm:px-6 lg:px-8 xl:px-12 2xl:px-24 max-w-7xl mx-auto">
-        
-        {/* HEADER - Diperbaiki untuk mobile seperti ValidasiPeserta */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-            <Users 
-              size={32} 
-              className="sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex-shrink-0" 
-              style={{ color: '#990D35' }}
-            />
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bebas leading-tight" style={{ color: '#050505' }}>
-                Semua Atlet
-              </h1>
-              <p className="text-sm sm:text-base lg:text-lg mt-1 sm:mt-2" style={{ color: '#050505', opacity: 0.6 }}>
-                Kelola data semua atlet yang terdaftar
-              </p>
+    <div className="p-6 md:p-8 space-y-8">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-bebas text-4xl tracking-wide text-gray-900">Data Atlet</h1>
+          <p className="text-gray-500 mt-2 font-inter">Kelola database atlet, riwayat pertandingan, dan prestasi.</p>
+        </div>
+      </div>
+
+      {/* ERROR STATE */}
+      {error && (
+        <div className="mb-6 border rounded-xl p-4" style={{ backgroundColor: 'rgba(153, 13, 53, 0.05)', borderColor: 'rgba(153, 13, 53, 0.2)' }}>
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" style={{ color: '#990D35' }} />
+            <div className="flex-1">
+              <p className="text-sm sm:text-base" style={{ color: '#990D35' }}>{error}</p>
+              <button
+                onClick={fetchAllAtlits}
+                className="mt-2 font-semibold underline hover:no-underline text-sm"
+                style={{ color: '#990D35' }}
+              >
+                Coba lagi
+              </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* ERROR STATE */}
-        {error && (
-          <div className="mb-6 border rounded-xl p-4" style={{ backgroundColor: 'rgba(153, 13, 53, 0.05)', borderColor: 'rgba(153, 13, 53, 0.2)' }}>
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" style={{ color: '#990D35' }} />
-              <div className="flex-1">
-                <p className="text-sm sm:text-base" style={{ color: '#990D35' }}>{error}</p>
-                <button
-                  onClick={fetchAllAtlits}
-                  className="mt-2 font-semibold underline hover:no-underline text-sm"
-                  style={{ color: '#990D35' }}
-                >
-                  Coba lagi
-                </button>
-              </div>
+      {/* FILTER + SEARCH */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div className="space-y-4">
+          <div className="w-full">
+            <div className="relative">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                placeholder="Cari berdasarkan nama atlet..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red focus:border-red outline-none transition-all font-inter"
+              />
             </div>
           </div>
-        )}
 
-        {/* FILTER + SEARCH - Layout yang sama dengan ValidasiPeserta */}
-        <div className="rounded-xl shadow-sm border p-4 sm:p-6 mb-6" style={{ backgroundColor: '#F5FBEF', borderColor: '#990D35' }}>
-          <div className="space-y-4">
-            {/* Search - Full width di mobile */}
-            <div className="w-full">
-              <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: '#050505', opacity: 0.4 }}
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Cari berdasarkan nama atlet..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl border shadow-sm focus:ring-2 focus:border-transparent text-sm placeholder-gray-400 transition-colors"
-                  style={{ 
-                    borderColor: '#990D35', 
-                    backgroundColor: '#F5FBEF',
-                    color: '#050505'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.outline = 'none';
-                    e.target.style.boxShadow = '0 0 0 2px rgba(153, 13, 53, 0.2)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.boxShadow = '';
-                  }}
-                />
-              </div>
+          {/* Filter dalam grid 2 kolom di mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Filter Gender */}
+            <div>
+              <label className="block text-xs mb-2 font-medium" style={{ color: '#050505', opacity: 0.6 }}>Jenis Kelamin</label>
+              <Select
+                unstyled
+                value={{
+                  value: filterGender,
+                  label:
+                    filterGender === "ALL" ? "Semua Gender" : filterGender,
+                }}
+                onChange={(selected) => setFilterGender(selected?.value as any)}
+                options={[
+                  { value: "ALL", label: "Semua Gender" },
+                  { value: "LAKI_LAKI", label: "Laki-Laki" },
+                  { value: "PEREMPUAN", label: "Perempuan" },
+                ]}
+                placeholder="Pilih kelompok usia"
+                classNames={{
+                  control: () =>
+                    `w-full flex items-center border border-gray-200 rounded-xl px-3 py-3 gap-2 transition-all duration-300 hover:shadow-sm focus-within:border-red focus-within:ring-2 focus-within:ring-red/20`,
+                  valueContainer: () => "px-1",
+                  placeholder: () => "text-gray-400 text-sm font-inter",
+                  menu: () =>
+                    "border border-gray-200 bg-white rounded-xl shadow-lg mt-2 overflow-hidden z-50",
+                  menuList: () => "max-h-40 overflow-y-auto",
+                  option: ({ isFocused, isSelected }) =>
+                    [
+                      "px-3 py-3 cursor-pointer text-sm transition-colors duration-200 font-inter",
+                      isFocused ? "bg-red/5 text-gray-900" : "text-gray-600",
+                      isSelected ? "bg-red text-white" : "",
+                    ].join(" "),
+                }}
+              />
             </div>
 
-            {/* Filter dalam grid 2 kolom di mobile */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Filter Gender */}
-              <div>
-                <label className="block text-xs mb-2 font-medium" style={{ color: '#050505', opacity: 0.6 }}>Jenis Kelamin</label>
-                <Select
-              unstyled
-              value={{
-                value: filterGender,
-                label:
-                  filterGender === "ALL" ? "Semua Gender" : filterGender,
-              }}
-              onChange={(selected) => setFilterGender(selected?.value as any)}
-              options={[
-                { value: "ALL", label: "Semua Gender" },
-                { value: "LAKI_LAKI", label: "Laki-Laki" },
-                { value: "PEREMPUAN", label: "Perempuan" },
-              ]}
-              placeholder="Pilih kelompok usia"
-              classNames={{
-                control: () =>
-                  `w-full flex items-center border border-black/20 rounded-2xl px-3 py-3 gap-2 transition-all duration-300 hover:shadow-sm focus-within:border-yellow-500 focus-within:ring-2 focus-within:ring-yellow-500/20`,
-                valueContainer: () => "px-1",
-                placeholder: () => "text-black/40 text-sm font-inter",
-                menu: () =>
-                  "border border-black/10 bg-white rounded-xl shadow-lg mt-2 overflow-hidden z-50",
-                menuList: () => "max-h-40 overflow-y-auto",
-                option: ({ isFocused, isSelected }) =>
-                  [
-                    "px-3 py-3 cursor-pointer text-sm transition-colors duration-200 font-inter",
-                    isFocused ? "bg-yellow-50 text-black" : "text-black/70",
-                    isSelected ? "bg-yellow-500 text-black" : "",
-                  ].join(" "),
-              }}
-            />
-              </div>
-
-              {/* Filter Age Category */}
-              <div>
-                <label className="block text-xs mb-2 font-medium" style={{ color: '#050505', opacity: 0.6 }}>Kategori Umur</label>
-                <Select
-              unstyled
-              value={{
-                value: filterAgeCategory,
-                label:
-                  filterAgeCategory === "ALL" ? "Semua Usia" : filterAgeCategory,
-              }}
-              onChange={(selected) => setFilterAgeCategory(selected?.value as any)}
-              options={[
-                { value: "ALL", label: "Semua Kelompok Umur" },
-                { value: "Super Pra-cadet", label: "Super Pra-Cadet (2017-2020)" },
-                { value: "Pracadet", label: "Pracadet (2014-2016)" },
-                { value: "Cadet", label: "Cadet (2011-2013)" },
-                { value: "Junior", label: "Junior (2008-2010)" },
-                { value: "Senior", label: "Senior (2007 ke atas)" },
-              ]}
-              placeholder="Pilih kelompok usia"
-              classNames={{
-                control: () =>
-                  `w-full flex items-center border border-black/20 rounded-2xl px-3 py-3 gap-2 transition-all duration-300 hover:shadow-sm focus-within:border-yellow-500 focus-within:ring-2 focus-within:ring-yellow-500/20`,
-                valueContainer: () => "px-1",
-                placeholder: () => "text-black/40 text-sm font-inter",
-                menu: () =>
-                  "border border-black/10 bg-white rounded-xl shadow-lg mt-2 overflow-hidden z-50",
-                menuList: () => "max-h-40 overflow-y-auto",
-                option: ({ isFocused, isSelected }) =>
-                  [
-                    "px-3 py-3 cursor-pointer text-sm transition-colors duration-200 font-inter",
-                    isFocused ? "bg-yellow-50 text-black" : "text-black/70",
-                    isSelected ? "bg-yellow-500 text-black" : "",
-                  ].join(" "),
-              }}
-            />
-              </div>
+            {/* Filter Age Category */}
+            <div>
+              <label className="block text-xs mb-2 font-medium" style={{ color: '#050505', opacity: 0.6 }}>Kategori Umur</label>
+              <Select
+                unstyled
+                value={{
+                  value: filterAgeCategory,
+                  label:
+                    filterAgeCategory === "ALL" ? "Semua Usia" : filterAgeCategory,
+                }}
+                onChange={(selected) => setFilterAgeCategory(selected?.value as any)}
+                options={[
+                  { value: "ALL", label: "Semua Kelompok Umur" },
+                  { value: "Super Pra-cadet", label: "Super Pra-Cadet (2017-2020)" },
+                  { value: "Pracadet", label: "Pracadet (2014-2016)" },
+                  { value: "Cadet", label: "Cadet (2011-2013)" },
+                  { value: "Junior", label: "Junior (2008-2010)" },
+                  { value: "Senior", label: "Senior (2007 ke atas)" },
+                ]}
+                placeholder="Pilih kelompok usia"
+                classNames={{
+                  control: () =>
+                    `w-full flex items-center border border-gray-200 rounded-xl px-3 py-3 gap-2 transition-all duration-300 hover:shadow-sm focus-within:border-red focus-within:ring-2 focus-within:ring-red/20`,
+                  valueContainer: () => "px-1",
+                  placeholder: () => "text-gray-400 text-sm font-inter",
+                  menu: () =>
+                    "border border-gray-200 bg-white rounded-xl shadow-lg mt-2 overflow-hidden z-50",
+                  menuList: () => "max-h-40 overflow-y-auto",
+                  option: ({ isFocused, isSelected }) =>
+                    [
+                      "px-3 py-3 cursor-pointer text-sm transition-colors duration-200 font-inter",
+                      isFocused ? "bg-red/5 text-gray-900" : "text-gray-600",
+                      isSelected ? "bg-red text-white" : "",
+                    ].join(" "),
+                }}
+              />
             </div>
+          </div>
 
-            {/* Info hasil */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-2 border-t" style={{ borderColor: 'rgba(153, 13, 53, 0.2)' }}>
-              <p className="text-sm sm:text-base" style={{ color: '#050505', opacity: 0.6 }}>
-                Menampilkan <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredAtlits.length)}</span> dari <span className="font-semibold">{filteredAtlits.length}</span> atlet
-              </p>
-              <p className="text-xs sm:text-sm" style={{ color: '#050505', opacity: 0.5 }}>
-                Halaman {currentPage} dari {totalPages}
-              </p>
-            </div>
+          {/* Info hasil */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-4 border-t border-gray-100 mt-4">
+            <p className="text-sm sm:text-base text-gray-500 font-inter">
+              Menampilkan <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, filteredAtlits.length)}</span> dari <span className="font-semibold text-gray-900">{filteredAtlits.length}</span> atlet
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400 font-inter">
+              Halaman {currentPage} dari {totalPages}
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* CONTENT */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <Loader className="w-8 h-8 animate-spin" style={{ color: '#990D35' }} />
-              <p className="text-sm sm:text-base" style={{ color: '#050505', opacity: 0.5 }}>Loading data atlet...</p>
-            </div>
+      {/* CONTENT */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader className="w-8 h-8 animate-spin" style={{ color: '#990D35' }} />
+            <p className="text-sm sm:text-base" style={{ color: '#050505', opacity: 0.5 }}>Loading data atlet...</p>
           </div>
-        ) : (
-          <>
-            {/* Mobile Cards View - Design yang sama dengan ValidasiPeserta */}
-            <div className="block lg:hidden space-y-4">
-              {currentAtlits.map((atlet) => (
+        </div>
+      ) : (
+        <>
+          {/* Mobile Cards View */}
+          <div className="block lg:hidden space-y-4">
+            {currentAtlits.map((atlet) => (
+              <div
+                key={atlet.id_atlet}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                {/* Header Card */}
                 <div
-                  key={atlet.id_atlet}
-                  className="rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
-                  style={{ backgroundColor: '#F5FBEF', borderColor: '#990D35' }}
+                  className="p-4 cursor-pointer"
+                  onClick={() => navigate(`/dashboard/atlit/${atlet.id_atlet}`)}
                 >
-                  {/* Header Card */}
-                  <div 
-                    className="p-4 cursor-pointer"
-                    onClick={() => navigate(`/dashboard/atlit/${atlet.id_atlet}`)}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1 min-w-0 pr-3">
-                        <h3 className="font-semibold text-base leading-tight truncate" style={{ color: '#050505' }}>
-                          {atlet.nama_atlet}
-                        </h3>
-                        <p className="text-sm mt-1" style={{ color: '#050505', opacity: 0.6 }}>
-                          {getAgeCategory(atlet.umur) || 'Tidak diketahui'}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0">
-                        {getGenderBadge(atlet.jenis_kelamin)}
-                      </div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <h3 className="font-semibold text-base leading-tight truncate text-gray-900 font-inter">
+                        {atlet.nama_atlet}
+                      </h3>
+                      <p className="text-sm mt-1 text-gray-500 font-inter">
+                        {getAgeCategory(atlet.umur) || 'Tidak diketahui'}
+                      </p>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span style={{ color: '#050505', opacity: 0.5 }}>Tanggal Lahir:</span>
-                        <p className="font-medium" style={{ color: '#050505' }}>{formatDate(atlet.tanggal_lahir)}</p>
-                      </div>
-                      <div>
-                        <span style={{ color: '#050505', opacity: 0.5 }}>Umur:</span>
-                        <p className="font-medium" style={{ color: '#050505' }}>{atlet.umur ?? '-'} tahun</p>
-                      </div>
+                    <div className="flex-shrink-0">
+                      {getGenderBadge(atlet.jenis_kelamin)}
                     </div>
                   </div>
-                  
-                  {/* Action Button */}
-                  <div className="flex gap-2 p-4 pt-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/dashboard/atlit/${atlet.id_atlet}`);
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg hover:shadow-md transition-all text-sm font-medium"
-                      style={{ backgroundColor: '#990D35' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.9)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#990D35';
-                      }}
-                    >
-                      <Eye size={16} />
-                      Lihat Detail
-                    </button>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-400 font-inter">Tanggal Lahir:</span>
+                      <p className="font-medium text-gray-900 font-inter">{formatDate(atlet.tanggal_lahir)}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-inter">Umur:</span>
+                      <p className="font-medium text-gray-900 font-inter">{atlet.umur ?? '-'} tahun</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Action Button */}
+                <div className="flex gap-2 p-4 pt-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/dashboard/atlit/${atlet.id_atlet}`);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm font-medium font-inter"
+                  >
+                    <Eye size={16} />
+                    Lihat Detail
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      {["Nama Atlet", "Jenis Kelamin", "Tanggal Lahir", "Umur", "Kategori Umur", "Aksi"].map((header) => (
+                        <th
+                          key={header}
+                          className={`py-4 px-6 font-bold text-xs uppercase tracking-wider text-gray-900 font-inter ${header === "Aksi" ? "text-center" : "text-left"
+                            }`}
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {currentAtlits.map((atlet) => (
+                      <tr
+                        key={atlet.id_atlet}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/dashboard/atlit/${atlet.id_atlet}`)}
+                      >
+                        <td className="py-4 px-6 font-medium text-sm text-gray-900 font-inter">{atlet.nama_atlet}</td>
+                        <td className="py-4 px-6 text-center">{getGenderBadge(atlet.jenis_kelamin)}</td>
+                        <td className="py-4 px-6 text-sm text-gray-500 font-inter">{formatDate(atlet.tanggal_lahir)}</td>
+                        <td className="py-4 px-6 text-sm text-center text-gray-500 font-inter">{atlet.umur ?? '-'} tahun</td>
+                        <td className="py-4 px-6 text-sm text-center text-gray-500 font-inter">
+                          {getAgeCategory(atlet.umur) || '-'}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/atlit/${atlet.id_atlet}`);
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium font-inter"
+                          >
+                            <Eye size={16} />
+                            Detail
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Empty State */}
+          {filteredAtlits.length === 0 && (
+            <div className="py-16 text-center text-gray-500">
+              <Users size={52} className="mx-auto mb-4 opacity-50 text-gray-400" />
+              <p className="text-lg font-medium text-gray-900">Tidak ada atlet yang ditemukan</p>
+              {(searchTerm || filterGender !== "ALL" || filterAgeCategory !== "ALL") && (
+                <p className="text-sm mt-2">Coba ubah filter pencarian Anda</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-2xl border border-gray-200 p-6 mt-6 shadow-sm">
+          {/* Pagination Info */}
+          <div className="text-sm order-2 sm:order-1 text-gray-500 font-inter">
+            Menampilkan {startIndex + 1} - {Math.min(endIndex, filteredAtlits.length)} dari {filteredAtlits.length} hasil
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-gray-600"
+            >
+              <ChevronLeft size={16} />
+              <span className="hidden sm:inline">Prev</span>
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((pageNum, index) => (
+                pageNum === '...' ? (
+                  <span key={`ellipsis-${index}`} className="px-3 py-2 text-sm text-gray-400">...</span>
+                ) : (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum as number)}
+                    className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${currentPage === pageNum
+                      ? "bg-red text-white shadow-md shadow-red/20"
+                      : "text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                      }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
               ))}
             </div>
 
-            {/* Desktop Table View - Layout yang lebih konsisten */}
-            <div className="hidden lg:block">
-              <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#F5FBEF', borderColor: '#990D35' }}>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[800px]">
-                    <thead style={{ backgroundColor: '#F5B700' }}>
-                      <tr>
-                        {["Nama Atlet", "Jenis Kelamin", "Tanggal Lahir", "Umur", "Kategori Umur", "Aksi"].map((header) => (
-                          <th
-                            key={header}
-                            className={`py-3 px-4 font-semibold text-sm ${
-                              header === "Aksi" ? "text-center" : "text-left"
-                            }`}
-                            style={{ color: '#050505' }}
-                          >
-                            {header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y" style={{ borderColor: '#990D35' }}>
-                      {currentAtlits.map((atlet) => (
-                        <tr
-                          key={atlet.id_atlet}
-                          className="transition-colors cursor-pointer"
-                          onClick={() => navigate(`/dashboard/atlit/${atlet.id_atlet}`)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(245, 183, 0, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          <td className="py-4 px-4 font-medium text-sm" style={{ color: '#050505' }}>{atlet.nama_atlet}</td>
-                          <td className="py-4 px-4 text-center">{getGenderBadge(atlet.jenis_kelamin)}</td>
-                          <td className="py-4 px-4 text-sm" style={{ color: '#050505', opacity: 0.7 }}>{formatDate(atlet.tanggal_lahir)}</td>
-                          <td className="py-4 px-4 text-sm text-center" style={{ color: '#050505', opacity: 0.7 }}>{atlet.umur ?? '-'} tahun</td>
-                          <td className="py-4 px-4 text-sm text-center" style={{ color: '#050505', opacity: 0.7 }}>
-                            {getAgeCategory(atlet.umur) || '-'}
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/dashboard/atlit/${atlet.id_atlet}`);
-                              }}
-                              className="inline-flex items-center gap-2 px-3 py-2 text-white rounded-lg hover:shadow-md transition-colors text-sm font-medium"
-                              style={{ backgroundColor: '#990D35' }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.9)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#990D35';
-                              }}
-                            >
-                              <Eye size={16} />
-                              Detail
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Empty State - Konsisten untuk mobile dan desktop */}
-            {filteredAtlits.length === 0 && (
-              <div className="py-16 text-center" style={{ color: '#050505', opacity: 0.4 }}>
-                <Users size={52} className="mx-auto mb-4" />
-                <p className="text-lg">Tidak ada atlet yang ditemukan</p>
-                {(searchTerm || filterGender !== "ALL" || filterAgeCategory !== "ALL") && (
-                  <p className="text-sm mt-2">Coba ubah filter pencarian Anda</p>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Pagination - Konsisten dengan design ValidasiPeserta */}
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl shadow-sm border p-4 sm:p-6 mt-6" style={{ backgroundColor: '#F5FBEF', borderColor: '#990D35' }}>
-            {/* Pagination Info */}
-            <div className="text-sm order-2 sm:order-1" style={{ color: '#050505', opacity: 0.6 }}>
-              Menampilkan {startIndex + 1} - {Math.min(endIndex, filteredAtlits.length)} dari {filteredAtlits.length} hasil
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2">
-              {/* Previous Button */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 px-2 sm:px-3 py-2 rounded-lg border hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                style={{ 
-                  borderColor: '#990D35', 
-                  backgroundColor: '#F5FBEF', 
-                  color: '#050505' 
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = '#F5FBEF';
-                  }
-                }}
-              >
-                <ChevronLeft size={16} />
-                <span className="hidden sm:inline">Prev</span>
-              </button>
-
-              {/* Page Numbers */}
-              <div className="flex items-center gap-1">
-                {getPageNumbers().map((pageNum, index) => (
-                  pageNum === '...' ? (
-                    <span key={`ellipsis-${index}`} className="px-2 py-2 text-sm sm:text-base" style={{ color: '#050505', opacity: 0.4 }}>...</span>
-                  ) : (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum as number)}
-                      className={`px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm sm:text-base min-w-[32px] sm:min-w-[40px]`}
-                      style={{
-                        backgroundColor: currentPage === pageNum ? '#990D35' : '#F5FBEF',
-                        color: currentPage === pageNum ? '#F5FBEF' : '#050505',
-                        border: currentPage === pageNum ? 'none' : `1px solid #990D35`
-                      }}
-                      onMouseEnter={(e) => {
-                        if (currentPage !== pageNum) {
-                          e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.05)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (currentPage !== pageNum) {
-                          e.currentTarget.style.backgroundColor = '#F5FBEF';
-                        }
-                      }}
-                    >
-                      {pageNum}
-                    </button>
-                  )
-                ))}
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 px-2 sm:px-3 py-2 rounded-lg border hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                style={{ 
-                  borderColor: '#990D35', 
-                  backgroundColor: '#F5FBEF', 
-                  color: '#050505' 
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = 'rgba(153, 13, 53, 0.05)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = '#F5FBEF';
-                  }
-                }}
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-gray-600"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight size={16} />
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
