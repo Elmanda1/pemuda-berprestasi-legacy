@@ -82,16 +82,16 @@ const AdminStats: React.FC = () => {
     }
   };
 
-  const StatCard = ({ 
-    icon: Icon, 
-    title, 
-    value, 
-    color 
-  }: { 
-    icon: React.ComponentType<any>, 
-    title: string, 
-    value: number, 
-    color: string 
+  const StatCard = ({
+    icon: Icon,
+    title,
+    value,
+    color
+  }: {
+    icon: React.ComponentType<any>,
+    title: string,
+    value: number,
+    color: string
   }) => (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ const AdminStats: React.FC = () => {
               <span className="block sm:inline">{error}</span>
             </div>
           </div>
-          <button 
+          <button
             onClick={fetchStats}
             className="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
           >
@@ -140,14 +140,16 @@ const AdminStats: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard Statistik</h1>
-        <p className="text-gray-600">Overview sistem dan aktivitas terkini</p>
+    <div className="p-6 md:p-8 space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-bebas text-4xl tracking-wide text-gray-900">Statistik</h1>
+          <p className="text-gray-500 mt-2 font-inter">Overview sistem dan aktivitas terkini</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon={Users}
           title="Total User"
@@ -174,14 +176,14 @@ const AdminStats: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Aktivitas Terkini</h2>
             <Activity size={20} className="text-gray-400" />
           </div>
-          
+
           <div className="space-y-4 max-h-80 overflow-y-auto">
             {stats?.recentActivity && stats.recentActivity.length > 0 ? (
               stats.recentActivity.map((activity) => (
@@ -222,17 +224,16 @@ const AdminStats: React.FC = () => {
             <h2 className="text-lg font-semibold text-gray-800">Atlet per Kategori</h2>
             <Trophy size={20} className="text-gray-400" />
           </div>
-          
+
           <div className="space-y-3">
             {stats?.atletByCategory && stats.atletByCategory.length > 0 ? (
               stats.atletByCategory.map((category, index) => (
                 <div key={category.category} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                      index % 4 === 0 ? 'bg-blue-500' : 
-                      index % 4 === 1 ? 'bg-green-500' : 
-                      index % 4 === 2 ? 'bg-purple-500' : 'bg-orange-500'
-                    }`}></div>
+                    <div className={`w-3 h-3 rounded-full ${index % 4 === 0 ? 'bg-blue-500' :
+                      index % 4 === 1 ? 'bg-green-500' :
+                        index % 4 === 2 ? 'bg-purple-500' : 'bg-orange-500'
+                      }`}></div>
                     <span className="text-sm text-gray-700">{category.category}</span>
                   </div>
                   <span className="font-semibold text-gray-800">{category.count}</span>
@@ -249,12 +250,12 @@ const AdminStats: React.FC = () => {
       </div>
 
       {/* Growth Chart Placeholder */}
-      <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+      <div className="bg-white rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">Pertumbuhan User</h2>
           <TrendingUp size={20} className="text-gray-400" />
         </div>
-        
+
         <div className="h-64 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-200">
           <div className="text-center text-gray-500">
             <TrendingUp size={48} className="mx-auto mb-3 opacity-50" />

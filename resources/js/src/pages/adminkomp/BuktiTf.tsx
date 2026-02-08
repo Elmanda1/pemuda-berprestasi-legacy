@@ -355,44 +355,29 @@ const BuktiTf = () => {
   const activeFiltersCount = (searchTerm ? 1 : 0) + (filterDojang !== 'ALL' ? 1 : 0);
 
   return (
-    <div className="min-h-screen w-full" style={{ backgroundColor: '#F5FBEF' }}>
+    <div className="min-h-screen w-full">
       <NavbarDashboard />
       <div className="2xl:ml-48">
-        <div className="px-4 lg:px-8 py-8 pb-16">
+        <div className="p-6 md:p-8 space-y-8">
           {/* Mobile Menu Button */}
-          <div className="lg:hidden mb-6">
+          <div className="lg:hidden">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-3 rounded-xl hover:shadow-md transition-all duration-300 border"
-              style={{ borderColor: 'rgba(153, 13, 53, 0.2)', backgroundColor: '#F5FBEF' }}
+              className="p-3 rounded-xl hover:bg-gray-50 transition-all border border-gray-200"
             >
-              <Menu size={24} style={{ color: '#990D35' }} />
+              <Menu size={24} className="text-gray-600" />
             </button>
           </div>
 
           {/* HEADER */}
-          <div className="mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <div
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)'
-                }}
-              >
-                <ImageIcon
-                  size={32}
-                  className="sm:w-8 sm:h-8"
-                  style={{ color: 'white' }}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bebas leading-tight mb-1" style={{ color: '#050505' }}>
-                  BUKTI TRANSFER
-                </h1>
-                <p className="text-sm sm:text-base" style={{ color: '#050505', opacity: 0.6 }}>
-                  Kelola dan verifikasi bukti pembayaran
-                </p>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-bebas text-4xl tracking-wide text-gray-900">
+                Bukti Transfer
+              </h1>
+              <p className="text-gray-500 mt-2 font-inter">
+                Kelola dan verifikasi bukti pembayaran
+              </p>
             </div>
           </div>
 
@@ -401,9 +386,9 @@ const BuktiTf = () => {
             <div
               className="rounded-2xl shadow-md border p-5 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               style={{
-                backgroundColor: '#F5FBEF',
+                className="bg-white",
                 borderColor: 'rgba(153, 13, 53, 0.1)',
-                background: 'linear-gradient(135deg, #F5FBEF 0%, rgba(153, 13, 53, 0.02) 100%)'
+                background: 'linear-gradient(135deg, white 0%, rgba(153, 13, 53, 0.02) 100%)'
               }}
             >
               <div className="flex flex-col gap-3">
@@ -427,9 +412,9 @@ const BuktiTf = () => {
             <div
               className="rounded-2xl shadow-md border p-5 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               style={{
-                backgroundColor: '#F5FBEF',
+                className="bg-white",
                 borderColor: 'rgba(245, 183, 0, 0.2)',
-                background: 'linear-gradient(135deg, #F5FBEF 0%, rgba(245, 183, 0, 0.03) 100%)'
+                background: 'linear-gradient(135deg, white 0%, rgba(245, 183, 0, 0.03) 100%)'
               }}
             >
               <div className="flex flex-col gap-3">
@@ -453,9 +438,9 @@ const BuktiTf = () => {
             <div
               className="rounded-2xl shadow-md border p-5 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               style={{
-                backgroundColor: '#F5FBEF',
+                className="bg-white",
                 borderColor: 'rgba(153, 13, 53, 0.1)',
-                background: 'linear-gradient(135deg, #F5FBEF 0%, rgba(153, 13, 53, 0.02) 100%)'
+                background: 'linear-gradient(135deg, white 0%, rgba(153, 13, 53, 0.02) 100%)'
               }}
             >
               <div className="flex flex-col gap-3">
@@ -481,9 +466,9 @@ const BuktiTf = () => {
           <div
             className="rounded-2xl shadow-md border p-6 sm:p-8 mb-8 hover:shadow-lg transition-all duration-300"
             style={{
-              backgroundColor: '#F5FBEF',
+              className="bg-white",
               borderColor: 'rgba(153, 13, 53, 0.1)',
-              background: 'linear-gradient(135deg, #F5FBEF 0%, rgba(153, 13, 53, 0.01) 100%)'
+              background: 'linear-gradient(135deg, white 0%, rgba(153, 13, 53, 0.01) 100%)'
             }}
           >
             <div className="space-y-5">
@@ -502,7 +487,7 @@ const BuktiTf = () => {
                     className="w-full pl-12 pr-4 py-4 rounded-xl border-2 shadow-sm text-sm font-medium focus:outline-none focus:ring-2 transition-all"
                     style={{
                       borderColor: 'rgba(153, 13, 53, 0.2)',
-                      backgroundColor: 'white',
+                      className="bg-white",
                       color: '#050505'
                     }}
                   />
@@ -514,7 +499,7 @@ const BuktiTf = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold hover:shadow-md transition-all"
                 style={{
                   borderColor: '#990D35',
-                  backgroundColor: '#F5FBEF',
+                  className="bg-white",
                   color: '#050505'
                 }}
               >
@@ -547,7 +532,7 @@ const BuktiTf = () => {
                       className="w-full px-4 py-2 border-2 rounded-lg focus:outline-none text-sm font-medium"
                       style={{
                         borderColor: 'rgba(153, 13, 53, 0.2)',
-                        backgroundColor: 'white',
+                        className="bg-white",
                         color: '#050505'
                       }}
                     >
@@ -606,7 +591,7 @@ const BuktiTf = () => {
                   key={bukti.id_bukti_transfer}
                   className="rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
                   style={{
-                    backgroundColor: '#F5FBEF',
+                    className="bg-white",
                     border: '1px solid rgba(153, 13, 53, 0.1)',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                   }}
@@ -749,9 +734,9 @@ const BuktiTf = () => {
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl shadow-md border p-6 mt-8"
               style={{
-                backgroundColor: '#F5FBEF',
+                className="bg-white",
                 borderColor: 'rgba(153, 13, 53, 0.1)',
-                background: 'linear-gradient(135deg, #F5FBEF 0%, rgba(153, 13, 53, 0.01) 100%)'
+                background: 'linear-gradient(135deg, white 0%, rgba(153, 13, 53, 0.01) 100%)'
               }}
             >
               <div className="text-sm font-medium" style={{ color: '#050505', opacity: 0.6 }}>
@@ -765,7 +750,7 @@ const BuktiTf = () => {
                   className="flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-bold hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
                   style={{
                     borderColor: '#990D35',
-                    backgroundColor: '#F5FBEF',
+                    className="bg-white",
                     color: '#050505'
                   }}
                 >
@@ -785,7 +770,7 @@ const BuktiTf = () => {
                         style={{
                           background: currentPage === pageNum
                             ? 'linear-gradient(135deg, #990D35 0%, #7A0A2B 100%)'
-                            : '#F5FBEF',
+                            : 'white',
                           color: currentPage === pageNum ? 'white' : '#050505',
                           border: currentPage === pageNum ? 'none' : '2px solid #990D35'
                         }}
@@ -802,7 +787,7 @@ const BuktiTf = () => {
                   className="flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-bold hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
                   style={{
                     borderColor: '#990D35',
-                    backgroundColor: '#F5FBEF',
+                    className="bg-white",
                     color: '#050505'
                   }}
                 >
@@ -818,14 +803,14 @@ const BuktiTf = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowPendingModal(false)}>
               <div
                 className="rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
-                style={{ backgroundColor: '#F5FBEF' }}
+                style={{ className="bg-white" }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
                 <div
                   className="p-6 border-b flex items-center justify-between"
                   style={{
-                    backgroundColor: '#F5FBEF',
+                    className="bg-white",
                     borderColor: 'rgba(153, 13, 53, 0.1)',
                     background: 'linear-gradient(135deg, rgba(153, 13, 53, 0.08) 0%, rgba(153, 13, 53, 0.04) 100%)'
                   }}
@@ -911,7 +896,7 @@ const BuktiTf = () => {
                                 : 'rgba(153, 13, 53, 0.2)',
                               backgroundColor: selectedPesertas.includes(peserta.id_peserta_kompetisi)
                                 ? 'rgba(153, 13, 53, 0.05)'
-                                : '#F5FBEF'
+                                : 'white'
                             }}
                           >
                             <div className="flex items-start gap-3">
@@ -988,7 +973,7 @@ const BuktiTf = () => {
                           style={{
                             borderColor: 'rgba(153, 13, 53, 0.3)',
                             color: '#050505',
-                            backgroundColor: '#F5FBEF'
+                            className="bg-white"
                           }}
                         >
                           Batal

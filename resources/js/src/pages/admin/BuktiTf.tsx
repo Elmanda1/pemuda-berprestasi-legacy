@@ -40,6 +40,15 @@ const BuktiTf = () => {
     fetchKompetisiList();
   }, []);
 
+  const filteredKompetisiList = kompetisiList.filter(k => {
+    if (user?.role === 'ADMIN_PENYELENGGARA' && user.admin_penyelenggara) {
+      const kAny = k as any;
+      const orgId = kAny.id_penyelenggara || kAny.penyelenggara?.id_penyelenggara;
+      return orgId === user.admin_penyelenggara.id_penyelenggara;
+    }
+    return true;
+  });
+
   // Fetch bukti transfer berdasarkan kompetisi
   const fetchBuktiTransfer = async (kompetisiId: number) => {
     setLoading(true);
@@ -157,50 +166,52 @@ const BuktiTf = () => {
   // Jika belum pilih kompetisi, tampilkan list kompetisi
   if (!selectedKompetisi) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-white via-red/5 to-yellow/10">
+      <div className="min-h-screen w-full">
         <NavbarDashboard />
         <div className="2xl:ml-48">
-          <div className="px-4 lg:px-8 py-8 pb-16">
+          <div className="p-6 md:p-8 space-y-8">
             {/* Mobile Menu Button */}
             <div className="lg:hidden mb-6">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-3 rounded-xl hover:bg-white/50 transition-all duration-300 border border-red/20"
+                className="p-3 rounded-xl hover:bg-gray-50 transition-all border border-gray-200"
               >
-                <Menu size={24} className="text-red" />
+                <Menu size={24} className="text-gray-600" />
               </button>
             </div>
 
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="font-bebas text-4xl lg:text-6xl text-black/80 tracking-wider">
-                BUKTI TRANSFER
-              </h1>
-              <p className="font-plex text-black/60 text-lg mt-2">
-                Pilih kompetisi untuk melihat bukti transfer dari pelatih
-              </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h1 className="font-bebas text-4xl tracking-wide text-gray-900">
+                  Bukti Transfer
+                </h1>
+                <p className="text-gray-500 mt-2 font-inter">
+                  Pilih kompetisi untuk melihat bukti transfer dari pelatih
+                </p>
+              </div>
             </div>
 
             {/* Kompetisi List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {kompetisiList.map((kompetisi) => (
+              {filteredKompetisiList.map((kompetisi) => (
                 <div
                   key={kompetisi.id_kompetisi}
                   onClick={() => handleKompetisiSelect(kompetisi)}
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-red/20 hover:border-red/40 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-red/10 rounded-xl">
-                      <Trophy size={24} className="text-red" />
+                    <div className="p-3 bg-red-50 rounded-xl">
+                      <Trophy size={24} className="text-red-600" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bebas text-xl text-black/80 mb-2">
+                      <h3 className="font-bebas text-xl text-gray-900 mb-2">
                         {kompetisi.nama_event}
                       </h3>
-                      <p className="text-sm text-black/60 mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         📍 {kompetisi.lokasi}
                       </p>
-                      <p className="text-xs text-black/50">
+                      <p className="text-xs text-gray-400">
                         {new Date(kompetisi.tanggal_mulai).toLocaleDateString('id-ID')} -
                         {new Date(kompetisi.tanggal_selesai).toLocaleDateString('id-ID')}
                       </p>
@@ -211,9 +222,9 @@ const BuktiTf = () => {
             </div>
 
             {kompetisiList.length === 0 && (
-              <div className="text-center py-12 bg-white/60 backdrop-blur-sm rounded-xl border border-red/20">
-                <Trophy className="mx-auto text-red/40 mb-4" size={48} />
-                <p className="font-plex text-black/60">Tidak ada kompetisi tersedia</p>
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                <Trophy className="mx-auto text-gray-400 mb-4" size={48} />
+                <p className="text-gray-500 font-inter">Tidak ada kompetisi tersedia</p>
               </div>
             )}
           </div>
@@ -237,24 +248,24 @@ const BuktiTf = () => {
 
   // Jika sudah pilih kompetisi, tampilkan bukti transfer
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-white via-red/5 to-yellow/10">
+    <div className="min-h-screen w-full">
       <NavbarDashboard />
       <div className="2xl:ml-48">
-        <div className="px-4 lg:px-8 py-8 pb-16">
+        <div className="p-6 md:p-8 space-y-8">
           {/* Mobile Menu + Back Button */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4">
             <div className="lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-3 rounded-xl hover:bg-white/50 transition-all duration-300 border border-red/20"
+                className="p-3 rounded-xl hover:bg-gray-50 transition-all border border-gray-200"
               >
-                <Menu size={24} className="text-red" />
+                <Menu size={24} className="text-gray-600" />
               </button>
             </div>
 
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-red hover:text-red/80 font-plex transition-colors"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-inter transition-colors"
             >
               <ChevronLeft size={20} />
               Kembali
@@ -262,13 +273,15 @@ const BuktiTf = () => {
           </div>
 
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="font-bebas text-3xl lg:text-5xl text-black/80 tracking-wider">
-              BUKTI TRANSFER - {selectedKompetisi.nama_event}
-            </h1>
-            <p className="font-plex text-black/60 text-lg mt-2">
-              Total: {filteredBukti.length} dari {buktiTransferList.length} bukti transfer
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-bebas text-4xl tracking-wide text-gray-900">
+                Bukti Transfer - {selectedKompetisi.nama_event}
+              </h1>
+              <p className="text-gray-500 mt-2 font-inter">
+                Total: {filteredBukti.length} dari {buktiTransferList.length} bukti transfer
+              </p>
+            </div>
           </div>
 
           {/* Search and Filter Section */}

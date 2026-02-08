@@ -2950,14 +2950,14 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6" style={{ backgroundColor: '#F5FBEF', minHeight: '100vh' }}>
+    <div className="p-6 md:p-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-inter font-bold" style={{ fontSize: '32px', color: '#050505' }}>
+          <h1 className="font-bebas text-4xl tracking-wide text-gray-900">
             Pengaturan Sistem
           </h1>
-          <p className="font-inter mt-1" style={{ fontSize: '16px', color: '#050505', opacity: '0.7' }}>
+          <p className="text-gray-500 mt-2 font-inter">
             Kelola konfigurasi dan preferensi sistem
           </p>
         </div>
@@ -2966,18 +2966,18 @@ const SettingsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Tabs */}
         <div className="lg:w-64">
-          <div className="p-4 rounded-xl" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
             <nav className="space-y-2">
               {settingsTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-inter font-medium ${activeTab === tab.id
-                    ? 'bg-red text-white shadow-sm'
-                    : 'text-black hover:bg-red/10 hover:text-red'
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-inter font-medium transition-all ${activeTab === tab.id
+                    ? 'bg-red-600 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  <tab.icon size={18} className={activeTab === tab.id ? 'text-yellow' : 'text-current'} />
+                  <tab.icon size={18} className={activeTab === tab.id ? 'text-white' : 'text-current'} />
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -2987,12 +2987,15 @@ const SettingsPage: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1">
-          <div className="p-6 rounded-xl" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             {renderTabContent()}
 
             {/* Save Button */}
-            <div className="flex justify-end mt-8 pt-6 border-t border-black/10">
-              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-inter font-medium transition-all duration-300 bg-red text-white hover:opacity-90 hover:shadow-md">
+            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+              <button className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium transition-colors">
+                Batalkan
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-inter font-medium transition-all bg-red-600 text-white hover:bg-red-700 shadow-md">
                 <Save size={16} />
                 Simpan Perubahan
               </button>
